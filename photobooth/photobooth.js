@@ -44,17 +44,19 @@ filterBtn.addEventListener('click',()=>{
   else{filterMode='normal';filterBtn.textContent='Filter: Normal';photoPreview.classList.remove('bw');}
 });
 
-printUploadBtn.addEventListener('click',async()=>{
-  try{
-    processingOverlay.style.display='flex';
-    const url=await uploadReceiptImage(lastReceiptDataUrl);
-    processingOverlay.style.display='none';
-    // redirect ke preview.html dengan image_id
-    const imgId = url.split('/').pop().split('.')[0];
-    window.location.href = `preview.html?img=${imgId}`;
-  }catch(err){
-    processingOverlay.style.display='none';
-    alert('Upload gagal: '+(err.message||err));
+printUploadBtn.addEventListener('click', async () => {
+  try {
+    processingOverlay.style.display = 'flex';
+    const url = await uploadReceiptImage(lastReceiptDataUrl);
+    processingOverlay.style.display = 'none';
+
+    // encode URL ImgBB supaya aman di query string
+    const encodedUrl = encodeURIComponent(url);
+    // redirect ke preview.html dengan ?img=<encoded_url>
+    window.location.href = `preview.html?img=${encodedUrl}`;
+  } catch(err) {
+    processingOverlay.style.display = 'none';
+    alert('Upload gagal: ' + (err.message || err));
     retryBtn.click();
   }
 });
