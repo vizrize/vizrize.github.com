@@ -1,6 +1,5 @@
 const IMGBB_API_KEY="1d1aa4b919d175436c480b9509c088e7";
-const LOCATION_LABEL="Bogor";
-const RETURN_SECONDS=8;
+const LOCATION_LABEL="Jakarta";
 const RECEIPT_WIDTH=576;
 
 const video=document.getElementById('camera');
@@ -44,19 +43,17 @@ filterBtn.addEventListener('click',()=>{
   else{filterMode='normal';filterBtn.textContent='Filter: Normal';photoPreview.classList.remove('bw');}
 });
 
-printUploadBtn.addEventListener('click', async () => {
-  try {
-    processingOverlay.style.display = 'flex';
-    const url = await uploadReceiptImage(lastReceiptDataUrl);
-    processingOverlay.style.display = 'none';
-
-    // encode URL ImgBB supaya aman di query string
+printUploadBtn.addEventListener('click',async()=>{
+  try{
+    processingOverlay.style.display='flex';
+    const url=await uploadReceiptImage(lastReceiptDataUrl);
+    processingOverlay.style.display='none';
+    // encode full URL ImgBB
     const encodedUrl = encodeURIComponent(url);
-    // redirect ke preview.html dengan ?img=<encoded_url>
     window.location.href = `preview.html?img=${encodedUrl}`;
-  } catch(err) {
-    processingOverlay.style.display = 'none';
-    alert('Upload gagal: ' + (err.message || err));
+  }catch(err){
+    processingOverlay.style.display='none';
+    alert('Upload gagal: '+(err.message||err));
     retryBtn.click();
   }
 });
@@ -72,7 +69,6 @@ async function countdown(sec){
   cd.style.display='none';
 }
 
-// capture foto + receipt
 function captureReceiptFrame(){
   const vw=video.videoWidth||1280;
   const vh=video.videoHeight||720;
@@ -95,6 +91,7 @@ function captureReceiptFrame(){
   const tmp=document.createElement('canvas'); tmp.width=vw; tmp.height=vh; const tctx=tmp.getContext('2d');
   tctx.save(); tctx.scale(-1,1); tctx.drawImage(video,-vw,0,vw,vh); tctx.restore();
   rcCtx.drawImage(tmp,0,0,vw,vh,photoX+innerBorder,photoY+innerBorder,photoW-innerBorder*2,photoH-innerBorder*2);
+
   if(filterMode==='bw'){
     const imgData=rcCtx.getImageData(photoX+innerBorder,photoY+innerBorder,photoW-innerBorder*2,photoH-innerBorder*2);
     for(let i=0;i<imgData.data.length;i+=4){
@@ -103,6 +100,7 @@ function captureReceiptFrame(){
     }
     rcCtx.putImageData(imgData,photoX+innerBorder,photoY+innerBorder);
   }
+
   const dateStr=new Date().toLocaleDateString('id-ID',{day:'2-digit',month:'short',year:'numeric'});
   rcCtx.fillStyle='#000'; rcCtx.font=`${Math.round(canvasW*0.04)}px monospace`; rcCtx.fillText(`${LOCATION_LABEL} • ${dateStr}`,canvasW/2,photoY+photoH+Math.round(footerH*0.45));
   rcCtx.font=`${Math.round(canvasW*0.03)}px monospace`; rcCtx.fillText('Scan QR untuk mengunduh foto',canvasW/2,photoY+photoH+Math.round(footerH*0.78));
