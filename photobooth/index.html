@@ -5,7 +5,6 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
 <title>Vizrize Photobooth Receipt</title>
 <script src="https://cdn.jsdelivr.net/npm/qrcodejs/qrcode.min.js"></script>
-
 <style>
   body {
     margin: 0;
@@ -148,7 +147,7 @@
   </div>
   <div id="countdown"></div>
   <div class="controls">
-    <button id="startBtn">Mulai 📸</button>
+    <button id="startBtn" disabled>📸 Mulai</button>
     <button id="filterBtn">Filter: Normal</button>
   </div>
 </div>
@@ -192,6 +191,11 @@
     try {
       const stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: "user" } });
       video.srcObject = stream;
+
+      // Tunggu sampai video siap baru aktifkan tombol
+      video.onloadedmetadata = () => {
+        startBtn.disabled = false;
+      };
     } catch (e) {
       alert("Kamera gagal diakses 😢");
     }
@@ -222,27 +226,24 @@
 
   function takePhoto() {
     const ctx = canvas.getContext("2d");
-    canvas.width = video.videoWidth;
-    canvas.height = video.videoHeight;
+    canvas.width = video.videoWidth || 1280;
+    canvas.height = video.videoHeight || 720;
     ctx.translate(canvas.width, 0);
     ctx.scale(-1, 1);
     ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
 
-    // Filter B&W
     if (currentFilter === "bw") {
       const imgData = ctx.getImageData(0, 0, canvas.width, canvas.height);
       for (let i = 0; i < imgData.data.length; i += 4) {
         const avg = (imgData.data[i] + imgData.data[i + 1] + imgData.data[i + 2]) / 3;
-        imgData.data[i] = avg + 10;
-        imgData.data[i + 1] = avg + 10;
-        imgData.data[i + 2] = avg + 10;
+        imgData.data[i] = imgData.data[i + 1] = imgData.data[i + 2] = avg;
       }
       ctx.putImageData(imgData, 0, 0);
     }
 
-    // Watermark Vizrize
+    // Tambahkan watermark
     ctx.font = `${canvas.width * 0.03}px Poppins`;
-    ctx.fillStyle = "rgba(255, 255, 255, 0.7)";
+    ctx.fillStyle = "rgba(255,255,255,0.7)";
     ctx.textBaseline = "bottom";
     ctx.fillText("VIZRIZE", 20, canvas.height - 20);
 
@@ -251,13 +252,14 @@
     photoPreview.style.display = "block";
     requestAnimationFrame(() => photoPreview.style.opacity = 1);
     video.style.opacity = 0;
+
     previewControls.style.display = "flex";
-    setTimeout(() => previewControls.style.opacity = 1, 200);
+    requestAnimationFrame(() => previewControls.style.opacity = 1);
   }
 
   retryBtn.onclick = () => {
-    photoPreview.style.opacity = 0;
     previewControls.style.opacity = 0;
+    photoPreview.style.opacity = 0;
     setTimeout(() => {
       photoPreview.style.display = "none";
       previewControls.style.display = "none";
@@ -273,7 +275,7 @@
       photoPreview.style.display = "none";
     }, 400);
     await fadeIn(printAnim);
-    await new Promise(r => setTimeout(r, 2500));
+    await new Promise(r => setTimeout(r, 2000));
     await fadeOut(printAnim);
     uploadPhoto();
   };
@@ -300,27 +302,4 @@
   async function showQRCode(url) {
     await fadeIn(qrSection);
     qrcodeDiv.innerHTML = "";
-    new QRCode(qrcodeDiv, { text: url, width: 200, height: 200 });
-
-    for (let i = 10; i > 0; i--) {
-      qrCountdown.textContent = `Kembali ke kamera dalam ${i} detik...`;
-      await new Promise(r => setTimeout(r, 1000));
-    }
-    await fadeOut(qrSection);
-    video.style.opacity = 1;
-  }
-
-  async function fadeIn(el) {
-    el.style.display = "flex";
-    await new Promise(r => requestAnimationFrame(r));
-    el.style.opacity = 1;
-  }
-
-  async function fadeOut(el) {
-    el.style.opacity = 0;
-    await new Promise(r => setTimeout(r, 800));
-    el.style.display = "none";
-  }
-</script>
-</body>
-</html>
+    new QRCode(qrcodeDiv, { text: url, width: 200, height: 2
