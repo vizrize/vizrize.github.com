@@ -1,0 +1,52 @@
+/* Global */
+body, html {
+  margin:0; padding:0; height:100%; font-family:'Roboto Mono',monospace; background:#f5f0e6;
+}
+
+/* Kamera */
+#cameraWrap {
+  position:fixed; inset:0; display:flex; align-items:center; justify-content:center; background:#f5f0e6;
+}
+video#camera {
+  width:100%; height:100%; object-fit:cover; transform:scaleX(-1);
+}
+
+/* Tombol mulai */
+#startBtnCenter {
+  position:fixed; top:50%; left:50%; transform:translate(-50%,-50%);
+  padding:14px 22px; font-size:20px; cursor:pointer; z-index:40;
+  background:#fff; border-radius:999px; box-shadow:0 8px 24px rgba(0,0,0,0.06);
+}
+
+/* Countdown 3 detik */
+#countdown {
+  position:fixed; top:50%; left:50%; transform:translate(-50%,-50%);
+  font-size:72px; font-weight:bold; color:#222; display:none; z-index:50;
+}
+
+/* Preview receipt */
+#receiptCard {
+  display:none; width:90%; max-width:400px; margin:18px auto;
+  background:#fff; border-radius:6px; box-shadow:0 12px 36px rgba(0,0,0,0.08);
+  overflow:hidden; position:relative; text-align:center;
+}
+.photoImg { width:100%; height:auto; border:6px solid #fff; }
+#footerText { padding:8px; font-size:14px; color:#333; }
+#previewControls { display:none; justify-content:center; gap:12px; padding:10px; }
+button {
+  padding:10px 16px; border-radius:999px; border:1px solid rgba(0,0,0,0.1);
+  cursor:pointer; background:#fff; font-weight:700;
+}
+button.primary { background:#faf8f6; }
+.bw { filter:grayscale(100%) contrast(1.1%); }
+
+/* Overlay upload */
+#processingOverlay {
+  position:fixed; inset:0; background:rgba(0,0,0,0.36); display:none;
+  align-items:center; justify-content:center; color:#fff; font-size:24px; z-index:60;
+}
+
+/* Preview.html */
+#photoPreview { display:block; margin:24px auto; max-width:90%; border:6px solid #fff; box-shadow:0 6px 20px rgba(0,0,0,0.06); }
+#qrcode { text-align:center; margin:16px; }
+#qrCountdown { text-align:center; color:#222; margin:4px; font-size:14px; }
