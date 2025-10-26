@@ -33,25 +33,39 @@
 <script>
 const RETURN_SECONDS = 24*60*60; // 24 jam
 const params = new URLSearchParams(window.location.search);
-const imgId = params.get('img');
-if(imgId){
-  const imgUrl = `https://i.ibb.co/${imgId}.jpg`;
+const imgUrlEncoded = params.get('img');
+if (imgUrlEncoded) {
+  const imgUrl = decodeURIComponent(imgUrlEncoded); // decode URL
   document.getElementById('photoPreview').src = imgUrl;
-  document.getElementById('footerText').textContent = `Jakarta • ${new Date().toLocaleDateString('id-ID')}`;
-  document.getElementById('qrUrl').textContent = window.location.href;
-  new QRCode(document.getElementById('qrcode'), {text: window.location.href, width:300, height:300, colorDark:'#000', colorLight:'#fff', correctLevel:QRCode.CorrectLevel.H});
 
-  let remaining = RETURN_SECONDS;
+  // footer & tanggal
+  document.getElementById('footerText').textContent = `Jakarta • ${new Date().toLocaleDateString('id-ID')}`;
+
+  // QR code tetap ke halaman ini sendiri
+  new QRCode(document.getElementById('qrcode'), {
+    text: window.location.href,
+    width: 300,
+    height: 300,
+    colorDark: '#000',
+    colorLight: '#fff',
+    correctLevel: QRCode.CorrectLevel.H
+  });
+
+  document.getElementById('qrUrl').textContent = window.location.href;
+
+  // countdown 24 jam
+  let remaining = 24*60*60; // 24 jam
   const countdownEl = document.getElementById('qrCountdown');
-  const timer = setInterval(()=>{
-    const hours = Math.floor(remaining/3600);
-    const mins = Math.floor((remaining%3600)/60);
-    const secs = remaining%60;
+  const timer = setInterval(() => {
+    const hours = Math.floor(remaining / 3600);
+    const mins = Math.floor((remaining % 3600) / 60);
+    const secs = remaining % 60;
     countdownEl.textContent = `Preview akan hilang dalam ${hours}h ${mins}m ${secs}s`;
     remaining--;
-    if(remaining<0){clearInterval(timer); window.location.href='index.html';}
-  },1000);
+    if (remaining < 0) { clearInterval(timer); window.location.href='index.html'; }
+  }, 1000);
 }
+
 </script>
 </body>
 </html>
