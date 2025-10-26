@@ -1,286 +1,367 @@
 <!DOCTYPE html>
 <html lang="id">
 <head>
-<meta charset="UTF-8" />
-<meta name="viewport" content="width=device-width, initial-scale=1.0" />
-<title>Vizrize Photobooth Receipt</title>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>Vizrize Photobooth — Beige Frame</title>
+
+<!-- QR lib -->
 <script src="https://cdn.jsdelivr.net/npm/qrcodejs/qrcode.min.js"></script>
+
 <style>
-  * { box-sizing: border-box; margin: 0; padding: 0; }
-  body {
-    background-color: #f7f5f2;
-    font-family: "Poppins", sans-serif;
-    color: #3a2e2a;
-    overflow: hidden;
+  :root{
+    --bg: #f5f0e6; /* beige aesthetic */
+    --panel: #ffffff;
+    --accent: #a58b6f;
+    --muted: #6b5c4b;
   }
+  *{box-sizing:border-box}
+  html,body{height:100%;margin:0;font-family:Inter,system-ui,-apple-system,Segoe UI,Roboto,"Helvetica Neue",Arial}
+  body{background:var(--bg);display:flex;align-items:center;justify-content:center;padding:18px;color:var(--muted)}
 
-  video, #photo-preview {
-    position: fixed;
-    top: 0; left: 0;
-    width: 100vw; height: 100vh;
-    object-fit: cover;
+  /* video fullscreen preview (mirror) */
+  #videoWrap{position:fixed;inset:0;display:flex;align-items:center;justify-content:center}
+  video#camera{width:100vw;height:100vh;object-fit:cover;transform:scaleX(-1)} /* mirror preview */
+
+  /* centered UI area */
+  .ui{position:relative;z-index:20;width:100%;max-width:920px;display:flex;flex-direction:column;align-items:center;gap:16px}
+
+  /* Frame container: single photo 3:4 */
+  .frameContainer{width:min(680px,86vw);aspect-ratio:3/4;display:flex;align-items:center;justify-content:center;position:relative}
+  .frameBox{
+    width:100%;height:100%;
+    background:var(--panel);
+    border-radius:10px;
+    box-shadow:0 18px 40px rgba(16,12,8,0.12);
+    display:flex;flex-direction:column;align-items:center;justify-content:flex-start;padding:12px;
+    overflow:hidden;
   }
+  .photoArea{flex:1;width:100%;display:flex;align-items:center;justify-content:center}
+  .photoImg{max-width:100%;max-height:100%;object-fit:cover;border:8px solid #fff;box-shadow:0 8px 20px rgba(16,12,8,0.08);}
 
-  video { transform: scaleX(-1); } /* Mirror untuk preview */
-  video.normal { filter: none; }
-  video.bw { filter: grayscale(100%) brightness(1.1) contrast(1.05); }
+  .footerText{width:100%;text-align:center;padding:10px 6px;font-size:14px;color:var(--muted);line-height:1.1}
+  .footerTitle{font-weight:700;color:var(--accent);letter-spacing:1px}
+  .footerMeta{font-size:13px;color:var(--muted)}
 
-  #photo-preview {
-    display: none;
-    z-index: 5;
-    background-color: #fff;
-  }
+  /* Controls */
+  .controlsRow{display:flex;gap:12px;align-items:center;justify-content:center}
+  button{pointer-events:auto;border:0;background:#fff;padding:10px 18px;border-radius:999px;font-weight:700;color:var(--muted);box-shadow:0 8px 22px rgba(16,12,8,0.08);cursor:pointer}
+  button.primary{background:linear-gradient(90deg,#fff,#fbf8f5);color:var(--accent);border:1px solid rgba(165,139,111,0.12)}
+  button.ghost{background:transparent;border:1px solid rgba(0,0,0,0.06)}
 
-  .overlay {
-    position: fixed;
-    top: 0; left: 0;
-    width: 100vw; height: 100vh;
-    display: flex;
-    flex-direction: column;
-    justify-content: space-between;
-    align-items: center;
-    pointer-events: none;
-    z-index: 10;
-  }
-
-  .top-bar { margin-top: 15px; text-align: center; }
-  .logo { font-weight: 600; font-size: 1.3em; color: #a58b6f; }
-  .subtitle { font-size: 0.85em; color: #b6a089; letter-spacing: 2px; }
-
-  .controls, #preview-controls {
-    position: fixed;
-    bottom: 40px;
-    left: 50%;
-    transform: translateX(-50%);
-    display: flex;
-    gap: 12px;
-    pointer-events: auto;
-    z-index: 15;
-  }
-
-  #preview-controls { display: none; }
-
-  button {
-    background-color: rgba(255, 255, 255, 0.75);
-    border: none;
-    border-radius: 20px;
-    padding: 10px 25px;
-    font-size: 0.95em;
-    color: #5a4a3d;
-    box-shadow: 0 3px 6px rgba(0,0,0,0.15);
-    cursor: pointer;
-  }
-
-  #countdown {
-    position: absolute;
-    font-size: 6em;
-    color: white;
-    text-shadow: 0 0 20px rgba(0,0,0,0.5);
-    display: none;
-    z-index: 12;
-  }
-
-  #print-anim, #qr-section {
-    position: fixed;
-    top: 0; left: 0;
-    width: 100vw; height: 100vh;
-    background-color: rgba(255,255,255,0.96);
-    display: none;
-    flex-direction: column;
-    justify-content: center;
-    align-items: center;
-    z-index: 20;
-  }
-
-  .countdown-text {
-    font-size: 1.2em;
-    margin-top: 10px;
-    color: #6b5c4b;
+  /* small helpers */
+  #countdown{position:fixed;top:18px;left:50%;transform:translateX(-50%);font-size:48px;color:#fff;text-shadow:0 8px 18px rgba(0,0,0,0.3);display:none;z-index:30}
+  #printOverlay, #qrPanel{position:fixed;inset:0;display:flex;align-items:center;justify-content:center;background:rgba(0,0,0,0.35);z-index:40;gap:18px;flex-direction:column;display:none}
+  .smallBox{background:var(--panel);padding:12px;border-radius:10px;box-shadow:0 12px 40px rgba(0,0,0,0.12)}
+  #qrcode{background:#fff;padding:10px;border-radius:8px}
+  /* responsive */
+  @media (max-width:520px){
+    .frameContainer{width:86vw}
+    .footerText{font-size:12px}
+    button{padding:8px 12px}
   }
 </style>
 </head>
-
 <body>
-<video id="camera" autoplay playsinline class="normal"></video>
-<canvas id="canvas" style="display:none;"></canvas>
-<img id="photo-preview" alt="preview" />
 
-<div class="overlay">
-  <div class="top-bar">
-    <div class="logo">VIZRIZE</div>
-    <div class="subtitle">PHOTOBOOTH RECEIPT</div>
+<!-- camera (full) -->
+<div id="videoWrap">
+  <video id="camera" autoplay playsinline></video>
+</div>
+
+<div class="ui" aria-live="polite">
+  <!-- countdown shown while capturing -->
+  <div id="countdown" role="status" aria-hidden="true"></div>
+
+  <!-- frame area (initially hidden until first photo) -->
+  <div class="frameContainer" id="frameContainer" style="display:none">
+    <div class="frameBox" id="frameBox">
+      <div class="photoArea">
+        <img id="photoImg" class="photoImg" alt="Hasil Foto">
+      </div>
+      <div class="footerText">
+        <div class="footerTitle">VIZRIZE PHOTOBOOTH</div>
+        <div class="footerMeta" id="footerMeta">Jakarta • --</div>
+      </div>
+    </div>
   </div>
-  <div id="countdown"></div>
+
+  <!-- Controls: main (camera) -->
+  <div class="controlsRow" id="mainControls">
+    <button id="startBtn" disabled class="primary">Mulai</button>
+    <button id="filterBtn" class="ghost">Filter: Normal</button>
+  </div>
+
+  <!-- Controls: preview (only shown when frame visible) -->
+  <div class="controlsRow" id="previewControls" style="display:none">
+    <button id="retryBtn" class="">Ulangi</button>
+    <button id="printBtn" class="primary">Cetak / Upload</button>
+  </div>
 </div>
 
-<div class="controls" id="main-controls">
-  <button id="startBtn" disabled>📸 Mulai</button>
-  <button id="filterBtn">Filter: Normal</button>
+<!-- hidden canvas used to build the framed image to upload -->
+<canvas id="hiddenCanvas" style="display:none"></canvas>
+
+<!-- print overlay (simple) -->
+<div id="printOverlay">
+  <div class="smallBox">
+    <div style="font-weight:700">✨ Sedang memproses & mengupload ✨</div>
+    <div style="margin-top:8px;color:#6b5c4b;font-size:13px">Mohon tunggu sebentar...</div>
+  </div>
 </div>
 
-<div id="preview-controls">
-  <button id="printBtn">Cetak 🖨️</button>
-  <button id="retryBtn">Ulangi 🔁</button>
-</div>
-
-<div id="print-anim">
-  <h2>✨ Sedang mencetak fotomu ✨</h2>
-  <div style="font-size:4em;">🖨️📄</div>
-</div>
-
-<div id="qr-section">
-  <h2>Scan QR untuk mengunduh 💫</h2>
-  <div id="qrcode"></div>
-  <div class="countdown-text" id="qrCountdown"></div>
+<!-- QR panel -->
+<div id="qrPanel">
+  <div class="smallBox" style="text-align:center">
+    <div style="font-weight:700;margin-bottom:8px">Scan QR untuk mengunduh</div>
+    <div id="qrcode"></div>
+    <div id="qrHint" style="margin-top:8px;color:#6b5c4b;font-size:13px"></div>
+  </div>
 </div>
 
 <script>
-  const API_KEY = "1d1aa4b919d175436c480b9509c088e7";
+/* ========== CONFIG ========== */
+const IMGBB_API_KEY = "1d1aa4b919d175436c480b9509c088e7";
+const LOCATION_LABEL = "Jakarta";
+const RETURN_TO_CAMERA_SECONDS = 10; // countdown on QR screen
 
-  const video = document.getElementById("camera");
-  const canvas = document.getElementById("canvas");
-  const photoPreview = document.getElementById("photo-preview");
-  const countdownEl = document.getElementById("countdown");
-  const mainControls = document.getElementById("main-controls");
-  const previewControls = document.getElementById("preview-controls");
-  const printAnim = document.getElementById("print-anim");
-  const qrSection = document.getElementById("qr-section");
-  const qrcodeDiv = document.getElementById("qrcode");
-  const qrCountdown = document.getElementById("qrCountdown");
-  const startBtn = document.getElementById("startBtn");
-  const filterBtn = document.getElementById("filterBtn");
-  const printBtn = document.getElementById("printBtn");
-  const retryBtn = document.getElementById("retryBtn");
+/* ========== UI elems ========== */
+const video = document.getElementById('camera');
+const startBtn = document.getElementById('startBtn');
+const filterBtn = document.getElementById('filterBtn');
+const countdownEl = document.getElementById('countdown');
 
-  let currentFilter = "normal";
+const frameContainer = document.getElementById('frameContainer');
+const photoImg = document.getElementById('photoImg');
+const footerMeta = document.getElementById('footerMeta');
 
-  async function startCamera() {
-    try {
-      const stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: "user" } });
-      video.srcObject = stream;
-      video.onloadedmetadata = () => { startBtn.disabled = false; };
-    } catch (e) {
-      alert("Kamera gagal diakses 😢");
-    }
+const mainControls = document.getElementById('mainControls');
+const previewControls = document.getElementById('previewControls');
+const retryBtn = document.getElementById('retryBtn');
+const printBtn = document.getElementById('printBtn');
+
+const printOverlay = document.getElementById('printOverlay');
+const qrPanel = document.getElementById('qrPanel');
+const qrcodeDiv = document.getElementById('qrcode');
+const qrHint = document.getElementById('qrHint');
+
+const hiddenCanvas = document.getElementById('hiddenCanvas');
+
+/* ========== state ========== */
+let stream = null;
+let filterMode = 'normal'; // 'normal' or 'bw'
+let lastFramedDataUrl = null;
+
+/* ---------- helpers ---------- */
+// wait ms
+const wait = ms => new Promise(r => setTimeout(r, ms));
+
+/* ---------- camera init ---------- */
+async function openCamera() {
+  try {
+    stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: 'user', width: { ideal: 1280 }, height: { ideal: 1700 } }, audio: false });
+    video.srcObject = stream;
+    // enable start button when metadata available
+    video.onloadedmetadata = () => { startBtn.disabled = false; };
+  } catch (err) {
+    alert('Tidak bisa akses kamera: ' + err.message);
   }
-  startCamera();
+}
+openCamera();
 
-  filterBtn.onclick = () => {
-    if (currentFilter === "normal") {
-      currentFilter = "bw";
-      video.className = "bw";
-      filterBtn.textContent = "Filter: B&W";
-    } else {
-      currentFilter = "normal";
-      video.className = "normal";
-      filterBtn.textContent = "Filter: Normal";
-    }
-  };
-
-  startBtn.onclick = async () => {
-    mainControls.style.display = "none";
-    countdownEl.style.display = "block";
-    for (let i = 3; i > 0; i--) {
-      countdownEl.textContent = i;
-      await new Promise(r => setTimeout(r, 1000));
-    }
-    countdownEl.style.display = "none";
-    takePhoto();
-  };
-
-  function takePhoto() {
-    const ctx = canvas.getContext("2d");
-    canvas.width = video.videoWidth || 1280;
-    canvas.height = video.videoHeight || 720;
-
-    // draw tanpa mirror
-    ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
-
-    if (currentFilter === "bw") {
-      const imgData = ctx.getImageData(0, 0, canvas.width, canvas.height);
-      for (let i = 0; i < imgData.data.length; i += 4) {
-        const avg = (imgData.data[i] + imgData.data[i + 1] + imgData.data[i + 2]) / 3;
-        imgData.data[i] = imgData.data[i + 1] = imgData.data[i + 2] = avg;
-      }
-      ctx.putImageData(imgData, 0, 0);
-    }
-
-    // Tambahkan frame putih
-    const frameHeight = canvas.height * 1.15;
-    const frameCanvas = document.createElement("canvas");
-    const fctx = frameCanvas.getContext("2d");
-    frameCanvas.width = canvas.width;
-    frameCanvas.height = frameHeight;
-
-    fctx.fillStyle = "#fff";
-    fctx.fillRect(0, 0, frameCanvas.width, frameCanvas.height);
-    fctx.drawImage(canvas, 0, 0, frameCanvas.width, canvas.height);
-
-    // Tambahkan teks info bawah
-    const date = new Date().toLocaleDateString("id-ID", { day: '2-digit', month: 'long', year: 'numeric' });
-    fctx.font = `${canvas.width * 0.03}px Poppins`;
-    fctx.fillStyle = "#3a2e2a";
-    fctx.textAlign = "center";
-    fctx.fillText(`VIZRIZE Photobooth • Jakarta, Indonesia`, frameCanvas.width / 2, frameCanvas.height - 45);
-    fctx.font = `${canvas.width * 0.025}px Poppins`;
-    fctx.fillText(date, frameCanvas.width / 2, frameCanvas.height - 15);
-
-    const dataUrl = frameCanvas.toDataURL("image/jpeg");
-    photoPreview.src = dataUrl;
-    photoPreview.style.display = "block";
-    video.style.display = "none";
-    previewControls.style.display = "flex";
+/* ---------- UI actions ---------- */
+filterBtn.addEventListener('click', () => {
+  if (filterMode === 'normal') {
+    filterMode = 'bw';
+    filterBtn.textContent = 'Filter: B&W';
+    video.classList.add('bw');
+  } else {
+    filterMode = 'normal';
+    filterBtn.textContent = 'Filter: Normal';
+    video.classList.remove('bw');
   }
+});
 
-  retryBtn.onclick = () => {
-    video.style.display = "block";
-    photoPreview.style.display = "none";
-    previewControls.style.display = "none";
-    mainControls.style.display = "flex";
-  };
+startBtn.addEventListener('click', async () => {
+  // hide main controls during countdown
+  mainControls.style.display = 'none';
+  countdownEl.style.display = 'block';
+  for (let i = 3; i > 0; i--) {
+    countdownEl.textContent = i;
+    await wait(1000);
+  }
+  countdownEl.style.display = 'none';
+  captureAndShowFrame();
+});
 
-  printBtn.onclick = async () => {
-    previewControls.style.display = "none";
-    photoPreview.style.display = "none";
-    printAnim.style.display = "flex";
-    await new Promise(r => setTimeout(r, 2000));
-    printAnim.style.display = "none";
-    uploadPhoto();
-  };
+retryBtn.addEventListener('click', () => {
+  // return to camera preview
+  frameContainer.style.display = 'none';
+  previewControls.style.display = 'none';
+  mainControls.style.display = 'flex';
+  // show video (camera) again
+  document.getElementById('videoWrap').style.display = 'flex';
+});
 
-  async function uploadPhoto() {
-    const base64 = photoPreview.src.split(",")[1];
-    const formData = new FormData();
-    formData.append("image", base64);
+printBtn.addEventListener('click', async () => {
+  // start print/upload flow
+  printOverlay.style.display = 'flex';
+  try {
+    const url = await uploadFramedImage(lastFramedDataUrl); // returns img url
+    // shorten the URL for better QR readability
+    const short = await shortenUrl(url);
+    printOverlay.style.display = 'none';
+    showQRCode(short);
+  } catch (err) {
+    printOverlay.style.display = 'none';
+    alert('Upload gagal: ' + (err.message || err));
+    // go back to camera
+    retryBtn.click();
+  }
+});
 
-    const response = await fetch(`https://api.imgbb.com/1/upload?key=${API_KEY}`, {
-      method: "POST",
-      body: formData
-    });
+/* ---------- capture, frame building ---------- */
+function captureAndShowFrame() {
+  // ensure video dimensions available
+  const vw = video.videoWidth || 1280;
+  const vh = video.videoHeight || 1700;
 
-    const result = await response.json();
-    if (result.data && result.data.url) {
-      showQRCode(result.data.url);
-    } else {
-      alert("Upload gagal 😢");
-      video.style.display = "block";
-      mainControls.style.display = "flex";
+  // create a canvas sized for the photo area (we want non-mirrored saved image)
+  const photoW = Math.min(1080, vw);
+  const photoH = Math.round(photoW * 4/3); // portrait 3:4 => width:height => we'll use 3:4 => width smaller than height; here we keep portrait orientation
+  // Actually for 3:4 frame (width/height = 3/4) we want height = width * 4/3
+  const tempCanvas = document.createElement('canvas');
+  tempCanvas.width = photoW;
+  tempCanvas.height = photoH;
+  const tctx = tempCanvas.getContext('2d');
+
+  // Draw video frame into tempCanvas WITHOUT mirror (video is mirrored via CSS; draw directly uses the raw pixels)
+  // To ensure upright result, draw using video element (this gives a correct non-mirrored image)
+  tctx.drawImage(video, 0, 0, tempCanvas.width, tempCanvas.height);
+
+  // apply filter if bw
+  if (filterMode === 'bw') {
+    const img = tctx.getImageData(0,0,tempCanvas.width,tempCanvas.height);
+    const d = img.data;
+    for (let i=0;i<d.length;i+=4){
+      const l = Math.round(0.21*d[i] + 0.72*d[i+1] + 0.07*d[i+2]);
+      d[i]=d[i+1]=d[i+2]=Math.min(255, l+8); // slight lift
     }
+    tctx.putImageData(img,0,0);
   }
 
-  async function showQRCode(url) {
-    qrSection.style.display = "flex";
-    qrcodeDiv.innerHTML = "";
-    new QRCode(qrcodeDiv, { text: url, width: 200, height: 200 });
+  // build framed canvas: white border on beige panel with footer
+  const border = Math.round(photoW * 0.04); // 4% border
+  const footerH = Math.round(photoH * 0.13);
+  const framedW = photoW;
+  const framedH = photoH + footerH;
 
-    for (let i = 10; i > 0; i--) {
-      qrCountdown.textContent = `Kembali ke kamera dalam ${i} detik...`;
-      await new Promise(r => setTimeout(r, 1000));
-    }
-    qrSection.style.display = "none";
-    video.style.display = "block";
-    mainControls.style.display = "flex";
+  hiddenCanvas.width = framedW;
+  hiddenCanvas.height = framedH;
+  const fctx = hiddenCanvas.getContext('2d');
+
+  // background white (frame card)
+  fctx.fillStyle = '#ffffff';
+  fctx.fillRect(0,0,framedW,framedH);
+
+  // draw photo centered with white inner border
+  const innerBorder = border;
+  fctx.drawImage(tempCanvas, innerBorder, innerBorder, photoW - innerBorder*2, photoH - innerBorder*2);
+
+  // footer area (bottom)
+  fctx.fillStyle = '#ffffff';
+  fctx.fillRect(0, photoH, framedW, footerH);
+
+  // footer text
+  const dateStr = new Date().toLocaleDateString('id-ID', { day:'2-digit', month:'short', year:'numeric' });
+  fctx.fillStyle = '#3a2e2a';
+  fctx.textAlign = 'center';
+  fctx.font = `${Math.round(framedW * 0.035)}px sans-serif`;
+  fctx.fillText('VIZRIZE PHOTOBOOTH', framedW/2, photoH + Math.round(footerH*0.45));
+  fctx.font = `${Math.round(framedW * 0.028)}px sans-serif`;
+  fctx.fillText(`${LOCATION_LABEL} • ${dateStr}`, framedW/2, photoH + Math.round(footerH*0.85));
+
+  // convert to dataURL
+  const finalDataUrl = hiddenCanvas.toDataURL('image/jpeg', 0.92);
+  lastFramedDataUrl = finalDataUrl;
+
+  // show framed preview (not full screen — centered frame)
+  photoImg.src = finalDataUrl;
+  frameContainer.style.display = 'block';
+  previewControls.style.display = 'flex';
+
+  // hide live video (so frame is visible centered)
+  document.getElementById('videoWrap').style.display = 'none';
+
+  // update footer text also visually
+  footerMeta.textContent = `${LOCATION_LABEL} • ${dateStr}`;
+
+  // show main controls hidden (already hidden)
+}
+
+/* ---------- upload to ImgBB (base64) ---------- */
+async function uploadFramedImage(dataUrl) {
+  if (!dataUrl) throw new Error('Tidak ada foto untuk diupload');
+  const base64 = dataUrl.split(',')[1];
+  const form = new FormData();
+  form.append('image', base64);
+  // optionally set name/title
+  form.append('name', `vizrize_${Date.now()}`);
+  const res = await fetch(`https://api.imgbb.com/1/upload?key=${IMGBB_API_KEY}`, { method: 'POST', body: form });
+  if (!res.ok) throw new Error('ImgBB response not OK');
+  const json = await res.json();
+  if (!json || !json.data || !json.data.url) throw new Error('ImgBB gagal memberikan URL');
+  return json.data.url;
+}
+
+/* ---------- shorten URL (TinyURL) ---------- */
+async function shortenUrl(longUrl) {
+  try {
+    const resp = await fetch(`https://tinyurl.com/api-create.php?url=${encodeURIComponent(longUrl)}`);
+    if (!resp.ok) return longUrl;
+    const short = await resp.text();
+    return short || longUrl;
+  } catch (e) {
+    return longUrl;
   }
+}
+
+/* ---------- QR display ---------- */
+async function showQRCode(url) {
+  qrcodeDiv.innerHTML = '';
+  // create big QR with high correction
+  new QRCode(qrcodeDiv, {
+    text: url,
+    width: 300,
+    height: 300,
+    colorDark: "#000000",
+    colorLight: "#ffffff",
+    correctLevel: QRCode.CorrectLevel.H
+  });
+  qrHint.textContent = url;
+  qrPanel.style.display = 'flex';
+
+  // countdown before returning to camera
+  for (let i = RETURN_TO_CAMERA_SECONDS; i > 0; i--) {
+    qrHint.textContent = `${url} — Kembali ke kamera dalam ${i} detik...`;
+    // wait 1 second
+    // allow short-circuit if user wants to skip: not implemented here (kehilangan intentional)
+    await wait(1000);
+  }
+
+  // cleanup & reset
+  qrcodeDiv.innerHTML = '';
+  qrPanel.style.display = 'none';
+  frameContainer.style.display = 'none';
+  previewControls.style.display = 'none';
+  mainControls.style.display = 'flex';
+  document.getElementById('videoWrap').style.display = 'flex';
+}
+
+/* ---------- safety / fallback ---------- */
+// if camera becomes unavailable, enable start disabled appropriately (already handled)
+// ensure buttons not overlapping on resize
+window.addEventListener('resize', ()=>{/* no-op for now */});
 </script>
 </body>
 </html>
