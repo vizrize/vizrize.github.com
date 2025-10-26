@@ -6,32 +6,29 @@
 <title>Vizrize Photobooth Receipt</title>
 <script src="https://cdn.jsdelivr.net/npm/qrcodejs/qrcode.min.js"></script>
 <style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
   body {
-    margin: 0;
     background-color: #f7f5f2;
-    overflow: hidden;
     font-family: "Poppins", sans-serif;
     color: #3a2e2a;
+    overflow: hidden;
   }
 
-  video {
+  video, #photo-preview {
     position: fixed;
     top: 0; left: 0;
     width: 100vw; height: 100vh;
     object-fit: cover;
-    transform: scaleX(-1);
   }
 
+  video { transform: scaleX(-1); } /* Mirror untuk preview */
   video.normal { filter: none; }
   video.bw { filter: grayscale(100%) brightness(1.1) contrast(1.05); }
 
   #photo-preview {
     display: none;
-    position: fixed;
-    top: 0; left: 0;
-    width: 100vw; height: 100vh;
-    object-fit: cover;
     z-index: 5;
+    background-color: #fff;
   }
 
   .overlay {
@@ -43,32 +40,25 @@
     justify-content: space-between;
     align-items: center;
     pointer-events: none;
+    z-index: 10;
   }
 
-  .top-bar {
-    margin-top: 15px;
-    text-align: center;
-  }
+  .top-bar { margin-top: 15px; text-align: center; }
+  .logo { font-weight: 600; font-size: 1.3em; color: #a58b6f; }
+  .subtitle { font-size: 0.85em; color: #b6a089; letter-spacing: 2px; }
 
-  .logo {
-    font-weight: 600;
-    font-size: 1.3em;
-    color: #a58b6f;
-  }
-
-  .subtitle {
-    font-size: 0.85em;
-    color: #b6a089;
-    letter-spacing: 2px;
-  }
-
-  .controls {
-    position: absolute;
+  .controls, #preview-controls {
+    position: fixed;
     bottom: 40px;
+    left: 50%;
+    transform: translateX(-50%);
     display: flex;
     gap: 12px;
     pointer-events: auto;
+    z-index: 15;
   }
+
+  #preview-controls { display: none; }
 
   button {
     background-color: rgba(255, 255, 255, 0.75);
@@ -78,6 +68,7 @@
     font-size: 0.95em;
     color: #5a4a3d;
     box-shadow: 0 3px 6px rgba(0,0,0,0.15);
+    cursor: pointer;
   }
 
   #countdown {
@@ -86,17 +77,7 @@
     color: white;
     text-shadow: 0 0 20px rgba(0,0,0,0.5);
     display: none;
-  }
-
-  #preview-controls {
-    display: none;
-    position: fixed;
-    bottom: 40px;
-    left: 50%;
-    transform: translateX(-50%);
-    z-index: 10;
-    display: flex;
-    gap: 12px;
+    z-index: 12;
   }
 
   #print-anim, #qr-section {
@@ -112,7 +93,7 @@
   }
 
   .countdown-text {
-    font-size: 1.8em;
+    font-size: 1.2em;
     margin-top: 10px;
     color: #6b5c4b;
   }
@@ -130,10 +111,11 @@
     <div class="subtitle">PHOTOBOOTH RECEIPT</div>
   </div>
   <div id="countdown"></div>
-  <div class="controls">
-    <button id="startBtn" disabled>📸 Mulai</button>
-    <button id="filterBtn">Filter: Normal</button>
-  </div>
+</div>
+
+<div class="controls" id="main-controls">
+  <button id="startBtn" disabled>📸 Mulai</button>
+  <button id="filterBtn">Filter: Normal</button>
 </div>
 
 <div id="preview-controls">
@@ -159,13 +141,14 @@
   const canvas = document.getElementById("canvas");
   const photoPreview = document.getElementById("photo-preview");
   const countdownEl = document.getElementById("countdown");
+  const mainControls = document.getElementById("main-controls");
+  const previewControls = document.getElementById("preview-controls");
   const printAnim = document.getElementById("print-anim");
   const qrSection = document.getElementById("qr-section");
   const qrcodeDiv = document.getElementById("qrcode");
   const qrCountdown = document.getElementById("qrCountdown");
   const startBtn = document.getElementById("startBtn");
   const filterBtn = document.getElementById("filterBtn");
-  const previewControls = document.getElementById("preview-controls");
   const printBtn = document.getElementById("printBtn");
   const retryBtn = document.getElementById("retryBtn");
 
@@ -195,6 +178,7 @@
   };
 
   startBtn.onclick = async () => {
+    mainControls.style.display = "none";
     countdownEl.style.display = "block";
     for (let i = 3; i > 0; i--) {
       countdownEl.textContent = i;
@@ -208,8 +192,8 @@
     const ctx = canvas.getContext("2d");
     canvas.width = video.videoWidth || 1280;
     canvas.height = video.videoHeight || 720;
-    ctx.translate(canvas.width, 0);
-    ctx.scale(-1, 1);
+
+    // draw tanpa mirror
     ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
 
     if (currentFilter === "bw") {
@@ -221,13 +205,27 @@
       ctx.putImageData(imgData, 0, 0);
     }
 
-    // Watermark
-    ctx.font = `${canvas.width * 0.03}px Poppins`;
-    ctx.fillStyle = "rgba(255,255,255,0.7)";
-    ctx.textBaseline = "bottom";
-    ctx.fillText("VIZRIZE", 20, canvas.height - 20);
+    // Tambahkan frame putih
+    const frameHeight = canvas.height * 1.15;
+    const frameCanvas = document.createElement("canvas");
+    const fctx = frameCanvas.getContext("2d");
+    frameCanvas.width = canvas.width;
+    frameCanvas.height = frameHeight;
 
-    const dataUrl = canvas.toDataURL("image/jpeg");
+    fctx.fillStyle = "#fff";
+    fctx.fillRect(0, 0, frameCanvas.width, frameCanvas.height);
+    fctx.drawImage(canvas, 0, 0, frameCanvas.width, canvas.height);
+
+    // Tambahkan teks info bawah
+    const date = new Date().toLocaleDateString("id-ID", { day: '2-digit', month: 'long', year: 'numeric' });
+    fctx.font = `${canvas.width * 0.03}px Poppins`;
+    fctx.fillStyle = "#3a2e2a";
+    fctx.textAlign = "center";
+    fctx.fillText(`VIZRIZE Photobooth • Jakarta, Indonesia`, frameCanvas.width / 2, frameCanvas.height - 45);
+    fctx.font = `${canvas.width * 0.025}px Poppins`;
+    fctx.fillText(date, frameCanvas.width / 2, frameCanvas.height - 15);
+
+    const dataUrl = frameCanvas.toDataURL("image/jpeg");
     photoPreview.src = dataUrl;
     photoPreview.style.display = "block";
     video.style.display = "none";
@@ -238,6 +236,7 @@
     video.style.display = "block";
     photoPreview.style.display = "none";
     previewControls.style.display = "none";
+    mainControls.style.display = "flex";
   };
 
   printBtn.onclick = async () => {
@@ -250,7 +249,7 @@
   };
 
   async function uploadPhoto() {
-    const base64 = canvas.toDataURL("image/jpeg").split(",")[1];
+    const base64 = photoPreview.src.split(",")[1];
     const formData = new FormData();
     formData.append("image", base64);
 
@@ -265,6 +264,7 @@
     } else {
       alert("Upload gagal 😢");
       video.style.display = "block";
+      mainControls.style.display = "flex";
     }
   }
 
@@ -279,6 +279,7 @@
     }
     qrSection.style.display = "none";
     video.style.display = "block";
+    mainControls.style.display = "flex";
   }
 </script>
 </body>
