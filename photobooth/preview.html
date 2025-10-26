@@ -1,13 +1,21 @@
 <script>
-const params = new URLSearchParams(window.location.search);
-const imgUrlEncoded = params.get('img');
-if (imgUrlEncoded) {
-  const imgUrl = decodeURIComponent(imgUrlEncoded); // decode full URL
-  document.getElementById('photoPreview').src = imgUrl;
-  document.getElementById('footerText').textContent = `Jakarta • ${new Date().toLocaleDateString('id-ID')}`;
+window.addEventListener('DOMContentLoaded', ()=>{
+  const photoPreview = document.getElementById('photoPreview');
+  const footerText = document.getElementById('footerText');
+  const qrcodeDiv = document.getElementById('qrcode');
+  const qrUrlEl = document.getElementById('qrUrl');
+  const qrCountdownEl = document.getElementById('qrCountdown');
+
+  const params = new URLSearchParams(window.location.search);
+  const imgUrlEncoded = params.get('img');
+  if(!imgUrlEncoded) return;
+
+  const imgUrl = decodeURIComponent(imgUrlEncoded);
+  photoPreview.src = imgUrl;
+  footerText.textContent = `Jakarta • ${new Date().toLocaleDateString('id-ID')}`;
 
   // QR code tetap ke halaman ini sendiri
-  new QRCode(document.getElementById('qrcode'), {
+  new QRCode(qrcodeDiv, {
     text: window.location.href,
     width: 300,
     height: 300,
@@ -15,18 +23,19 @@ if (imgUrlEncoded) {
     colorLight: '#fff',
     correctLevel: QRCode.CorrectLevel.H
   });
-  document.getElementById('qrUrl').textContent = window.location.href;
+  qrUrlEl.textContent = window.location.href;
 
-  // countdown 24 jam
+  // countdown 24 jam stabil
   let remaining = 24*60*60;
-  const countdownEl = document.getElementById('qrCountdown');
-  const timer = setInterval(() => {
+  const tick = () => {
     const hours = Math.floor(remaining / 3600);
-    const mins = Math.floor((remaining % 3600) / 60);
+    const mins = Math.floor((remaining % 3600)/60);
     const secs = remaining % 60;
-    countdownEl.textContent = `Preview akan hilang dalam ${hours}h ${mins}m ${secs}s`;
+    qrCountdownEl.textContent = `Preview akan hilang dalam ${hours}h ${mins}m ${secs}s`;
     remaining--;
-    if (remaining < 0) { clearInterval(timer); window.location.href='index.html'; }
-  }, 1000);
-}
+    if(remaining>=0) setTimeout(tick,1000);
+    else window.location.href='index.html';
+  }
+  tick();
+});
 </script>
