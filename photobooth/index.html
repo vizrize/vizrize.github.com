@@ -1,59 +1,179 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="id">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Vizrize Photobooth</title>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>Vizrize Photobooth — Receipt</title>
+<script src="https://cdn.jsdelivr.net/npm/qrcodejs/qrcode.min.js"></script>
 <style>
-/* Global */
-body, html {margin:0; padding:0; height:100%; font-family:'Roboto Mono',monospace; background:#f5f0e6;}
-/* Kamera */
-#cameraWrap {position:fixed; inset:0; display:flex; align-items:center; justify-content:center; background:#f5f0e6;}
-video#camera {width:100%; height:100%; object-fit:cover; transform:scaleX(-1);}
-/* Tombol mulai */
-#startBtnCenter {position:fixed; top:50%; left:50%; transform:translate(-50%,-50%); padding:14px 22px; font-size:20px; cursor:pointer; z-index:40; background:#fff; border-radius:999px; box-shadow:0 8px 24px rgba(0,0,0,0.06);}
-/* Countdown 3 detik */
-#countdown {position:fixed; top:50%; left:50%; transform:translate(-50%,-50%); font-size:72px; font-weight:bold; color:#222; display:none; z-index:50;}
-/* Preview receipt */
-#receiptCard {display:none; width:90%; max-width:400px; margin:18px auto; background:#fff; border-radius:6px; box-shadow:0 12px 36px rgba(0,0,0,0.08); overflow:hidden; position:relative; text-align:center;}
-.photoImg { width:100%; height:auto; border:6px solid #fff; }
-#footerText { padding:8px; font-size:14px; color:#333; }
-#previewControls { display:none; justify-content:center; gap:12px; padding:10px; }
-button { padding:10px 16px; border-radius:999px; border:1px solid rgba(0,0,0,0.1); cursor:pointer; background:#fff; font-weight:700; }
-button.primary { background:#faf8f6; }
-.bw { filter:grayscale(100%) contrast(1.1); }
-/* Overlay upload */
-#processingOverlay { position:fixed; inset:0; background:rgba(0,0,0,0.36); display:none; align-items:center; justify-content:center; color:#fff; font-size:24px; z-index:60; }
+:root{
+  --bg:#f0ede7;
+  --muted:#2b2b2b;
+  --accent:#111;
+  --receipt-bg: #fffdf7;
+  --receipt-edge:#e6dfd4;
+  --thermal:#f9f7f2;
+}
+*{box-sizing:border-box}
+html,body{height:100%;margin:0;font-family:Inter,system-ui,-apple-system,'Segoe UI',Roboto,'Helvetica Neue',Arial;background:var(--bg);color:var(--muted);}
+#cameraWrap{position:fixed;inset:0;display:flex;align-items:center;justify-content:center;background:var(--bg);}
+video#camera{width:100vw;height:100vh;object-fit:cover;transform:scaleX(-1);}
+
+/* Panel */
+.panel{position:relative;z-index:30;width:min(820px,94vw);margin:18px auto;display:flex;flex-direction:column;align-items:center;gap:12px;}
+.titleRow{text-align:center;}
+.brand{font-weight:800;color:var(--accent);letter-spacing:1px;font-size:18px;}
+.subtitle{font-size:13px;color:#ffffff;margin-top:2px;}
+.frameWrap{width:clamp(300px,72vw,720px);display:flex;align-items:center;justify-content:center;padding:6px;}
+
+/* Receipt card: more like physical receipt */
+.receiptCard{
+  width:100%;
+  max-width:600px;
+  background:linear-gradient(180deg, var(--receipt-bg), var(--thermal));
+  border-radius:6px;
+  box-shadow:0 12px 36px rgba(0,0,0,0.08);
+  overflow:hidden;
+  display:flex;
+  flex-direction:column;
+  border:1px solid var(--receipt-edge);
+  font-family: 'Courier New', Courier, monospace;
+}
+
+/* tiny perforation notch top */
+.topPerforation{height:12px;background:repeating-linear-gradient(90deg,#fff 0 6px, transparent 6px 12px);}
+
+/* header */
+.receiptHeader{padding:12px 18px;border-bottom:1px dashed #ded6c8;text-align:center;}
+.headerTitle{font-weight:800;letter-spacing:1px;color:#111;font-size:15px;}
+.headerSub{font-size:12px;color:#444;margin-top:6px;}
+
+/* image area */
+.photoHolder{display:flex;align-items:center;justify-content:center;padding:10px;background:transparent;position:relative;}
+.photoImg{display:block;max-width:100%;height:auto;border:10px solid #fff;box-shadow:0 6px 20px rgba(0,0,0,0.06);}
+
+/* receipt content (makes canvas look like struk) */
+.receiptBody{padding:6px 18px 14px;}
+
+/* footer area */
+.receiptFooter{padding:8px 18px;border-top:1px dashed #eee;text-align:center;font-size:12px;color:#333;background:transparent;}
+
+/* controls */
+.controlsRow{display:flex;gap:10px;justify-content:center;margin-top:6px;}
+button{background:#fff;border:1px solid rgba(0,0,0,0.06);padding:10px 16px;border-radius:999px;font-weight:700;color:var(--muted);cursor:pointer;box-shadow:0 8px 24px rgba(0,0,0,0.06);}
+button.primary{background:linear-gradient(90deg,#fff,#faf8f6);color:var(--accent);border:1px solid rgba(0,0,0,0.06);}
+button:disabled{opacity:0.55;cursor:not-allowed;}
+.filterBtn{position:absolute;top:8px;right:8px;z-index:10;padding:6px 12px;font-size:12px;border-radius:999px;border:1px solid rgba(0,0,0,0.08);background:#fff;cursor:pointer;}
+
+/* overlays */
+#qrOverlay,#processingOverlay{position:fixed;inset:0;display:none;align-items:center;justify-content:center;background:rgba(0,0,0,0.36);z-index:60;}
+.modalBox{background:#fff;padding:12px;border-radius:10px;text-align:center;max-width:92vw;}
+#qrcode{margin:6px auto;}
+#countdown{position:fixed;top:18px;left:50%;transform:translateX(-50%);font-size:48px;color:#fff;text-shadow:0 8px 18px rgba(0,0,0,0.45);display:none;z-index:70;}
+.bw{filter:grayscale(100%) contrast(1.1);}
+
+/* camera flash */
+#flash{position:fixed;inset:0;background:#fff;opacity:0;pointer-events:none;z-index:80;transition:opacity 220ms ease-out;}
+
+/* receipt visual details */
+.receiptSmall{font-size:11px;color:#6b5c4b;}
+.receiptBig{font-size:16px;font-weight:800;letter-spacing:1px;}
+.separator{border-top:1px dashed #ded6c8;margin:8px 0;}
+.lineItem{display:flex;justify-content:space-between;font-size:13px;padding:2px 0;}
+.totalRow{display:flex;justify-content:space-between;font-size:15px;font-weight:800;padding-top:6px;padding-bottom:6px;}
+.barcode{height:40px;margin-top:8px;background:repeating-linear-gradient(90deg,#111 0 3px,#fff 3px 6px);}
+
+/* responsive tweaks */
+@media (max-width:560px){
+  .photoHolder{padding:8px}.receiptHeader{padding:8px}.receiptFooter{padding:8px}
+}
+#startBtnCenter{position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);z-index:40;font-size:18px;padding:14px 22px}
 </style>
 </head>
 <body>
 
-<div id="cameraWrap">
-  <video id="camera" autoplay muted playsinline></video>
-  <div id="startBtnCenter">MULAI</div>
-</div>
+<div id="cameraWrap"><video id="camera" autoplay playsinline></video></div>
 
-<div id="countdown"></div>
+<div id="flash"></div>
 
-<div id="receiptCard">
-  <canvas id="receiptCanvas" style="width:100%;"></canvas>
-  <img id="photoPreview" class="photoImg"/>
-  <div id="footerText"></div>
-  <div id="previewControls">
-    <button id="filterBtn">Filter: Normal</button>
+<div class="panel" aria-live="polite">
+  <div class="titleRow">
+    <div class="brand">VIZRIZE</div>
+    <div class="subtitle">PHOTOBOOTH RECEIPT</div>
+  </div>
+
+  <div class="frameWrap">
+    <div class="receiptCard" id="receiptCard" style="display:none">
+      <div class="topPerforation" aria-hidden="true"></div>
+      <div class="receiptHeader">
+        <div class="headerTitle">VIZRIZE PHOTOBOOTH</div>
+        <div class="headerSub">Jakarta · Photobooth · (Scan untuk unduh)</div>
+      </div>
+
+      <div class="photoHolder">
+        <img id="photoPreview" class="photoImg" alt="Hasil foto">
+        <button class="filterBtn" id="filterBtn" aria-pressed="false">Filter: Normal</button>
+      </div>
+
+      <div class="receiptBody" id="receiptBody">
+        <!-- Canvas image will be placed above, but we'll also render a receipt-styled area (canvas provides final image) -->
+        <div class="separator"></div>
+        <div style="display:flex;justify-content:space-between;align-items:center">
+          <div class="receiptSmall">No. Transaksi: <span id="txId">-</span></div>
+          <div class="receiptSmall" id="dateText">--</div>
+        </div>
+
+        <div style="margin-top:6px;">
+          <div class="lineItem"><div>1x Photobooth Struk</div><div>Rp 0</div></div>
+          <div class="lineItem"><div>Print (optional)</div><div>Rp 0</div></div>
+          <div class="separator"></div>
+          <div class="totalRow"><div>Total</div><div id="totalPrice">Rp 0</div></div>
+        </div>
+
+        <div class="separator"></div>
+        <div style="text-align:center" class="receiptSmall">Terima kasih telah menggunakan Vizrize</div>
+        <div class="barcode" id="barcodePreview" aria-hidden="true"></div>
+      </div>
+
+      <div class="receiptFooter">
+        <div id="footerText">Jakarta • --</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="controlsRow" id="previewControls" style="display:none">
     <button id="retryBtn">Ulangi</button>
-    <button id="printUploadBtn" class="primary">Upload & QR</button>
+    <button id="printUploadBtn" class="primary">Cetak / Upload</button>
   </div>
 </div>
 
-<div id="processingOverlay">Uploading...</div>
+<button id="startBtnCenter" class="primary" aria-label="Mulai photobooth">Mulai</button>
 
-<script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+<div id="processingOverlay">
+  <div class="modalBox"><div style="font-weight:700">Memproses & Mengupload...</div><div style="margin-top:8px;color:#6b5c4b;font-size:13px">Jangan tutup browser</div></div>
+</div>
+
+<div id="qrOverlay">
+  <div class="modalBox">
+    <div style="font-weight:700;margin-bottom:8px">Scan QR untuk unduh</div>
+    <div id="qrcode"></div>
+    <div id="qrUrl" style="margin-top:8px;font-size:12px;color:#6b5c4b;word-break:break-all;max-width:260px"></div>
+    <div id="qrCountdown" style="margin-top:8px;color:#6b5c4b"></div>
+  </div>
+</div>
+
+<div id="countdown" aria-hidden="true"></div>
+<canvas id="receiptCanvas" style="display:none"></canvas>
+
 <script>
-const IMGBB_API_KEY="1d1aa4b919d175436c480b9509c088e7";
-const LOCATION_LABEL="Jakarta";
-const RECEIPT_WIDTH=576;
+/* ========== CONFIG ========== */
+const CLOUD_NAME = "dcqqaebln";         // <- cloud name kamu
+const UPLOAD_PRESET = "vizrize_unsigned"; // <- ganti sesuai preset
+const LOCATION_LABEL = "Jakarta";
+const RETURN_SECONDS = 8;
+const RECEIPT_WIDTH = 720;
 
+/* ========== DOM ========== */
 const video=document.getElementById('camera');
 const startBtnCenter=document.getElementById('startBtnCenter');
 const receiptCard=document.getElementById('receiptCard');
@@ -63,51 +183,98 @@ const previewControls=document.getElementById('previewControls');
 const retryBtn=document.getElementById('retryBtn');
 const printUploadBtn=document.getElementById('printUploadBtn');
 const processingOverlay=document.getElementById('processingOverlay');
+const qrOverlay=document.getElementById('qrOverlay');
+const qrcodeDiv=document.getElementById('qrcode');
+const qrUrlEl=document.getElementById('qrUrl');
+const qrCountdownEl=document.getElementById('qrCountdown');
 const filterBtn=document.getElementById('filterBtn');
 const receiptCanvas=document.getElementById('receiptCanvas');
 const rcCtx=receiptCanvas.getContext('2d');
-const countdownEl=document.getElementById('countdown');
+const txIdEl=document.getElementById('txId');
+const dateTextEl=document.getElementById('dateText');
+const totalPriceEl=document.getElementById('totalPrice');
+const barcodeEl=document.getElementById('barcodePreview');
+const flashEl=document.getElementById('flash');
+
 let lastReceiptDataUrl=null;
 let filterMode='normal';
 
-// buka kamera
+/* ========== Audio helpers (Web Audio API) ========== */
+const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+
+function playBeep(freq = 1000, duration = 0.08, type='sine', gain=0.08) {
+  try {
+    const o = audioCtx.createOscillator();
+    const g = audioCtx.createGain();
+    o.type = type;
+    o.frequency.setValueAtTime(freq, audioCtx.currentTime);
+    g.gain.setValueAtTime(gain, audioCtx.currentTime);
+    o.connect(g);
+    g.connect(audioCtx.destination);
+    o.start();
+    o.stop(audioCtx.currentTime + duration);
+  } catch(e){ /* ignore */ }
+}
+
+function playClick(){ // shutter-like two short sounds
+  playBeep(700, 0.03, 'triangle', 0.08);
+  setTimeout(()=>playBeep(1200, 0.035, 'square', 0.06), 70);
+}
+
+/* ========== Camera setup ========== */
 async function openCamera(){
   try{
-    const stream=await navigator.mediaDevices.getUserMedia({video:{facingMode:'user',width:{ideal:1280},height:{ideal:1920}},audio:false});
+    const stream=await navigator.mediaDevices.getUserMedia({
+      video:{ facingMode:'user', width:{ideal:1280}, height:{ideal:1920} }, audio:false
+    });
     video.srcObject=stream;
-  }catch(e){alert('Tidak bisa mengakses kamera: '+(e.message||e));}
+  }catch(e){
+    alert('Tidak bisa mengakses kamera: '+(e.message||e));
+  }
 }
 openCamera();
 
-// tombol mulai
-startBtnCenter.addEventListener('click',async()=>{
+/* ========== UI interactions ========== */
+startBtnCenter.addEventListener('click', async ()=>{
+  // resume audio context on user gesture (necessary on some browsers)
+  if (audioCtx.state === 'suspended') await audioCtx.resume();
+
   startBtnCenter.style.display='none';
   await countdown(3);
   captureReceiptFrame();
 });
 
-// tombol ulangi
-retryBtn.addEventListener('click',()=>{
+retryBtn.addEventListener('click', ()=>{
   previewControls.style.display='none';
   receiptCard.style.display='none';
   startBtnCenter.style.display='block';
+  qrOverlay.style.display='none';
   document.getElementById('cameraWrap').style.display='flex';
 });
 
-// filter
-filterBtn.addEventListener('click',()=>{
-  if(filterMode==='normal'){filterMode='bw';filterBtn.textContent='Filter: B&W';photoPreview.classList.add('bw');}
-  else{filterMode='normal';filterBtn.textContent='Filter: Normal';photoPreview.classList.remove('bw');}
+filterBtn.addEventListener('click', ()=>{
+  if(filterMode==='normal'){
+    filterMode='bw';
+    filterBtn.textContent='Filter: B&W';
+    photoPreview.classList.add('bw');
+    filterBtn.setAttribute('aria-pressed','true');
+  } else {
+    filterMode='normal';
+    filterBtn.textContent='Filter: Normal';
+    photoPreview.classList.remove('bw');
+    filterBtn.setAttribute('aria-pressed','false');
+  }
 });
 
-// cetak/upload
-printUploadBtn.addEventListener('click',async()=>{
+printUploadBtn.addEventListener('click', async ()=>{
   try{
     processingOverlay.style.display='flex';
-    const url=await uploadReceiptImage(lastReceiptDataUrl);
+    const url = await uploadReceiptImage(lastReceiptDataUrl);
     processingOverlay.style.display='none';
-    const encodedUrl = encodeURIComponent(url);
-    window.location.href = `preview.html?img=${encodedUrl}`;
+    // setelah upload, tampilkan QR dan juga tawarkan print
+    showQr(url);
+    // auto-print optional: uncomment next line untuk auto-print saat upload sukses
+    // window.print();
   }catch(err){
     processingOverlay.style.display='none';
     alert('Upload gagal: '+(err.message||err));
@@ -115,82 +282,228 @@ printUploadBtn.addEventListener('click',async()=>{
   }
 });
 
-// countdown sebelum capture
+/* ========== Countdown with tick sound ========== */
 async function countdown(sec){
-  countdownEl.style.display='block';
+  const cd=document.getElementById('countdown');
+  cd.style.display='block';
   for(let i=sec;i>0;i--){
-    countdownEl.textContent = i;
-    await new Promise(r => setTimeout(r,1000));
+    cd.textContent=i;
+    playBeep(1100 - i*120, 0.06, 'sine', 0.06); // tick
+    await new Promise(r=>setTimeout(r,1000));
   }
-  countdownEl.style.display='none';
+  cd.style.display='none';
 }
 
-// capture foto + buat receipt
-function captureReceiptFrame(){
-  const vw=video.videoWidth||1280;
-  const vh=video.videoHeight||720;
-  const sideMargin=Math.round(RECEIPT_WIDTH*0.06);
-  const photoW=RECEIPT_WIDTH-sideMargin*2;
-  const scale=photoW/vw;
-  const photoH=Math.round(vh*scale);
-  const headerH=Math.round(RECEIPT_WIDTH*0.12);
-  const footerH=Math.round(RECEIPT_WIDTH*0.2);
-  const canvasW=RECEIPT_WIDTH;
-  const canvasH=headerH+photoH+footerH;
-  receiptCanvas.width=canvasW;
-  receiptCanvas.height=canvasH;
+/* ========== Capture + Receipt canvas drawing ========== */
+function makeTxId(){
+  const t = Date.now().toString(36).toUpperCase().slice(-8);
+  return `VZ-${t}`;
+}
 
-  rcCtx.fillStyle='#fff'; rcCtx.fillRect(0,0,canvasW,canvasH);
+function drawReceiptOnCanvas(){
+  const vw = video.videoWidth || 1280;
+  const vh = video.videoHeight || 720;
+  // scale to receipt width
+  const canvasW = RECEIPT_WIDTH; // e.g. 720
+  const sidePad = Math.round(canvasW*0.06);
+  const photoW = canvasW - sidePad*2;
+  const scale = photoW / vw;
+  const photoH = Math.round(vh * scale);
+  const headerH = Math.round(canvasW*0.14);
+  const footerH = Math.round(canvasW*0.26);
+  const canvasH = headerH + photoH + footerH;
 
-  rcCtx.fillStyle='#000'; rcCtx.textAlign='center';
-  rcCtx.font=`${Math.round(canvasW*0.06)}px monospace`; rcCtx.fillText('VIZRIZE PHOTOBOOTH RECEIPT',canvasW/2,Math.round(headerH*0.55));
-  rcCtx.font=`${Math.round(canvasW*0.035)}px monospace`; rcCtx.fillText('Jakarta • Photobooth',canvasW/2,Math.round(headerH*0.88));
+  receiptCanvas.width = canvasW;
+  receiptCanvas.height = canvasH;
 
-  const photoX=sideMargin; const photoY=headerH; const innerBorder=Math.max(6,Math.round(photoW*0.03));
-  rcCtx.fillStyle='#fff'; rcCtx.fillRect(photoX,photoY,photoW,photoH);
-  const tmp=document.createElement('canvas'); tmp.width=vw; tmp.height=vh; const tctx=tmp.getContext('2d');
-  tctx.save(); tctx.scale(-1,1); tctx.drawImage(video,-vw,0,vw,vh); tctx.restore();
-  rcCtx.drawImage(tmp,0,0,vw,vh,photoX+innerBorder,photoY+innerBorder,photoW-innerBorder*2,photoH-innerBorder*2);
+  // base paper
+  rcCtx.fillStyle = '#fffdf7';
+  rcCtx.fillRect(0,0,canvasW,canvasH);
 
-  if(filterMode==='bw'){
-    const imgData=rcCtx.getImageData(photoX+innerBorder,photoY+innerBorder,photoW-innerBorder*2,photoH-innerBorder*2);
+  // header
+  rcCtx.fillStyle = '#111';
+  rcCtx.textAlign = 'center';
+  rcCtx.font = `${Math.round(canvasW*0.054)}px monospace`;
+  rcCtx.fillText('VIZRIZE PHOTOBOOTH', canvasW/2, Math.round(headerH*0.45));
+  rcCtx.font = `${Math.round(canvasW*0.03)}px monospace`;
+  rcCtx.fillText(`${LOCATION_LABEL} • Photobooth`, canvasW/2, Math.round(headerH*0.78));
+
+  // draw a dashed line
+  rcCtx.strokeStyle = '#d8cfc0';
+  rcCtx.setLineDash([4,3]);
+  rcCtx.beginPath();
+  rcCtx.moveTo(sidePad, headerH + 6);
+  rcCtx.lineTo(canvasW - sidePad, headerH + 6);
+  rcCtx.stroke();
+  rcCtx.setLineDash([]);
+
+  // photo area background (simulate white photo border)
+  const photoX = sidePad;
+  const photoY = headerH + 12;
+  const innerBorder = Math.max(8, Math.round(photoW*0.03));
+  rcCtx.fillStyle = '#ffffff';
+  rcCtx.fillRect(photoX, photoY, photoW, photoH);
+
+  // draw flipped video into a temporary canvas
+  const tmp = document.createElement('canvas');
+  tmp.width = vw;
+  tmp.height = vh;
+  const tctx = tmp.getContext('2d');
+  tctx.save();
+  tctx.scale(-1,1); // mirror
+  tctx.drawImage(video, -vw, 0, vw, vh);
+  tctx.restore();
+
+  rcCtx.drawImage(tmp, 0, 0, vw, vh, photoX + innerBorder, photoY + innerBorder, photoW - innerBorder*2, photoH - innerBorder*2);
+
+  // optional BW filter on the placed photo
+  if(filterMode === 'bw'){
+    const imgData = rcCtx.getImageData(photoX + innerBorder, photoY + innerBorder, photoW - innerBorder*2, photoH - innerBorder*2);
     for(let i=0;i<imgData.data.length;i+=4){
-      const avg=(imgData.data[i]+imgData.data[i+1]+imgData.data[i+2])/3;
-      imgData.data[i]=imgData.data[i+1]=imgData.data[i+2]=avg;
+      const avg = (imgData.data[i] + imgData.data[i+1] + imgData.data[i+2]) / 3;
+      imgData.data[i] = imgData.data[i+1] = imgData.data[i+2] = avg;
     }
-    rcCtx.putImageData(imgData,photoX+innerBorder,photoY+innerBorder);
+    rcCtx.putImageData(imgData, photoX + innerBorder, photoY + innerBorder);
   }
 
-  const dateStr=new Date().toLocaleDateString('id-ID',{day:'2-digit',month:'short',year:'numeric'});
-  rcCtx.fillStyle='#000'; rcCtx.font=`${Math.round(canvasW*0.04)}px monospace`; rcCtx.fillText(`${LOCATION_LABEL} • ${dateStr}`,canvasW/2,photoY+photoH+Math.round(footerH*0.45));
-  rcCtx.font=`${Math.round(canvasW*0.03)}px monospace`; rcCtx.fillText('Scan QR untuk mengunduh foto',canvasW/2,photoY+photoH+Math.round(footerH*0.78));
+  // footer area: transactional lines
+  const bodyY = photoY + photoH + 18;
+  rcCtx.fillStyle = '#111';
+  rcCtx.textAlign = 'left';
+  rcCtx.font = `${Math.round(canvasW*0.034)}px monospace`;
+  const txId = makeTxId();
+  const dateStr = new Date().toLocaleDateString('id-ID',{day:'2-digit',month:'short',year:'numeric'});
+  rcCtx.fillText(`No. Transaksi: ${txId}`, sidePad + 4, bodyY);
+  rcCtx.fillText(`${LOCATION_LABEL} • ${dateStr}`, sidePad + 4, bodyY + Math.round(canvasW*0.04));
 
-  lastReceiptDataUrl=receiptCanvas.toDataURL('image/jpeg',0.92);
-  photoPreview.src=lastReceiptDataUrl;
-  footerText.textContent=`${LOCATION_LABEL} • ${dateStr}`;
+  // items
+  const itemStart = bodyY + Math.round(canvasW*0.08);
+  rcCtx.font = `${Math.round(canvasW*0.03)}px monospace`;
+  function drawLine(y, left, right){
+    rcCtx.fillText(left, sidePad + 4, y);
+    rcCtx.textAlign = 'right';
+    rcCtx.fillText(right, canvasW - sidePad - 4, y);
+    rcCtx.textAlign = 'left';
+  }
+  drawLine(itemStart, '1x Photobooth (digital)', 'Rp 0');
+  drawLine(itemStart + 26, 'Print (optional)', 'Rp 0');
+
+  // total
+  rcCtx.font = `${Math.round(canvasW*0.04)}px monospace`;
+  rcCtx.fillText('------------------------------', sidePad + 4, itemStart + 56);
+  rcCtx.textAlign = 'right';
+  rcCtx.fillText('Rp 0', canvasW - sidePad - 4, itemStart + 86);
+  rcCtx.textAlign = 'left';
+
+  // message
+  rcCtx.font = `${Math.round(canvasW*0.028)}px monospace`;
+  rcCtx.fillText('Terima kasih telah menggunakan Vizrize', sidePad + 4, itemStart + 120);
+
+  // draw small barcode-like area
+  const bY = itemStart + 140;
+  const bH = 36;
+  const bX = sidePad + 4;
+  const bW = canvasW - sidePad*2 - 8;
+  rcCtx.fillStyle = '#111';
+  for(let i=0;i<bW;i+=6){
+    const h = (i % 24 === 0) ? bH : (bH * (0.4 + Math.random()*0.6));
+    rcCtx.fillRect(bX + i, bY + (bH - h), 3, h);
+  }
+
+  // footer small text
+  rcCtx.fillStyle = '#6b5c4b';
+  rcCtx.font = `${Math.round(canvasW*0.025)}px monospace`;
+  rcCtx.textAlign = 'center';
+  rcCtx.fillText('Follow us @vizrize', canvasW/2, canvasH - 18);
+
+  // update DOM elements too so the visible receipt card matches
+  txIdEl.textContent = txId;
+  dateTextEl.textContent = dateStr;
+  totalPriceEl.textContent = 'Rp 0';
+
+  // convert to dataURL
+  const dataUrl = receiptCanvas.toDataURL('image/jpeg', 0.92);
+  lastReceiptDataUrl = dataUrl;
+  photoPreview.src = dataUrl;
+  footerText.textContent = `${LOCATION_LABEL} • ${dateStr}`;
+}
+
+/* Visual flash effect */
+function doFlash(){
+  flashEl.style.opacity = '0.95';
+  setTimeout(()=>{ flashEl.style.opacity = '0'; }, 160);
+}
+
+/* main capture flow */
+function captureReceiptFrame(){
+  // play shutter sound + flash
+  playClick();
+  doFlash();
+
+  drawReceiptOnCanvas();
+
+  // show card & controls
   receiptCard.style.display='block';
   previewControls.style.display='flex';
   document.getElementById('cameraWrap').style.display='none';
-
-  setTimeout(()=>{
-    previewControls.style.display='none';
-    receiptCard.style.display='none';
-    startBtnCenter.style.display='block';
-    document.getElementById('cameraWrap').style.display='flex';
-  },10000);
 }
 
-// upload ke ImgBB
+/* ========== Upload to Cloudinary ========== */
 async function uploadReceiptImage(dataUrl){
-  if(!dataUrl) throw new Error('Tidak ada gambar');
-  const base64=dataUrl.split(',')[1]; const form=new FormData();
-  form.append('image',base64); form.append('name',`vizrize_${Date.now()}`);
-  const resp=await fetch(`https://api.imgbb.com/1/upload?key=${IMGBB_API_KEY}`,{method:'POST',body:form});
-  if(!resp.ok) throw new Error('ImgBB upload gagal (network)');
-  const json=await resp.json();
-  if(!json||!json.data||!json.data.url) throw new Error('ImgBB tidak mengembalikan URL');
-  return json.data.url;
+  if (!dataUrl) throw new Error('Tidak ada gambar');
+  // dataUrl is "data:image/jpeg;base64,...." — Cloudinary accepts that as 'file' value
+  const form = new FormData();
+  form.append('file', dataUrl);
+  form.append('upload_preset', UPLOAD_PRESET);
+  form.append('folder', 'vizrize_photobooth');
+
+  const resp = await fetch(`https://api.cloudinary.com/v1_1/${CLOUD_NAME}/image/upload`, {
+    method: 'POST',
+    body: form
+  });
+
+  if (!resp.ok) {
+    const txt = await resp.text().catch(()=>null);
+    throw new Error('Cloudinary upload gagal: ' + (txt || resp.status));
+  }
+  const json = await resp.json();
+  if (!json.secure_url) throw new Error('Tidak ada URL dari Cloudinary');
+  return json.secure_url;
 }
+
+/* ========== QR + return flow ========== */
+async function showQr(viewerUrl){
+  qrcodeDiv.innerHTML='';
+  new QRCode(qrcodeDiv,{text:viewerUrl,width:300,height:300,colorDark:'#000',colorLight:'#fff',correctLevel:QRCode.CorrectLevel.H});
+  qrUrlEl.textContent = viewerUrl;
+  qrOverlay.style.display='flex';
+  for(let i=RETURN_SECONDS;i>0;i--){
+    qrCountdownEl.textContent = `Kembali ke kamera dalam ${i} detik...`;
+    await new Promise(r=>setTimeout(r,1000));
+  }
+  qrOverlay.style.display='none';
+  qrcodeDiv.innerHTML='';
+  qrUrlEl.textContent='';
+  qrCountdownEl.textContent='';
+  receiptCard.style.display='none';
+  previewControls.style.display='none';
+  startBtnCenter.style.display='block';
+  document.getElementById('cameraWrap').style.display='flex';
+}
+
+/* clean up camera on unload */
+window.addEventListener('beforeunload', ()=>{
+  const stream = video.srcObject;
+  if(stream && stream.getTracks) stream.getTracks().forEach(t=>t.stop());
+});
+
+/* accessibility: allow space to start */
+window.addEventListener('keydown', (e)=>{
+  if(e.code === 'Space' && startBtnCenter.style.display !== 'none'){
+    e.preventDefault();
+    startBtnCenter.click();
+  }
+});
 </script>
 </body>
 </html>
