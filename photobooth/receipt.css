@@ -1,0 +1,26 @@
+:root{--bg:#f5f0e6;--muted:#333;--accent:#222;}
+*{box-sizing:border-box;}
+html,body{height:100%;margin:0;font-family:'Roboto Mono',monospace;background:var(--bg);color:var(--muted);}
+#cameraWrap{position:fixed;inset:0;display:flex;align-items:center;justify-content:center;background:var(--bg);}
+video#camera{width:100vw;height:100vh;object-fit:cover;transform:scaleX(-1);}
+.panel{position:relative;z-index:30;width:min(820px,94vw);margin:18px auto;display:flex;flex-direction:column;align-items:center;gap:12px;}
+.titleRow{text-align:center;}
+.brand{font-weight:700;color:var(--accent);letter-spacing:1px;font-size:18px;}
+.subtitle{font-size:13px;color:#6e6156;margin-top:2px;}
+.frameWrap{width:clamp(260px,72vw,680px);background:transparent;display:flex;align-items:center;justify-content:center;padding:6px;}
+.receiptCard{width:100%;background:#fff;border-radius:6px;box-shadow:0 12px 36px rgba(0,0,0,0.08);overflow:hidden;display:flex;flex-direction:column;font-family:'Roboto Mono',monospace;}
+.receiptHeader{background:#fff;padding:8px 12px;border-bottom:1px dashed #ddd;text-align:center;}
+.headerTitle{font-weight:700;letter-spacing:1px;color:#111;font-size:14px;}
+.headerSub{font-size:12px;color:#444;margin-top:4px;}
+.photoHolder{display:flex;align-items:center;justify-content:center;padding:14px;background:#fff;position:relative;}
+.photoImg{display:block;max-width:100%;height:auto;border:8px solid #fff;box-shadow:0 6px 20px rgba(0,0,0,0.06);}
+.filterBtn{position:absolute;top:6px;right:6px;z-index:10;padding:6px 12px;font-size:12px;border-radius:999px;border:1px solid rgba(0,0,0,0.1);background:#fff;cursor:pointer;}
+.receiptFooter{padding:10px 12px;border-top:1px dashed #eee;text-align:center;font-size:12px;color:#333;background:#fff;}
+.controlsRow{display:flex;gap:10px;justify-content:center;margin-top:6px;}
+button{background:#fff;border:1px solid rgba(0,0,0,0.06);padding:10px 16px;border-radius:999px;font-weight:700;color:var(--muted);cursor:pointer;box-shadow:0 8px 24px rgba(0,0,0,0.06);}
+button.primary{background:linear-gradient(90deg,#fff,#faf8f6);color:var(--accent);border:1px solid rgba(0,0,0,0.06);}
+button:disabled{opacity:0.55;cursor:not-allowed;}
+.bw{filter:grayscale(100%) contrast(1.1);}
+#startBtnCenter{position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);z-index:40;font-size:18px;padding:14px 22px;}
+.modalBox{background:#fff;padding:12px;border-radius:10px;text-align:center;max-width:92vw;}
+#processingOverlay,#qrOverlay{position:fixed;inset:0;display:none;align-items:center;justify-content:center;background:rgba(0,0,0,0.36);z-index:60;}
