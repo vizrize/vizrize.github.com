@@ -3,46 +3,15 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>Vizrize Photobooth — Receipt</title>
-<link href="https://fonts.googleapis.com/css2?family=Roboto+Mono&display=swap" rel="stylesheet">
-<script src="https://cdn.jsdelivr.net/npm/qrcodejs/qrcode.min.js"></script>
-<style>
-:root{--bg:#f5f0e6;--muted:#333;--accent:#222;}
-*{box-sizing:border-box;}
-html,body{height:100%;margin:0;font-family:'Roboto Mono',monospace;background:var(--bg);color:var(--muted);}
-#cameraWrap{position:fixed;inset:0;display:flex;align-items:center;justify-content:center;background:var(--bg);}
-video#camera{width:100vw;height:100vh;object-fit:cover;transform:scaleX(-1);}
-.panel{position:relative;z-index:30;width:min(820px,94vw);margin:18px auto;display:flex;flex-direction:column;align-items:center;gap:12px;}
-.titleRow{text-align:center;}
-.brand{font-weight:700;color:var(--accent);letter-spacing:1px;font-size:18px;}
-.subtitle{font-size:13px;color:#6e6156;margin-top:2px;}
-.frameWrap{width:clamp(260px,72vw,680px);background:transparent;display:flex;align-items:center;justify-content:center;padding:6px;}
-.receiptCard{width:100%;background:#fff;border-radius:6px;box-shadow:0 12px 36px rgba(0,0,0,0.08);overflow:hidden;display:flex;flex-direction:column;font-family:'Roboto Mono',monospace;}
-.receiptHeader{background:#fff;padding:8px 12px;border-bottom:1px dashed #ddd;text-align:center;}
-.headerTitle{font-weight:700;letter-spacing:1px;color:#111;font-size:14px;}
-.headerSub{font-size:12px;color:#444;margin-top:4px;}
-.photoHolder{display:flex;align-items:center;justify-content:center;padding:14px;background:#fff;position:relative;}
-.photoImg{display:block;max-width:100%;height:auto;border:8px solid #fff;box-shadow:0 6px 20px rgba(0,0,0,0.06);}
-.filterBtn{position:absolute;top:6px;right:6px;z-index:10;padding:6px 12px;font-size:12px;border-radius:999px;border:1px solid rgba(0,0,0,0.1);background:#fff;cursor:pointer;}
-.receiptFooter{padding:10px 12px;border-top:1px dashed #eee;text-align:center;font-size:12px;color:#333;background:#fff;}
-.controlsRow{display:flex;gap:10px;justify-content:center;margin-top:6px;}
-button{background:#fff;border:1px solid rgba(0,0,0,0.06);padding:10px 16px;border-radius:999px;font-weight:700;color:var(--muted);cursor:pointer;box-shadow:0 8px 24px rgba(0,0,0,0.06);}
-button.primary{background:linear-gradient(90deg,#fff,#faf8f6);color:var(--accent);border:1px solid rgba(0,0,0,0.06);}
-button:disabled{opacity:0.55;cursor:not-allowed;}
-#qrOverlay,#processingOverlay{position:fixed;inset:0;display:none;align-items:center;justify-content:center;background:rgba(0,0,0,0.36);z-index:60;}
-.modalBox{background:#fff;padding:12px;border-radius:10px;text-align:center;max-width:92vw;}
-#qrcode{margin:6px auto;}
-#countdown{position:fixed;top:18px;left:50%;transform:translateX(-50%);font-size:48px;color:#fff;text-shadow:0 8px 18px rgba(0,0,0,0.45);display:none;z-index:70;}
-.bw{filter:grayscale(100%) contrast(1.1);}
-@media (max-width:560px){.photoHolder{padding:8px}.receiptHeader{padding:6px}.receiptFooter{padding:8px}}
-#startBtnCenter{position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);z-index:40;font-size:18px;padding:14px 22px;}
-</style>
+<title>Vizrize Photobooth</title>
+<link rel="stylesheet" href="receipt.css">
+<script src="qrcode.min.js"></script>
 </head>
 <body>
 
 <div id="cameraWrap"><video id="camera" autoplay playsinline></video></div>
 
-<div class="panel" aria-live="polite">
+<div class="panel">
   <div class="titleRow">
     <div class="brand">VIZRIZE</div>
     <div class="subtitle">PHOTOBOOTH RECEIPT</div>
@@ -73,178 +42,14 @@ button:disabled{opacity:0.55;cursor:not-allowed;}
 <button id="startBtnCenter" class="primary">Mulai</button>
 
 <div id="processingOverlay">
-  <div class="modalBox"><div style="font-weight:700">Memproses & Mengupload...</div><div style="margin-top:8px;color:#6b5c4b;font-size:13px">Jangan tutup browser</div></div>
-</div>
-
-<div id="qrOverlay">
   <div class="modalBox">
-    <div style="font-weight:700;margin-bottom:8px">Scan QR untuk unduh</div>
-    <div id="qrcode"></div>
-    <div id="qrUrl" style="margin-top:8px;font-size:12px;color:#6b5c4b;word-break:break-all;max-width:260px"></div>
-    <div id="qrCountdown" style="margin-top:8px;color:#6b5c4b"></div>
+    <div style="font-weight:700">Memproses & Mengupload...</div>
+    <div style="margin-top:8px;color:#6b5c4b;font-size:13px">Jangan tutup browser</div>
   </div>
 </div>
 
-<div id="countdown"></div>
 <canvas id="receiptCanvas" style="display:none"></canvas>
 
-<script>
-const IMGBB_API_KEY="1d1aa4b919d175436c480b9509c088e7";
-const LOCATION_LABEL="Jakarta";
-const RETURN_SECONDS=8;
-const RECEIPT_WIDTH=576;
-
-const video=document.getElementById('camera');
-const startBtnCenter=document.getElementById('startBtnCenter');
-const receiptCard=document.getElementById('receiptCard');
-const photoPreview=document.getElementById('photoPreview');
-const footerText=document.getElementById('footerText');
-const previewControls=document.getElementById('previewControls');
-const retryBtn=document.getElementById('retryBtn');
-const printUploadBtn=document.getElementById('printUploadBtn');
-const processingOverlay=document.getElementById('processingOverlay');
-const qrOverlay=document.getElementById('qrOverlay');
-const qrcodeDiv=document.getElementById('qrcode');
-const qrUrlEl=document.getElementById('qrUrl');
-const qrCountdownEl=document.getElementById('qrCountdown');
-const filterBtn=document.getElementById('filterBtn');
-const receiptCanvas=document.getElementById('receiptCanvas');
-const rcCtx=receiptCanvas.getContext('2d');
-let lastReceiptDataUrl=null;
-let filterMode='normal';
-
-// fungsi baca query ?img=xxxx
-function getQueryImage(){
-  const params=new URLSearchParams(window.location.search);
-  return params.get('img');
-}
-
-async function openCamera(){
-  try{
-    const stream=await navigator.mediaDevices.getUserMedia({video:{facingMode:'user',width:{ideal:1280},height:{ideal:1920}},audio:false});
-    video.srcObject=stream;
-  }catch(e){alert('Tidak bisa mengakses kamera: '+(e.message||e));}
-}
-openCamera();
-
-startBtnCenter.addEventListener('click',async()=>{
-  startBtnCenter.style.display='none';
-  await countdown(3);
-  captureReceiptFrame();
-});
-
-retryBtn.addEventListener('click',()=>{
-  previewControls.style.display='none';
-  receiptCard.style.display='none';
-  startBtnCenter.style.display='block';
-  qrOverlay.style.display='none';
-  document.getElementById('cameraWrap').style.display='flex';
-});
-
-filterBtn.addEventListener('click',()=>{
-  if(filterMode==='normal'){filterMode='bw';filterBtn.textContent='Filter: B&W';photoPreview.classList.add('bw');}
-  else{filterMode='normal';filterBtn.textContent='Filter: Normal';photoPreview.classList.remove('bw');}
-});
-
-printUploadBtn.addEventListener('click',async()=>{
-  try{
-    processingOverlay.style.display='flex';
-    const url=await uploadReceiptImage(lastReceiptDataUrl);
-    processingOverlay.style.display='none';
-    // QR code arahkan ke halaman web booth sendiri dengan ?img=
-    const urlViewer=`${location.origin}${location.pathname}?img=${url.split('/').pop().split('.')[0]}`;
-    showQr(urlViewer);
-  }catch(err){
-    processingOverlay.style.display='none';
-    alert('Upload gagal: '+(err.message||err));
-    retryBtn.click();
-  }
-});
-
-async function countdown(sec){
-  const cd=document.getElementById('countdown');
-  cd.style.display='block';
-  for(let i=sec;i>0;i--){
-    cd.textContent=i;
-    await new Promise(r=>setTimeout(r,1000));
-  }
-  cd.style.display='none';
-}
-
-function captureReceiptFrame(){
-  const vw=video.videoWidth||1280;
-  const vh=video.videoHeight||720;
-  const sideMargin=Math.round(RECEIPT_WIDTH*0.06);
-  const photoW=RECEIPT_WIDTH-sideMargin*2;
-  const scale=photoW/vw;
-  const photoH=Math.round(vh*scale);
-  const headerH=Math.round(RECEIPT_WIDTH*0.12);
-  const footerH=Math.round(RECEIPT_WIDTH*0.2);
-  const canvasW=RECEIPT_WIDTH;
-  const canvasH=headerH+photoH+footerH;
-  receiptCanvas.width=canvasW;
-  receiptCanvas.height=canvasH;
-  rcCtx.fillStyle='#fff'; rcCtx.fillRect(0,0,canvasW,canvasH);
-  rcCtx.fillStyle='#000'; rcCtx.textAlign='center';
-  rcCtx.font=`${Math.round(canvasW*0.06)}px monospace`; rcCtx.fillText('VIZRIZE PHOTOBOOTH RECEIPT',canvasW/2,Math.round(headerH*0.55));
-  rcCtx.font=`${Math.round(canvasW*0.035)}px monospace`; rcCtx.fillText('Jakarta • Photobooth',canvasW/2,Math.round(headerH*0.88));
-  const photoX=sideMargin; const photoY=headerH; const innerBorder=Math.max(6,Math.round(photoW*0.03));
-  rcCtx.fillStyle='#fff'; rcCtx.fillRect(photoX,photoY,photoW,photoH);
-  const tmp=document.createElement('canvas'); tmp.width=vw; tmp.height=vh; const tctx=tmp.getContext('2d');
-  tctx.save(); tctx.scale(-1,1); tctx.drawImage(video,-vw,0,vw,vh); tctx.restore();
-  rcCtx.drawImage(tmp,0,0,vw,vh,photoX+innerBorder,photoY+innerBorder,photoW-innerBorder*2,photoH-innerBorder*2);
-  if(filterMode==='bw'){
-    const imgData=rcCtx.getImageData(photoX+innerBorder,photoY+innerBorder,photoW-innerBorder*2,photoH-innerBorder*2);
-    for(let i=0;i<imgData.data.length;i+=4){
-      const avg=(imgData.data[i]+imgData.data[i+1]+imgData.data[i+2])/3;
-      imgData.data[i]=imgData.data[i+1]=imgData.data[i+2]=avg;
-    }
-    rcCtx.putImageData(imgData,photoX+innerBorder,photoY+innerBorder);
-  }
-  const dateStr=new Date().toLocaleDateString('id-ID',{day:'2-digit',month:'short',year:'numeric'});
-  rcCtx.fillStyle='#000'; rcCtx.font=`${Math.round(canvasW*0.04)}px monospace`; rcCtx.fillText(`${LOCATION_LABEL} • ${dateStr}`,canvasW/2,photoY+photoH+Math.round(footerH*0.45));
-  rcCtx.font=`${Math.round(canvasW*0.03)}px monospace`; rcCtx.fillText('Scan QR untuk mengunduh foto',canvasW/2,photoY+photoH+Math.round(footerH*0.78));
-  const dataUrl=receiptCanvas.toDataURL('image/jpeg',0.92);
-  lastReceiptDataUrl=dataUrl;
-  photoPreview.src=dataUrl;
-  footerText.textContent=`${LOCATION_LABEL} • ${dateStr}`;
-  receiptCard.style.display='block';
-  previewControls.style.display='flex';
-  document.getElementById('cameraWrap').style.display='none';
-}
-
-async function uploadReceiptImage(dataUrl){
-  if(!dataUrl) throw new Error('Tidak ada gambar');
-  const base64=dataUrl.split(',')[1]; const form=new FormData();
-  form.append('image',base64); form.append('name',`vizrize_${Date.now()}`);
-  const resp=await fetch(`https://api.imgbb.com/1/upload?key=${IMGBB_API_KEY}`,{method:'POST',body:form});
-  if(!resp.ok) throw new Error('ImgBB upload gagal (network)');
-  const json=await resp.json();
-  if(!json||!json.data||!json.data.url) throw new Error('ImgBB tidak mengembalikan URL');
-  return json.data.url;
-}
-
-async function showQr(viewerUrl){
-  qrcodeDiv.innerHTML=''; new QRCode(qrcodeDiv,{text:viewerUrl,width:300,height:300,colorDark:'#000',colorLight:'#fff',correctLevel:QRCode.CorrectLevel.H});
-  qrUrlEl.textContent=viewerUrl; qrOverlay.style.display='flex';
-  for(let i=RETURN_SECONDS;i>0;i--){qrCountdownEl.textContent=`Kembali ke kamera dalam ${i} detik...`; await new Promise(r=>setTimeout(r,1000));}
-  qrOverlay.style.display='none'; qrcodeDiv.innerHTML=''; qrUrlEl.textContent=''; qrCountdownEl.textContent='';
-  receiptCard.style.display='none'; previewControls.style.display='none'; startBtnCenter.style.display='block'; document.getElementById('cameraWrap').style.display='flex';
-}
-
-// Jika halaman dibuka dengan ?img=xxxx
-window.addEventListener('load',()=>{
-  const imgId=getQueryImage();
-  if(imgId){
-    const overlayUrl=`https://i.ibb.co/${imgId}.jpg`;
-    photoPreview.src=overlayUrl;
-    receiptCard.style.display='block';
-    previewControls.style.display='none';
-    qrOverlay.style.display='flex';
-    qrcodeDiv.innerHTML=''; new QRCode(qrcodeDiv,{text:`${location.origin}${location.pathname}?img=${imgId}`,width:300,height:300,colorDark:'#000',colorLight:'#fff',correctLevel:QRCode.CorrectLevel.H});
-    qrUrlEl.textContent=`${location.origin}${location.pathname}?img=${imgId}`;
-  }
-});
-</script>
+<script src="photobooth.js"></script>
 </body>
 </html>
