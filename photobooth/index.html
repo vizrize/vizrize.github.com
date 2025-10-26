@@ -20,7 +20,6 @@
     width: 100vw; height: 100vh;
     object-fit: cover;
     transform: scaleX(-1);
-    transition: filter 0.3s ease, opacity 0.5s ease;
   }
 
   video.normal { filter: none; }
@@ -32,9 +31,7 @@
     top: 0; left: 0;
     width: 100vw; height: 100vh;
     object-fit: cover;
-    opacity: 0;
     z-index: 5;
-    transition: opacity 0.8s ease;
   }
 
   .overlay {
@@ -51,7 +48,6 @@
   .top-bar {
     margin-top: 15px;
     text-align: center;
-    animation: fadeIn 1s ease forwards;
   }
 
   .logo {
@@ -82,10 +78,7 @@
     font-size: 0.95em;
     color: #5a4a3d;
     box-shadow: 0 3px 6px rgba(0,0,0,0.15);
-    transition: all 0.25s;
   }
-
-  button:hover { background-color: #f0e6dc; transform: scale(1.05); }
 
   #countdown {
     position: absolute;
@@ -104,8 +97,6 @@
     z-index: 10;
     display: flex;
     gap: 12px;
-    opacity: 0;
-    transition: opacity 0.6s ease;
   }
 
   #print-anim, #qr-section {
@@ -118,19 +109,12 @@
     justify-content: center;
     align-items: center;
     z-index: 20;
-    opacity: 0;
-    transition: opacity 0.8s ease;
   }
 
   .countdown-text {
     font-size: 1.8em;
     margin-top: 10px;
     color: #6b5c4b;
-  }
-
-  @keyframes fadeIn {
-    from { opacity: 0; }
-    to { opacity: 1; }
   }
 </style>
 </head>
@@ -191,11 +175,7 @@
     try {
       const stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: "user" } });
       video.srcObject = stream;
-
-      // Tunggu sampai video siap baru aktifkan tombol
-      video.onloadedmetadata = () => {
-        startBtn.disabled = false;
-      };
+      video.onloadedmetadata = () => { startBtn.disabled = false; };
     } catch (e) {
       alert("Kamera gagal diakses 😢");
     }
@@ -241,7 +221,7 @@
       ctx.putImageData(imgData, 0, 0);
     }
 
-    // Tambahkan watermark
+    // Watermark
     ctx.font = `${canvas.width * 0.03}px Poppins`;
     ctx.fillStyle = "rgba(255,255,255,0.7)";
     ctx.textBaseline = "bottom";
@@ -250,33 +230,22 @@
     const dataUrl = canvas.toDataURL("image/jpeg");
     photoPreview.src = dataUrl;
     photoPreview.style.display = "block";
-    requestAnimationFrame(() => photoPreview.style.opacity = 1);
-    video.style.opacity = 0;
-
+    video.style.display = "none";
     previewControls.style.display = "flex";
-    requestAnimationFrame(() => previewControls.style.opacity = 1);
   }
 
   retryBtn.onclick = () => {
-    previewControls.style.opacity = 0;
-    photoPreview.style.opacity = 0;
-    setTimeout(() => {
-      photoPreview.style.display = "none";
-      previewControls.style.display = "none";
-      video.style.opacity = 1;
-    }, 400);
+    video.style.display = "block";
+    photoPreview.style.display = "none";
+    previewControls.style.display = "none";
   };
 
   printBtn.onclick = async () => {
-    previewControls.style.opacity = 0;
-    photoPreview.style.opacity = 0;
-    setTimeout(() => {
-      previewControls.style.display = "none";
-      photoPreview.style.display = "none";
-    }, 400);
-    await fadeIn(printAnim);
+    previewControls.style.display = "none";
+    photoPreview.style.display = "none";
+    printAnim.style.display = "flex";
     await new Promise(r => setTimeout(r, 2000));
-    await fadeOut(printAnim);
+    printAnim.style.display = "none";
     uploadPhoto();
   };
 
@@ -295,11 +264,22 @@
       showQRCode(result.data.url);
     } else {
       alert("Upload gagal 😢");
-      video.style.opacity = 1;
+      video.style.display = "block";
     }
   }
 
   async function showQRCode(url) {
-    await fadeIn(qrSection);
+    qrSection.style.display = "flex";
     qrcodeDiv.innerHTML = "";
-    new QRCode(qrcodeDiv, { text: url, width: 200, height: 2
+    new QRCode(qrcodeDiv, { text: url, width: 200, height: 200 });
+
+    for (let i = 10; i > 0; i--) {
+      qrCountdown.textContent = `Kembali ke kamera dalam ${i} detik...`;
+      await new Promise(r => setTimeout(r, 1000));
+    }
+    qrSection.style.display = "none";
+    video.style.display = "block";
+  }
+</script>
+</body>
+</html>
