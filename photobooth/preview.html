@@ -1,0 +1,57 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Preview Photobooth</title>
+<link rel="stylesheet" href="receipt.css">
+<script src="qrcode.min.js"></script>
+</head>
+<body>
+
+<div class="panel">
+  <div class="receiptCard" id="receiptCard">
+    <div class="receiptHeader">
+      <div class="headerTitle">VIZRIZE PHOTOBOOTH RECEIPT</div>
+      <div class="headerSub">Jakarta • Photobooth</div>
+    </div>
+    <div class="photoHolder">
+      <img id="photoPreview" class="photoImg" alt="Preview">
+    </div>
+    <div class="receiptFooter">
+      <div id="footerText">Jakarta • --</div>
+    </div>
+  </div>
+
+  <div class="qrRow">
+    <div id="qrcode"></div>
+    <div id="qrUrl" style="font-size:12px;color:#6b5c4b;word-break:break-all;"></div>
+    <div id="qrCountdown" style="color:#6b5c4b;margin-top:6px;"></div>
+  </div>
+</div>
+
+<script>
+const RETURN_SECONDS = 24*60*60; // 24 jam
+const params = new URLSearchParams(window.location.search);
+const imgId = params.get('img');
+if(imgId){
+  const imgUrl = `https://i.ibb.co/${imgId}.jpg`;
+  document.getElementById('photoPreview').src = imgUrl;
+  document.getElementById('footerText').textContent = `Jakarta • ${new Date().toLocaleDateString('id-ID')}`;
+  document.getElementById('qrUrl').textContent = window.location.href;
+  new QRCode(document.getElementById('qrcode'), {text: window.location.href, width:300, height:300, colorDark:'#000', colorLight:'#fff', correctLevel:QRCode.CorrectLevel.H});
+
+  let remaining = RETURN_SECONDS;
+  const countdownEl = document.getElementById('qrCountdown');
+  const timer = setInterval(()=>{
+    const hours = Math.floor(remaining/3600);
+    const mins = Math.floor((remaining%3600)/60);
+    const secs = remaining%60;
+    countdownEl.textContent = `Preview akan hilang dalam ${hours}h ${mins}m ${secs}s`;
+    remaining--;
+    if(remaining<0){clearInterval(timer); window.location.href='index.html';}
+  },1000);
+}
+</script>
+</body>
+</html>
