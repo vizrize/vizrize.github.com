@@ -1,0 +1,326 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Vizrize Photobooth Receipt</title>
+<script src="https://cdn.jsdelivr.net/npm/qrcodejs/qrcode.min.js"></script>
+
+<style>
+  body {
+    margin: 0;
+    background-color: #f7f5f2;
+    overflow: hidden;
+    font-family: "Poppins", sans-serif;
+    color: #3a2e2a;
+  }
+
+  video {
+    position: fixed;
+    top: 0; left: 0;
+    width: 100vw; height: 100vh;
+    object-fit: cover;
+    transform: scaleX(-1);
+    transition: filter 0.3s ease, opacity 0.5s ease;
+  }
+
+  video.normal { filter: none; }
+  video.bw { filter: grayscale(100%) brightness(1.1) contrast(1.05); }
+
+  #photo-preview {
+    display: none;
+    position: fixed;
+    top: 0; left: 0;
+    width: 100vw; height: 100vh;
+    object-fit: cover;
+    opacity: 0;
+    z-index: 5;
+    transition: opacity 0.8s ease;
+  }
+
+  .overlay {
+    position: fixed;
+    top: 0; left: 0;
+    width: 100vw; height: 100vh;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    align-items: center;
+    pointer-events: none;
+  }
+
+  .top-bar {
+    margin-top: 15px;
+    text-align: center;
+    animation: fadeIn 1s ease forwards;
+  }
+
+  .logo {
+    font-weight: 600;
+    font-size: 1.3em;
+    color: #a58b6f;
+  }
+
+  .subtitle {
+    font-size: 0.85em;
+    color: #b6a089;
+    letter-spacing: 2px;
+  }
+
+  .controls {
+    position: absolute;
+    bottom: 40px;
+    display: flex;
+    gap: 12px;
+    pointer-events: auto;
+  }
+
+  button {
+    background-color: rgba(255, 255, 255, 0.75);
+    border: none;
+    border-radius: 20px;
+    padding: 10px 25px;
+    font-size: 0.95em;
+    color: #5a4a3d;
+    box-shadow: 0 3px 6px rgba(0,0,0,0.15);
+    transition: all 0.25s;
+  }
+
+  button:hover { background-color: #f0e6dc; transform: scale(1.05); }
+
+  #countdown {
+    position: absolute;
+    font-size: 6em;
+    color: white;
+    text-shadow: 0 0 20px rgba(0,0,0,0.5);
+    display: none;
+  }
+
+  #preview-controls {
+    display: none;
+    position: fixed;
+    bottom: 40px;
+    left: 50%;
+    transform: translateX(-50%);
+    z-index: 10;
+    display: flex;
+    gap: 12px;
+    opacity: 0;
+    transition: opacity 0.6s ease;
+  }
+
+  #print-anim, #qr-section {
+    position: fixed;
+    top: 0; left: 0;
+    width: 100vw; height: 100vh;
+    background-color: rgba(255,255,255,0.96);
+    display: none;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    z-index: 20;
+    opacity: 0;
+    transition: opacity 0.8s ease;
+  }
+
+  .countdown-text {
+    font-size: 1.8em;
+    margin-top: 10px;
+    color: #6b5c4b;
+  }
+
+  @keyframes fadeIn {
+    from { opacity: 0; }
+    to { opacity: 1; }
+  }
+</style>
+</head>
+
+<body>
+<video id="camera" autoplay playsinline class="normal"></video>
+<canvas id="canvas" style="display:none;"></canvas>
+<img id="photo-preview" alt="preview" />
+
+<div class="overlay">
+  <div class="top-bar">
+    <div class="logo">VIZRIZE</div>
+    <div class="subtitle">PHOTOBOOTH RECEIPT</div>
+  </div>
+  <div id="countdown"></div>
+  <div class="controls">
+    <button id="startBtn">Mulai 📸</button>
+    <button id="filterBtn">Filter: Normal</button>
+  </div>
+</div>
+
+<div id="preview-controls">
+  <button id="printBtn">Cetak 🖨️</button>
+  <button id="retryBtn">Ulangi 🔁</button>
+</div>
+
+<div id="print-anim">
+  <h2>✨ Sedang mencetak fotomu ✨</h2>
+  <div style="font-size:4em;">🖨️📄</div>
+</div>
+
+<div id="qr-section">
+  <h2>Scan QR untuk mengunduh 💫</h2>
+  <div id="qrcode"></div>
+  <div class="countdown-text" id="qrCountdown"></div>
+</div>
+
+<script>
+  const API_KEY = "1d1aa4b919d175436c480b9509c088e7";
+
+  const video = document.getElementById("camera");
+  const canvas = document.getElementById("canvas");
+  const photoPreview = document.getElementById("photo-preview");
+  const countdownEl = document.getElementById("countdown");
+  const printAnim = document.getElementById("print-anim");
+  const qrSection = document.getElementById("qr-section");
+  const qrcodeDiv = document.getElementById("qrcode");
+  const qrCountdown = document.getElementById("qrCountdown");
+  const startBtn = document.getElementById("startBtn");
+  const filterBtn = document.getElementById("filterBtn");
+  const previewControls = document.getElementById("preview-controls");
+  const printBtn = document.getElementById("printBtn");
+  const retryBtn = document.getElementById("retryBtn");
+
+  let currentFilter = "normal";
+
+  async function startCamera() {
+    try {
+      const stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: "user" } });
+      video.srcObject = stream;
+    } catch (e) {
+      alert("Kamera gagal diakses 😢");
+    }
+  }
+  startCamera();
+
+  filterBtn.onclick = () => {
+    if (currentFilter === "normal") {
+      currentFilter = "bw";
+      video.className = "bw";
+      filterBtn.textContent = "Filter: B&W";
+    } else {
+      currentFilter = "normal";
+      video.className = "normal";
+      filterBtn.textContent = "Filter: Normal";
+    }
+  };
+
+  startBtn.onclick = async () => {
+    countdownEl.style.display = "block";
+    for (let i = 3; i > 0; i--) {
+      countdownEl.textContent = i;
+      await new Promise(r => setTimeout(r, 1000));
+    }
+    countdownEl.style.display = "none";
+    takePhoto();
+  };
+
+  function takePhoto() {
+    const ctx = canvas.getContext("2d");
+    canvas.width = video.videoWidth;
+    canvas.height = video.videoHeight;
+    ctx.translate(canvas.width, 0);
+    ctx.scale(-1, 1);
+    ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+
+    // Filter B&W
+    if (currentFilter === "bw") {
+      const imgData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+      for (let i = 0; i < imgData.data.length; i += 4) {
+        const avg = (imgData.data[i] + imgData.data[i + 1] + imgData.data[i + 2]) / 3;
+        imgData.data[i] = avg + 10;
+        imgData.data[i + 1] = avg + 10;
+        imgData.data[i + 2] = avg + 10;
+      }
+      ctx.putImageData(imgData, 0, 0);
+    }
+
+    // Watermark Vizrize
+    ctx.font = `${canvas.width * 0.03}px Poppins`;
+    ctx.fillStyle = "rgba(255, 255, 255, 0.7)";
+    ctx.textBaseline = "bottom";
+    ctx.fillText("VIZRIZE", 20, canvas.height - 20);
+
+    const dataUrl = canvas.toDataURL("image/jpeg");
+    photoPreview.src = dataUrl;
+    photoPreview.style.display = "block";
+    requestAnimationFrame(() => photoPreview.style.opacity = 1);
+    video.style.opacity = 0;
+    previewControls.style.display = "flex";
+    setTimeout(() => previewControls.style.opacity = 1, 200);
+  }
+
+  retryBtn.onclick = () => {
+    photoPreview.style.opacity = 0;
+    previewControls.style.opacity = 0;
+    setTimeout(() => {
+      photoPreview.style.display = "none";
+      previewControls.style.display = "none";
+      video.style.opacity = 1;
+    }, 400);
+  };
+
+  printBtn.onclick = async () => {
+    previewControls.style.opacity = 0;
+    photoPreview.style.opacity = 0;
+    setTimeout(() => {
+      previewControls.style.display = "none";
+      photoPreview.style.display = "none";
+    }, 400);
+    await fadeIn(printAnim);
+    await new Promise(r => setTimeout(r, 2500));
+    await fadeOut(printAnim);
+    uploadPhoto();
+  };
+
+  async function uploadPhoto() {
+    const base64 = canvas.toDataURL("image/jpeg").split(",")[1];
+    const formData = new FormData();
+    formData.append("image", base64);
+
+    const response = await fetch(`https://api.imgbb.com/1/upload?key=${API_KEY}`, {
+      method: "POST",
+      body: formData
+    });
+
+    const result = await response.json();
+    if (result.data && result.data.url) {
+      showQRCode(result.data.url);
+    } else {
+      alert("Upload gagal 😢");
+      video.style.opacity = 1;
+    }
+  }
+
+  async function showQRCode(url) {
+    await fadeIn(qrSection);
+    qrcodeDiv.innerHTML = "";
+    new QRCode(qrcodeDiv, { text: url, width: 200, height: 200 });
+
+    for (let i = 10; i > 0; i--) {
+      qrCountdown.textContent = `Kembali ke kamera dalam ${i} detik...`;
+      await new Promise(r => setTimeout(r, 1000));
+    }
+    await fadeOut(qrSection);
+    video.style.opacity = 1;
+  }
+
+  async function fadeIn(el) {
+    el.style.display = "flex";
+    await new Promise(r => requestAnimationFrame(r));
+    el.style.opacity = 1;
+  }
+
+  async function fadeOut(el) {
+    el.style.opacity = 0;
+    await new Promise(r => setTimeout(r, 800));
+    el.style.display = "none";
+  }
+</script>
+</body>
+</html>
