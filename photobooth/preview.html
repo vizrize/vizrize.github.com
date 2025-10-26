@@ -1,3 +1,24 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Vizrize Photobooth Preview</title>
+<style>
+body,html{margin:0;padding:0;height:100%;font-family:'Roboto Mono',monospace;background:#f5f0e6;}
+#photoPreview{display:block;margin:24px auto;max-width:90%;border:6px solid #fff;box-shadow:0 6px 20px rgba(0,0,0,0.06);}
+#footerText{text-align:center;font-size:16px;color:#333;}
+#qrcode{text-align:center;margin:16px;}
+#qrCountdown{text-align:center;color:#222;margin:4px;font-size:14px;}
+</style>
+</head>
+<body>
+<img id="photoPreview"/>
+<div id="footerText"></div>
+<div id="qrcode"></div>
+<div id="qrCountdown"></div>
+<div id="qrUrl" style="display:none;"></div>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
 <script>
 window.addEventListener('DOMContentLoaded', ()=>{
   const photoPreview = document.getElementById('photoPreview');
@@ -14,7 +35,6 @@ window.addEventListener('DOMContentLoaded', ()=>{
   photoPreview.src = imgUrl;
   footerText.textContent = `Jakarta • ${new Date().toLocaleDateString('id-ID')}`;
 
-  // QR code tetap ke halaman ini sendiri
   new QRCode(qrcodeDiv, {
     text: window.location.href,
     width: 300,
@@ -25,7 +45,6 @@ window.addEventListener('DOMContentLoaded', ()=>{
   });
   qrUrlEl.textContent = window.location.href;
 
-  // countdown 24 jam stabil
   let remaining = 24*60*60;
   const tick = () => {
     const hours = Math.floor(remaining / 3600);
@@ -39,3 +58,5 @@ window.addEventListener('DOMContentLoaded', ()=>{
   tick();
 });
 </script>
+</body>
+</html>
