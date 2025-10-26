@@ -25,12 +25,14 @@ async function openCamera(){
 }
 openCamera();
 
+// tombol mulai
 startBtnCenter.addEventListener('click',async()=>{
   startBtnCenter.style.display='none';
   await countdown(3);
   captureReceiptFrame();
 });
 
+// tombol ulangi
 retryBtn.addEventListener('click',()=>{
   previewControls.style.display='none';
   receiptCard.style.display='none';
@@ -38,17 +40,18 @@ retryBtn.addEventListener('click',()=>{
   document.getElementById('cameraWrap').style.display='flex';
 });
 
+// filter
 filterBtn.addEventListener('click',()=>{
   if(filterMode==='normal'){filterMode='bw';filterBtn.textContent='Filter: B&W';photoPreview.classList.add('bw');}
   else{filterMode='normal';filterBtn.textContent='Filter: Normal';photoPreview.classList.remove('bw');}
 });
 
+// cetak/upload
 printUploadBtn.addEventListener('click',async()=>{
   try{
     processingOverlay.style.display='flex';
     const url=await uploadReceiptImage(lastReceiptDataUrl);
     processingOverlay.style.display='none';
-    // encode full URL ImgBB
     const encodedUrl = encodeURIComponent(url);
     window.location.href = `preview.html?img=${encodedUrl}`;
   }catch(err){
@@ -58,6 +61,7 @@ printUploadBtn.addEventListener('click',async()=>{
   }
 });
 
+// countdown sebelum capture
 async function countdown(sec){
   const cd=document.getElementById('countdown');
   if(!cd) return;
@@ -69,6 +73,7 @@ async function countdown(sec){
   cd.style.display='none';
 }
 
+// capture foto + buat receipt
 function captureReceiptFrame(){
   const vw=video.videoWidth||1280;
   const vh=video.videoHeight||720;
@@ -82,16 +87,23 @@ function captureReceiptFrame(){
   const canvasH=headerH+photoH+footerH;
   receiptCanvas.width=canvasW;
   receiptCanvas.height=canvasH;
+
+  // background putih
   rcCtx.fillStyle='#fff'; rcCtx.fillRect(0,0,canvasW,canvasH);
+
+  // header text
   rcCtx.fillStyle='#000'; rcCtx.textAlign='center';
   rcCtx.font=`${Math.round(canvasW*0.06)}px monospace`; rcCtx.fillText('VIZRIZE PHOTOBOOTH RECEIPT',canvasW/2,Math.round(headerH*0.55));
   rcCtx.font=`${Math.round(canvasW*0.035)}px monospace`; rcCtx.fillText('Jakarta • Photobooth',canvasW/2,Math.round(headerH*0.88));
+
+  // photo
   const photoX=sideMargin; const photoY=headerH; const innerBorder=Math.max(6,Math.round(photoW*0.03));
   rcCtx.fillStyle='#fff'; rcCtx.fillRect(photoX,photoY,photoW,photoH);
   const tmp=document.createElement('canvas'); tmp.width=vw; tmp.height=vh; const tctx=tmp.getContext('2d');
   tctx.save(); tctx.scale(-1,1); tctx.drawImage(video,-vw,0,vw,vh); tctx.restore();
   rcCtx.drawImage(tmp,0,0,vw,vh,photoX+innerBorder,photoY+innerBorder,photoW-innerBorder*2,photoH-innerBorder*2);
 
+  // filter B&W
   if(filterMode==='bw'){
     const imgData=rcCtx.getImageData(photoX+innerBorder,photoY+innerBorder,photoW-innerBorder*2,photoH-innerBorder*2);
     for(let i=0;i<imgData.data.length;i+=4){
@@ -101,17 +113,28 @@ function captureReceiptFrame(){
     rcCtx.putImageData(imgData,photoX+innerBorder,photoY+innerBorder);
   }
 
+  // footer
   const dateStr=new Date().toLocaleDateString('id-ID',{day:'2-digit',month:'short',year:'numeric'});
   rcCtx.fillStyle='#000'; rcCtx.font=`${Math.round(canvasW*0.04)}px monospace`; rcCtx.fillText(`${LOCATION_LABEL} • ${dateStr}`,canvasW/2,photoY+photoH+Math.round(footerH*0.45));
   rcCtx.font=`${Math.round(canvasW*0.03)}px monospace`; rcCtx.fillText('Scan QR untuk mengunduh foto',canvasW/2,photoY+photoH+Math.round(footerH*0.78));
+
   lastReceiptDataUrl=receiptCanvas.toDataURL('image/jpeg',0.92);
   photoPreview.src=lastReceiptDataUrl;
   footerText.textContent=`${LOCATION_LABEL} • ${dateStr}`;
   receiptCard.style.display='block';
   previewControls.style.display='flex';
   document.getElementById('cameraWrap').style.display='none';
+
+  // otomatis kembali ke kamera setelah 10 detik
+  setTimeout(()=>{
+    previewControls.style.display='none';
+    receiptCard.style.display='none';
+    startBtnCenter.style.display='block';
+    document.getElementById('cameraWrap').style.display='flex';
+  },10000);
 }
 
+// upload ke ImgBB
 async function uploadReceiptImage(dataUrl){
   if(!dataUrl) throw new Error('Tidak ada gambar');
   const base64=dataUrl.split(',')[1]; const form=new FormData();
