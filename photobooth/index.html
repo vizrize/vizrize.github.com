@@ -1,585 +1,447 @@
 <!doctype html>
 <html lang="id">
 <head>
-<meta charset="utf-8" />
-<meta name="viewport" content="width=device-width,initial-scale=1" />
-<title>Vizrize Photobooth — Receipt</title>
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1"/>
+<title>Vizrize Photobooth — Final</title>
 <script src="https://cdn.jsdelivr.net/npm/qrcodejs/qrcode.min.js"></script>
 <style>
 :root{
-  --bg:#f0ede7;
-  --muted:#2b2b2b;
-  --accent:#111;
-  --receipt-bg: #fffdf7;
-  --receipt-edge:#e6dfd4;
-  --thermal:#f9f7f2;
+  --bg:#f0ede7; --muted:#2b2b2b; --accent:#111;
+  --receipt-bg:#fffdf7; --receipt-edge:#e6dfd4;
 }
 *{box-sizing:border-box}
-html,body{height:100%;margin:0;font-family:Inter,system-ui,-apple-system,'Segoe UI',Roboto,'Helvetica Neue',Arial;background:var(--bg);color:var(--muted);}
-#cameraWrap{position:fixed;inset:0;display:flex;align-items:center;justify-content:center;background:var(--bg);}
+html,body{height:100%;margin:0;font-family:Inter,system-ui,-apple-system,'Segoe UI',Roboto,Arial;background:var(--bg);color:var(--muted);overflow:hidden}
+#cameraWrap{position:fixed;inset:0;display:flex;align-items:center;justify-content:center;background:var(--bg);z-index:1}
 video#camera{width:100vw;height:100vh;object-fit:cover;transform:scaleX(-1);}
 
-/* Panel */
-.panel{position:relative;z-index:30;width:min(820px,94vw);margin:18px auto;display:flex;flex-direction:column;align-items:center;gap:12px;}
-.titleRow{text-align:center;}
-.brand{font-weight:800;color:var(--accent);letter-spacing:1px;font-size:18px;}
-.subtitle{font-size:13px;color:#444;margin-top:2px;}
-.frameWrap{width:clamp(300px,72vw,720px);display:flex;align-items:center;justify-content:center;padding:6px;}
+/* top control area */
+.topControls{position:fixed;top:12px;left:50%;transform:translateX(-50%);z-index:60;display:flex;align-items:center;gap:8px}
+select#modeSelect{padding:10px 12px;border-radius:999px;border:1px solid rgba(0,0,0,0.08);background:#fff;font-weight:700}
+button#startBtnCenter{padding:12px 18px;border-radius:999px;border:1px solid rgba(0,0,0,0.08);background:linear-gradient(90deg,#fff,#faf8f6);font-weight:800;cursor:pointer}
 
-/* Receipt card: more like physical receipt */
-.receiptCard{
-  width:100%;
-  max-width:600px;
-  background:linear-gradient(180deg, var(--receipt-bg), var(--thermal));
-  border-radius:6px;
-  box-shadow:0 12px 36px rgba(0,0,0,0.08);
-  overflow:hidden;
-  display:flex;
-  flex-direction:column;
-  border:1px solid var(--receipt-edge);
-  font-family: 'Courier New', Courier, monospace;
-}
-
-/* tiny perforation notch top */
-.topPerforation{height:12px;background:repeating-linear-gradient(90deg,#fff 0 6px, transparent 6px 12px);}
-
-/* header */
-.receiptHeader{padding:12px 18px;border-bottom:1px dashed #ded6c8;text-align:center;}
-.headerTitle{font-weight:800;letter-spacing:1px;color:#111;font-size:15px;}
-.headerSub{font-size:12px;color:#444;margin-top:6px;}
-
-/* image area */
-.photoHolder{display:flex;align-items:center;justify-content:center;padding:10px;background:transparent;position:relative;}
+/* Panel / receipt UI */
+.panel{position:relative;z-index:30;width:min(820px,94vw);margin:18px auto;display:flex;flex-direction:column;align-items:center;gap:12px}
+.brand{font-weight:800;color:var(--accent);letter-spacing:1px;font-size:18px}
+.subtitle{font-size:13px;color:#444;margin-top:2px}
+.frameWrap{width:clamp(300px,72vw,720px);display:flex;align-items:center;justify-content:center;padding:6px}
+.receiptCard{width:100%;max-width:600px;background:linear-gradient(180deg,var(--receipt-bg),#f9f7f2);border-radius:6px;box-shadow:0 12px 36px rgba(0,0,0,0.08);overflow:hidden;display:flex;flex-direction:column;border:1px solid var(--receipt-edge);font-family: 'Courier New', Courier, monospace}
+.topPerforation{height:12px;background:repeating-linear-gradient(90deg,#fff 0 6px, transparent 6px 12px)}
+.receiptHeader{padding:12px 18px;border-bottom:1px dashed #ded6c8;text-align:center}
+.headerTitle{font-weight:800;letter-spacing:1px;color:#111;font-size:15px}
+.photoHolder{display:flex;align-items:center;justify-content:center;padding:10px;background:transparent;position:relative}
 .photoImg{display:block;max-width:100%;height:auto;border:10px solid #fff;box-shadow:0 6px 20px rgba(0,0,0,0.06);object-fit:contain}
-
-/* receipt content (makes canvas look like struk) */
-.receiptBody{padding:6px 18px 14px;}
-
-/* footer area */
-.receiptFooter{padding:8px 18px;border-top:1px dashed #eee;text-align:center;font-size:12px;color:#333;background:transparent;}
-
-/* controls */
-.controlsRow{display:flex;gap:10px;justify-content:center;margin-top:6px;}
-button{background:#fff;border:1px solid rgba(0,0,0,0.06);padding:10px 16px;border-radius:999px;font-weight:700;color:var(--muted);cursor:pointer;box-shadow:0 8px 24px rgba(0,0,0,0.06);}
-button.primary{background:linear-gradient(90deg,#fff,#faf8f6);color:var(--accent);border:1px solid rgba(0,0,0,0.06);}
-button:disabled{opacity:0.55;cursor:not-allowed;}
-.filterBtn{position:absolute;top:8px;right:8px;z-index:10;padding:6px 12px;font-size:12px;border-radius:999px;border:1px solid rgba(0,0,0,0.08);background:#fff;cursor:pointer;}
+.receiptBody{padding:6px 18px 14px}
+.receiptFooter{padding:8px 18px;border-top:1px dashed #eee;text-align:center;font-size:12px;color:#333;background:transparent}
+.controlsRow{display:flex;gap:10px;justify-content:center;margin-top:6px}
+button{background:#fff;border:1px solid rgba(0,0,0,0.06);padding:10px 16px;border-radius:999px;font-weight:700;color:var(--muted);cursor:pointer;box-shadow:0 8px 24px rgba(0,0,0,0.06)}
+button.primary{background:linear-gradient(90deg,#fff,#faf8f6);color:var(--accent)}
+.small{font-size:12px;color:#6b5c4b}
 
 /* overlays */
-#qrOverlay,#processingOverlay{position:fixed;inset:0;display:none;align-items:center;justify-content:center;background:rgba(0,0,0,0.36);z-index:60;}
-.modalBox{background:#fff;padding:12px;border-radius:10px;text-align:center;max-width:92vw;}
-#qrcode{margin:6px auto;}
-#countdown{position:fixed;top:18px;left:50%;transform:translateX(-50%);font-size:48px;color:#fff;text-shadow:0 8px 18px rgba(0,0,0,0.45);display:none;z-index:70;}
-.bw{filter:grayscale(100%) contrast(1.1);}
+#qrOverlay,#processingOverlay{position:fixed;inset:0;display:none;align-items:center;justify-content:center;background:rgba(0,0,0,0.36);z-index:80}
+.modalBox{background:#fff;padding:12px;border-radius:10px;text-align:center;max-width:92vw}
+#qrcode{margin:6px auto}
+#countdown{position:fixed;top:12vh;left:50%;transform:translateX(-50%);font-size:64px;color:#fff;text-shadow:0 8px 18px rgba(0,0,0,0.45);display:none;z-index:90}
+#flash{position:fixed;inset:0;background:#fff;opacity:0;pointer-events:none;z-index:85;transition:opacity 180ms ease-out}
 
-/* camera flash */
-#flash{position:fixed;inset:0;background:#fff;opacity:0;pointer-events:none;z-index:80;transition:opacity 220ms ease-out;}
-
-/* receipt visual details */
-.receiptSmall{font-size:11px;color:#6b5c4b;}
-.receiptBig{font-size:16px;font-weight:800;letter-spacing:1px;}
-.separator{border-top:1px dashed #ded6c8;margin:8px 0;}
-.lineItem{display:flex;justify-content:space-between;font-size:13px;padding:2px 0;}
-.totalRow{display:flex;justify-content:space-between;font-size:15px;font-weight:800;padding-top:6px;padding-bottom:6px;}
-.barcode{height:40px;margin-top:8px;background:repeating-linear-gradient(90deg,#111 0 3px,#fff 3px 6px);}
-
-/* mode selector */
-#modeSelector{position:fixed;bottom:18px;left:50%;transform:translateX(-50%);z-index:50;display:flex;gap:8px}
-.modeBtn{padding:10px 14px;border-radius:999px;background:#fff;border:1px solid rgba(0,0,0,0.06);font-weight:700;cursor:pointer}
-.modeBtn.active{background:linear-gradient(90deg,#fff,#faf8f6);color:var(--accent)}
-
-/* responsive tweaks */
-@media (max-width:560px){
-  .photoHolder{padding:8px}.receiptHeader{padding:8px}.receiptFooter{padding:8px}
-}
-#startBtnCenter{position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);z-index:40;font-size:18px;padding:14px 22px}
+/* responsive */
+@media (max-width:560px){.panel{width:94vw}.photoImg{border:6px solid #fff}.receiptHeader{padding:8px}}
 </style>
 </head>
 <body>
 
-<div id="cameraWrap"><video id="camera" autoplay playsinline></video></div>
+<!-- top selector + start -->
+<div class="topControls">
+  <select id="modeSelect" aria-label="Pilih mode">
+    <option value="">Pilih mode …</option>
+    <option value="single">1 Foto (Single)</option>
+    <option value="strip">3 Foto (Strip 1:1)</option>
+  </select>
+  <button id="startBtnCenter" class="primary" disabled>Mulai</button>
+</div>
 
+<div id="cameraWrap"><video id="camera" autoplay playsinline></video></div>
 <div id="flash" aria-hidden="true"></div>
 
 <div class="panel" aria-live="polite">
-  <div class="titleRow">
-    <div class="brand">VIZRIZE</div>
-    <div class="subtitle">PHOTOBOOTH RECEIPT</div>
-  </div>
+  <div class="brand">VIZRIZE</div>
+  <div class="subtitle">PHOTOBOOTH RECEIPT</div>
 
   <div class="frameWrap">
     <div class="receiptCard" id="receiptCard" style="display:none">
       <div class="topPerforation" aria-hidden="true"></div>
       <div class="receiptHeader">
         <div class="headerTitle">VIZRIZE PHOTOBOOTH</div>
-        <div class="headerSub">Jakarta · Photobooth · (Scan untuk unduh)</div>
+        <div class="small">Jakarta · Photobooth · (Scan untuk unduh)</div>
       </div>
 
-      <div class="photoHolder" id="photoHolder">
-        <img id="photoPreview" class="photoImg" alt="Hasil foto">
-        <button class="filterBtn" id="filterBtn" aria-pressed="false">Filter: Normal</button>
+      <div class="photoHolder">
+        <img id="photoPreview" class="photoImg" alt="Preview hasil">
       </div>
 
-      <div class="receiptBody" id="receiptBody">
-        <div class="separator"></div>
+      <div class="receiptBody">
         <div style="display:flex;justify-content:space-between;align-items:center">
-          <div class="receiptSmall">No. Transaksi: <span id="txId">-</span></div>
-          <div class="receiptSmall" id="dateText">--</div>
+          <div class="small">No. Transaksi: <span id="txId">-</span></div>
+          <div class="small" id="dateText">--</div>
         </div>
-
-        <div style="margin-top:6px;">
-          <div class="lineItem"><div>1x Photobooth Struk</div><div>Rp 0</div></div>
-          <div class="lineItem"><div>Print (optional)</div><div>Rp 0</div></div>
-          <div class="separator"></div>
-          <div class="totalRow"><div>Total</div><div id="totalPrice">Rp 0</div></div>
-        </div>
-
-        <div class="separator"></div>
-        <div style="text-align:center" class="receiptSmall">Terima kasih telah menggunakan Vizrize</div>
-        <div class="barcode" id="barcodePreview" aria-hidden="true"></div>
+        <div style="margin-top:8px;text-align:center" class="small">Terima kasih telah menggunakan Vizrize</div>
       </div>
 
-      <div class="receiptFooter">
-        <div id="footerText">Jakarta • --</div>
-      </div>
+      <div class="receiptFooter"><div id="footerText">Jakarta • --</div></div>
     </div>
   </div>
 
   <div class="controlsRow" id="previewControls" style="display:none">
     <button id="retryBtn">Ulangi</button>
     <button id="printUploadBtn" class="primary">Cetak / Upload</button>
+    <button id="btPrintBtn">Print Bluetooth</button>
   </div>
 </div>
 
-<div id="modeSelector">
-  <button id="modeSingle" class="modeBtn active">1x Foto</button>
-  <button id="modeTriple" class="modeBtn">3x Strip</button>
-</div>
+<div id="processingOverlay"><div class="modalBox"><strong>Memproses & Mengupload...</strong><div style="margin-top:8px;color:#6b5c4b;font-size:13px">Jangan tutup browser</div></div></div>
 
-<button id="startBtnCenter" class="primary" aria-label="Mulai photobooth">Mulai</button>
-
-<div id="processingOverlay">
-  <div class="modalBox"><div style="font-weight:700">Memproses & Mengupload...</div><div style="margin-top:8px;color:#6b5c4b;font-size:13px">Jangan tutup browser</div></div>
-</div>
-
-<div id="qrOverlay">
-  <div class="modalBox">
-    <div style="font-weight:700;margin-bottom:8px">Scan QR untuk unduh</div>
-    <div id="qrcode"></div>
-    <div id="qrUrl" style="margin-top:8px;font-size:12px;color:#6b5c4b;word-break:break-all;max-width:260px"></div>
-    <div id="qrCountdown" style="margin-top:8px;color:#6b5c4b"></div>
-  </div>
-</div>
+<div id="qrOverlay"><div class="modalBox"><div style="font-weight:700;margin-bottom:8px">Scan QR untuk unduh</div><div id="qrcode"></div><div id="qrUrl" style="margin-top:8px;font-size:12px;color:#6b5c4b;word-break:break-all;max-width:260px"></div><div id="qrCountdown" style="margin-top:8px;color:#6b5c4b"></div></div></div>
 
 <div id="countdown" aria-hidden="true"></div>
+
+<!-- canvases (invisible) -->
 <canvas id="receiptCanvas" style="display:none"></canvas>
+<canvas id="uploadCanvas" style="display:none"></canvas>
 
 <script>
-/* ========== CONFIG ========== */
-const CLOUD_NAME = "dcqqaebln";         // <- cloud name kamu
-const UPLOAD_PRESET = "vizrize_unsigned"; // <- ganti sesuai preset
+/* ===== CONFIG ===== */
+const CLOUD_NAME = "dcqqaebln";           // isi Cloudinary cloud name
+const UPLOAD_PRESET = "vizrize_unsigned"; // isi upload preset (unsigned)
 const LOCATION_LABEL = "Jakarta";
 const RETURN_SECONDS = 8;
-const RECEIPT_WIDTH = 384; // use 384 for 58mm thermal to avoid gepeng
 
-/* ========== DOM ========== */
+/* sizes */
+const PRINT_W = 384;      // thermal / preview width
+const UPLOAD_W = 1080;    // HD upload width
+const UPLOAD_H = 1920;    // HD upload height
+const STRIP_GAP = 3;      // px gap between strip photos
+
+/* ===== DOM ===== */
 const video = document.getElementById('camera');
-const startBtnCenter = document.getElementById('startBtnCenter');
-const receiptCard = document.getElementById('receiptCard');
+const modeSelect = document.getElementById('modeSelect');
+const startBtn = document.getElementById('startBtnCenter');
+const flashEl = document.getElementById('flash');
+const countdownEl = document.getElementById('countdown');
+const receiptCanvas = document.getElementById('receiptCanvas');
+const rcCtx = receiptCanvas.getContext('2d');
+const uploadCanvas = document.getElementById('uploadCanvas');
+const ucCtx = uploadCanvas.getContext('2d');
 const photoPreview = document.getElementById('photoPreview');
-const footerText = document.getElementById('footerText');
+const receiptCard = document.getElementById('receiptCard');
 const previewControls = document.getElementById('previewControls');
 const retryBtn = document.getElementById('retryBtn');
 const printUploadBtn = document.getElementById('printUploadBtn');
+const btPrintBtn = document.getElementById('btPrintBtn');
 const processingOverlay = document.getElementById('processingOverlay');
 const qrOverlay = document.getElementById('qrOverlay');
 const qrcodeDiv = document.getElementById('qrcode');
 const qrUrlEl = document.getElementById('qrUrl');
 const qrCountdownEl = document.getElementById('qrCountdown');
-const filterBtn = document.getElementById('filterBtn');
-const receiptCanvas = document.getElementById('receiptCanvas');
-const rcCtx = receiptCanvas.getContext('2d');
 const txIdEl = document.getElementById('txId');
 const dateTextEl = document.getElementById('dateText');
-const totalPriceEl = document.getElementById('totalPrice');
-const barcodeEl = document.getElementById('barcodePreview');
-const flashEl = document.getElementById('flash');
-const countdownEl = document.getElementById('countdown');
-const startBtn = document.getElementById('startBtnCenter');
-const modeSingle = document.getElementById('modeSingle');
-const modeTriple = document.getElementById('modeTriple');
-let captureMode = 'single';
-let lastReceiptDataUrl = null;
-let filterMode = 'normal';
+const footerText = document.getElementById('footerText');
 
-/* ========== Audio helpers (Web Audio API) ========== */
+let captureMode = ''; // 'single' or 'strip'
+let lastPrintDataUrl = null;
+let lastUploadDataUrl = null;
+
+/* ===== Audio (simple beeps) ===== */
 const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+function beep(freq=1000,dur=0.06){ try{ const o=audioCtx.createOscillator(), g=audioCtx.createGain(); o.type='sine'; o.frequency.setValueAtTime(freq,audioCtx.currentTime); g.gain.setValueAtTime(0.06,audioCtx.currentTime); o.connect(g); g.connect(audioCtx.destination); o.start(); o.stop(audioCtx.currentTime+dur);}catch(e){}}
+function shutter(){ beep(700,0.03); setTimeout(()=>beep(1200,0.03),70); }
 
-function playBeep(freq = 1000, duration = 0.08, type='sine', gain=0.08) {
-  try {
-    const o = audioCtx.createOscillator();
-    const g = audioCtx.createGain();
-    o.type = type;
-    o.frequency.setValueAtTime(freq, audioCtx.currentTime);
-    g.gain.setValueAtTime(gain, audioCtx.currentTime);
-    o.connect(g);
-    g.connect(audioCtx.destination);
-    o.start();
-    o.stop(audioCtx.currentTime + duration);
-  } catch(e){ /* ignore */ }
-}
-
-function playClick(){ // shutter-like two short sounds
-  playBeep(700, 0.03, 'triangle', 0.08);
-  setTimeout(()=>playBeep(1200, 0.035, 'square', 0.06), 70);
-}
-
-/* ========== Camera setup ========== */
+/* ===== Camera ===== */
 async function openCamera(){
   try{
-    const stream = await navigator.mediaDevices.getUserMedia({
-      video:{ facingMode:'user', width:{ideal:1280}, height:{ideal:1920} }, audio:false
-    });
+    const stream = await navigator.mediaDevices.getUserMedia({ video:{ facingMode:'user', width:{ideal:1280}, height:{ideal:1920} }, audio:false });
     video.srcObject = stream;
-  }catch(e){
-    alert('Tidak bisa mengakses kamera: '+(e.message||e));
+  } catch(err){
+    alert('Tidak bisa akses kamera: '+(err.message||err));
   }
 }
 openCamera();
 
-/* ========== Mode selector UI ========== */
-modeSingle.addEventListener('click', ()=>{
-  captureMode = 'single';
-  modeSingle.classList.add('active');
-  modeTriple.classList.remove('active');
+/* ===== UI logic: require selection before start ===== */
+modeSelect.addEventListener('change', ()=> {
+  captureMode = modeSelect.value || '';
+  startBtn.disabled = !captureMode;
 });
-modeTriple.addEventListener('click', ()=>{
-  captureMode = 'triple';
-  modeTriple.classList.add('active');
-  modeSingle.classList.remove('active');
-});
+startBtn.disabled = true;
 
-/* ========== UI interactions ========== */
-startBtn.addEventListener('click', async ()=>{
-  if (audioCtx.state === 'suspended') await audioCtx.resume();
-  startBtn.style.display='none';
-  await countdown(3);
-  if(captureMode === 'single'){
-    playClick(); doFlash(); await drawReceiptSingle();
-  } else {
-    await shootStripAndDraw();
-  }
-});
-
+/* retry */
 retryBtn.addEventListener('click', ()=>{
-  previewControls.style.display='none';
-  receiptCard.style.display='none';
-  startBtn.style.display='block';
-  qrOverlay.style.display='none';
-  document.getElementById('cameraWrap').style.display='flex';
+  previewControls.style.display = 'none';
+  receiptCard.style.display = 'none';
+  startBtn.style.display = 'inline-block';
+  qrOverlay.style.display = 'none';
+  document.getElementById('cameraWrap').style.display = 'flex';
 });
 
-/* filter toggle */
-filterBtn.addEventListener('click', ()=>{
-  if(filterMode==='normal'){ filterMode='bw'; filterBtn.textContent='Filter: B&W'; photoPreview.classList.add('bw'); filterBtn.setAttribute('aria-pressed','true'); }
-  else{ filterMode='normal'; filterBtn.textContent='Filter: Normal'; photoPreview.classList.remove('bw'); filterBtn.setAttribute('aria-pressed','false'); }
-});
-
-/* print/upload */
+/* print/upload click */
 printUploadBtn.addEventListener('click', async ()=>{
   try{
-    processingOverlay.style.display='flex';
-    const url = await uploadReceiptImage(lastReceiptDataUrl);
-    processingOverlay.style.display='none';
-    showQr(url);
-  }catch(err){
-    processingOverlay.style.display='none';
-    alert('Upload gagal: '+(err.message||err));
-    retryBtn.click();
+    processingOverlay.style.display = 'flex';
+    if(!lastUploadDataUrl) throw new Error('Tidak ada gambar untuk diupload');
+    const url = await uploadToCloudinary(lastUploadDataUrl);
+    processingOverlay.style.display = 'none';
+    await showQr(url);
+  }catch(e){
+    processingOverlay.style.display = 'none';
+    alert('Upload gagal: '+(e.message||e));
   }
 });
 
-/* ========== Countdown ========== */
+/* bluetooth print hook for WebView */
+btPrintBtn.addEventListener('click', ()=>{
+  if(window.AndroidPrinter && lastPrintDataUrl){
+    try{ window.AndroidPrinter.printImage(lastPrintDataUrl); }
+    catch(e){ alert('Gagal panggil AndroidPrinter: '+e.message); }
+  } else alert('Fitur Print Bluetooth tersedia hanya di aplikasi WebView dengan native bridge.');
+});
+
+/* countdown */
 async function countdown(sec){
-  countdownEl.style.display='block';
+  if(audioCtx.state === 'suspended') await audioCtx.resume();
+  countdownEl.style.display = 'block';
   for(let i=sec;i>0;i--){
-    countdownEl.textContent=i;
-    playBeep(1100 - i*120, 0.06, 'sine', 0.06);
+    countdownEl.textContent = i;
+    beep(1200 - i*100, 0.06);
     await new Promise(r=>setTimeout(r,1000));
   }
-  countdownEl.style.display='none';
+  countdownEl.style.display = 'none';
 }
 
-/* ========== capture helpers ========== */
-function captureFrameDataUrl(){
+/* capture raw canvas (mirrored) */
+function captureRawCanvas(){
   const vw = video.videoWidth || 1280;
   const vh = video.videoHeight || 720;
-  const tmp = document.createElement('canvas');
-  tmp.width = vw; tmp.height = vh;
-  const tctx = tmp.getContext('2d');
-  tctx.save(); tctx.scale(-1,1); tctx.drawImage(video, -vw, 0, vw, vh); tctx.restore();
-  return tmp.toDataURL('image/jpeg', 0.92);
+  const c = document.createElement('canvas');
+  c.width = vw; c.height = vh;
+  const ctx = c.getContext('2d');
+  ctx.save(); ctx.scale(-1,1); ctx.drawImage(video, -vw, 0, vw, vh); ctx.restore();
+  return c;
 }
 
-/* ========== draw single receipt ========== */
-async function drawReceiptSingle(){
-  // capture a frame
-  const photoData = captureFrameDataUrl();
-
-  // set canvas sizes based on RECEIPT_WIDTH and desired aspect
-  const canvasW = RECEIPT_WIDTH;
-  const sidePad = Math.round(canvasW*0.06);
-  const photoW = canvasW - sidePad*2;
-  const photoH = Math.round(photoW * (4/3)); // portrait ratio
-  const headerH = Math.round(canvasW*0.14);
-  const footerH = Math.round(canvasW*0.2);
-  const canvasH = headerH + photoH + footerH;
-
-  receiptCanvas.width = canvasW;
-  receiptCanvas.height = canvasH;
-
-  // background
-  rcCtx.fillStyle = '#fffdf7';
-  rcCtx.fillRect(0,0,canvasW,canvasH);
-
-  // header
-  rcCtx.fillStyle = '#111';
-  rcCtx.textAlign = 'center';
-  rcCtx.font = `${Math.round(canvasW*0.06)}px monospace`;
-  rcCtx.fillText('VIZRIZE PHOTOBOOTH', canvasW/2, Math.round(headerH*0.45));
-  rcCtx.font = `${Math.round(canvasW*0.03)}px monospace`;
-  rcCtx.fillText(`${LOCATION_LABEL} • Photobooth`, canvasW/2, Math.round(headerH*0.82));
-
-  // photo area
-  const img = new Image();
-  img.src = photoData;
-  await new Promise(res => { img.onload = res; img.onerror = res; });
-
-  const photoX = sidePad;
-  const photoY = headerH + 8;
-  rcCtx.fillStyle = '#fff';
-  rcCtx.fillRect(photoX, photoY, photoW, photoH);
-
-  // draw with inner border
-  const innerBorder = Math.max(8, Math.round(photoW*0.03));
-  rcCtx.drawImage(img, photoX + innerBorder, photoY + innerBorder, photoW - innerBorder*2, photoH - innerBorder*2);
-
-  // optional BW
-  if(filterMode==='bw'){
-    const imgData = rcCtx.getImageData(photoX + innerBorder, photoY + innerBorder, photoW - innerBorder*2, photoH - innerBorder*2);
-    for(let i=0;i<imgData.data.length;i+=4){
-      const avg = (imgData.data[i]+imgData.data[i+1]+imgData.data[i+2])/3;
-      imgData.data[i]=imgData.data[i+1]=imgData.data[i+2]=avg;
-    }
-    rcCtx.putImageData(imgData, photoX + innerBorder, photoY + innerBorder);
+/* center crop to target size */
+function cropCenter(sourceCanvas, targetW, targetH){
+  const sw = sourceCanvas.width, sh = sourceCanvas.height;
+  const srcRatio = sw/sh, tgtRatio = targetW/targetH;
+  let sx, sy, swCrop, shCrop;
+  if(srcRatio > tgtRatio){
+    // crop sides
+    shCrop = sh; swCrop = Math.round(shCrop * tgtRatio);
+    sx = Math.floor((sw - swCrop)/2); sy = 0;
+  } else {
+    swCrop = sw; shCrop = Math.round(swCrop / tgtRatio);
+    sx = 0; sy = Math.floor((sh - shCrop)/2);
   }
-
-  // footer text & items
-  const bodyY = photoY + photoH + 12;
-  const tx = makeTxId();
-  const dateStr = new Date().toLocaleDateString('id-ID',{day:'2-digit',month:'short',year:'numeric'});
-  rcCtx.fillStyle = '#111'; rcCtx.textAlign='left';
-  rcCtx.font = `${Math.round(canvasW*0.034)}px monospace`;
-  rcCtx.fillText(`No. Transaksi: ${tx}`, sidePad + 4, bodyY);
-  rcCtx.fillText(`${LOCATION_LABEL} • ${dateStr}`, sidePad + 4, bodyY + Math.round(canvasW*0.04));
-
-  const itemStart = bodyY + Math.round(canvasW*0.08);
-  rcCtx.font = `${Math.round(canvasW*0.03)}px monospace`;
-  drawLine(itemStart, '1x Photobooth (digital)', 'Rp 0', canvasW, sidePad);
-  drawLine(itemStart + 24, 'Print (optional)', 'Rp 0', canvasW, sidePad);
-
-  // total separator and amount
-  rcCtx.font = `${Math.round(canvasW*0.04)}px monospace`;
-  rcCtx.fillText('------------------------------', sidePad + 4, itemStart + 56);
-  rcCtx.textAlign='right';
-  rcCtx.fillText('Rp 0', canvasW - sidePad - 4, itemStart + 86);
-  rcCtx.textAlign='left';
-
-  // thanks & small barcode
-  rcCtx.font = `${Math.round(canvasW*0.028)}px monospace`;
-  rcCtx.fillText('Terima kasih telah menggunakan Vizrize', sidePad + 4, itemStart + 120);
-
-  drawBarcodeLike(itemStart + 140, canvasW, sidePad);
-
-  // footer small
-  rcCtx.fillStyle = '#6b5c4b';
-  rcCtx.font = `${Math.round(canvasW*0.025)}px monospace`;
-  rcCtx.textAlign='center';
-  rcCtx.fillText('Follow us @vizrize', canvasW/2, canvasH - 18);
-
-  // done
-  txIdEl.textContent = tx;
-  dateTextEl.textContent = dateStr;
-  totalPriceEl.textContent = 'Rp 0';
-  lastReceiptDataUrl = receiptCanvas.toDataURL('image/jpeg', 0.92);
-  photoPreview.src = lastReceiptDataUrl;
-  footerText.textContent = `${LOCATION_LABEL} • ${dateStr}`;
-
-  receiptCard.style.display='block';
-  previewControls.style.display='flex';
-  document.getElementById('cameraWrap').style.display='none';
+  const out = document.createElement('canvas');
+  out.width = targetW; out.height = targetH;
+  const octx = out.getContext('2d');
+  octx.drawImage(sourceCanvas, sx, sy, swCrop, shCrop, 0, 0, targetW, targetH);
+  return out;
 }
 
-/* helper draw line left/right */
-function drawLine(y, left, right, canvasW, sidePad){
-  rcCtx.fillStyle = '#111';
-  rcCtx.textAlign = 'left';
-  rcCtx.fillText(left, sidePad + 4, y);
-  rcCtx.textAlign = 'right';
-  rcCtx.fillText(right, canvasW - sidePad - 4, y);
-  rcCtx.textAlign = 'left';
-}
-
-/* barcode-like */
-function drawBarcodeLike(y, canvasW, sidePad){
-  const bH = 36;
-  const bX = sidePad + 4;
-  const bW = canvasW - sidePad*2 - 8;
-  rcCtx.fillStyle = '#111';
+/* draw barcode-like block helper */
+function drawBarcodeLike(ctx, y, width, sidePad){
+  const bH = 36; const bX = sidePad + 4; const bW = width - sidePad*2 - 8;
+  ctx.fillStyle = '#111';
   for(let i=0;i<bW;i+=6){
     const h = (i % 24 === 0) ? bH : Math.round(bH * (0.4 + Math.random()*0.6));
-    rcCtx.fillRect(bX + i, y + (bH - h), 3, h);
+    ctx.fillRect(bX + i, y + (bH - h), 3, h);
   }
 }
 
-/* ========== draw 3x vertical strip ========== */
-async function shootStripAndDraw(){
-  const photos = [];
-  for(let i=1;i<=3;i++){
-    await countdown(3);
-    playClick(); doFlash();
-    photos.push(captureFrameDataUrl());
-    // brief pause between shots
-    if(i<3) await new Promise(r=>setTimeout(r,600));
-  }
+/* make transaction id */
+function makeTxId(){ return 'VZ-' + Date.now().toString(36).toUpperCase().slice(-8); }
 
-  // layout sizes
-  const canvasW = RECEIPT_WIDTH;
-  const sidePad = 6;
-  const frameW = canvasW - sidePad*2;
-  const frameH = Math.round(frameW * 4/3); // portrait
-  const gap = 8;
-  const headerH = Math.round(canvasW*0.12);
-  const footerH = Math.round(canvasW*0.16);
-  const canvasH = headerH + footerH + (frameH*3) + (gap*2);
+/* visual flash */
+function doFlash(){ flashEl.style.opacity = '0.95'; setTimeout(()=>{ flashEl.style.opacity = '0'; }, 150); }
 
-  receiptCanvas.width = canvasW;
-  receiptCanvas.height = canvasH;
+/* ===== RENDER: single (both print & upload) ===== */
+function renderSingle(rawCanvas){
+  // PRINT version (small)
+  const pW = PRINT_W;
+  const sidePad = Math.round(pW*0.06);
+  const photoW = pW - sidePad*2;
+  const photoH = Math.round(photoW * (4/3));
+  const headerH = Math.round(pW*0.12);
+  const footerH = Math.round(pW*0.18);
+  const pH = headerH + photoH + footerH;
+  receiptCanvas.width = pW; receiptCanvas.height = pH;
+  rcCtx.fillStyle = '#fffdf7'; rcCtx.fillRect(0,0,pW,pH);
+  // header
+  rcCtx.fillStyle = '#111'; rcCtx.textAlign='center'; rcCtx.font = `${Math.round(pW*0.06)}px monospace`;
+  rcCtx.fillText('VIZRIZE PHOTOBOOTH', pW/2, Math.round(headerH*0.45));
+  rcCtx.font = `${Math.round(pW*0.03)}px monospace`; rcCtx.fillText(`${LOCATION_LABEL} • Photobooth`, pW/2, Math.round(headerH*0.82));
+  // photo crop 4:3
+  const innerBorder = Math.max(8, Math.round(photoW*0.03));
+  const photoCanvasPrint = cropCenter(rawCanvas, photoW - innerBorder*2, photoH - innerBorder*2);
+  const px = sidePad, py = headerH + 8;
+  rcCtx.fillStyle = '#fff'; rcCtx.fillRect(px, py, photoW, photoH);
+  rcCtx.drawImage(photoCanvasPrint, px + innerBorder, py + innerBorder, photoCanvasPrint.width, photoCanvasPrint.height);
+  // footer
+  const tx = makeTxId(); const dateStr = new Date().toLocaleDateString('id-ID',{day:'2-digit',month:'short',year:'numeric'});
+  const bodyY = py + photoH + 12;
+  rcCtx.fillStyle = '#111'; rcCtx.font = `${Math.round(pW*0.034)}px monospace`; rcCtx.textAlign='left';
+  rcCtx.fillText(`No. Transaksi: ${tx}`, sidePad + 4, bodyY);
+  rcCtx.fillText(`${LOCATION_LABEL} • ${dateStr}`, sidePad + 4, bodyY + Math.round(pW*0.04));
+  rcCtx.font = `${Math.round(pW*0.028)}px monospace`;
+  rcCtx.fillText('Terima kasih telah menggunakan Vizrize', sidePad + 4, bodyY + Math.round(pW*0.12));
+  drawBarcodeLike(rcCtx, bodyY + Math.round(pW*0.16), pW, sidePad);
+  lastPrintDataUrl = receiptCanvas.toDataURL('image/jpeg', 0.92);
 
-  // background + header
-  rcCtx.fillStyle = '#fffdf7'; rcCtx.fillRect(0,0,canvasW,canvasH);
-  rcCtx.fillStyle = '#111'; rcCtx.textAlign='center';
-  rcCtx.font = `${Math.round(canvasW*0.05)}px monospace`;
-  rcCtx.fillText('VIZRIZE PHOTOBOOTH', canvasW/2, Math.round(headerH*0.45));
-  rcCtx.font = `${Math.round(canvasW*0.028)}px monospace`;
-  rcCtx.fillText(`${LOCATION_LABEL} • Photobooth`, canvasW/2, Math.round(headerH*0.82));
+  // UPLOAD version (HD)
+  uploadCanvas.width = UPLOAD_W; uploadCanvas.height = UPLOAD_H;
+  ucCtx.fillStyle = '#fffdf7'; ucCtx.fillRect(0,0,UPLOAD_W,UPLOAD_H);
+  ucCtx.fillStyle = '#111'; ucCtx.textAlign='center'; ucCtx.font = '44px monospace';
+  ucCtx.fillText('VIZRIZE PHOTOBOOTH', UPLOAD_W/2, 64);
+  ucCtx.font = '20px monospace'; ucCtx.fillText(`${LOCATION_LABEL} • Photobooth`, UPLOAD_W/2, 100);
+  const upPad = Math.round(UPLOAD_W*0.06);
+  const upPhotoW = UPLOAD_W - upPad*2;
+  const upPhotoH = Math.round(upPhotoW * (4/3));
+  const upInner = Math.round(upPhotoW*0.03);
+  const upPhotoCanvas = cropCenter(rawCanvas, upPhotoW - upInner*2, upPhotoH - upInner*2);
+  const upPx = upPad, upPy = 140;
+  ucCtx.fillStyle = '#fff'; ucCtx.fillRect(upPx, upPy, upPhotoW, upPhotoH);
+  ucCtx.drawImage(upPhotoCanvas, upPx + upInner, upPy + upInner, upPhotoCanvas.width, upPhotoCanvas.height);
+  ucCtx.fillStyle = '#111'; ucCtx.font='18px monospace'; ucCtx.textAlign='left';
+  ucCtx.fillText(`No. Transaksi: ${tx}`, upPad + 4, upPy + upPhotoH + 40);
+  ucCtx.fillText(`${LOCATION_LABEL} • ${dateStr}`, upPad + 4, upPy + upPhotoH + 72);
+  ucCtx.textAlign='center'; ucCtx.font='16px monospace'; ucCtx.fillText('Scan QR untuk mengunduh foto', UPLOAD_W/2, UPLOAD_H - 60);
+  lastUploadDataUrl = uploadCanvas.toDataURL('image/jpeg', 0.98);
 
-  // draw each frame stacked
-  let y = headerH + 6;
+  // update preview with print version (keputusan: preview uses print-sized image to avoid stretching)
+  photoPreview.src = lastPrintDataUrl;
+  txIdEl.textContent = tx; dateTextEl.textContent = dateStr; footerText.textContent = `${LOCATION_LABEL} • ${dateStr}`;
+  receiptCard.style.display = 'block'; previewControls.style.display = 'flex'; document.getElementById('cameraWrap').style.display = 'none';
+}
+
+/* ===== RENDER: strip (both print & upload) ===== */
+async function renderStrip(rawCanvasArray){
+  // PRINT: small vertical stacked squares
+  const pW = PRINT_W; const pad = 6;
+  const frameW = pW - pad*2;
+  const frameH = Math.round(frameW * 1); // 1:1
+  const headerH = Math.round(pW*0.12);
+  const footerH = Math.round(pW*0.12);
+  const pH = headerH + footerH + frameH*3 + STRIP_GAP*2;
+  receiptCanvas.width = pW; receiptCanvas.height = pH;
+  rcCtx.fillStyle = '#fffdf7'; rcCtx.fillRect(0,0,pW,pH);
+  // header
+  rcCtx.fillStyle = '#111'; rcCtx.textAlign='center'; rcCtx.font = `${Math.round(pW*0.05)}px monospace`;
+  rcCtx.fillText('VIZRIZE PHOTOBOOTH', pW/2, Math.round(headerH*0.45));
+  rcCtx.font = `${Math.round(pW*0.03)}px monospace`; rcCtx.fillText(`${LOCATION_LABEL} • Photobooth`, pW/2, Math.round(headerH*0.82));
+  // frames
+  let y = headerH;
   for(let i=0;i<3;i++){
-    const img = new Image();
-    img.src = photos[i];
-    // wait for load synchronously per image to avoid draw issues
-    await new Promise(res=>{
-      img.onload = ()=>{
-        rcCtx.fillStyle = '#fff';
-        rcCtx.fillRect(sidePad, y, frameW, frameH);
-        // inner border
-        const ib = Math.max(6, Math.round(frameW*0.03));
-        rcCtx.drawImage(img, sidePad + ib, y + ib, frameW - ib*2, frameH - ib*2);
-        res();
-      };
-      img.onerror = ()=>res();
-    });
-    y += frameH + gap;
+    const raw = rawCanvasArray[i];
+    // crop to square(inner)
+    const inner = Math.max(6, Math.round(frameW*0.03));
+    const cropped = cropCenter(raw, frameW - inner*2, frameH - inner*2);
+    rcCtx.fillStyle = '#fff'; rcCtx.fillRect(pad, y, frameW, frameH);
+    rcCtx.drawImage(cropped, pad + inner, y + inner, cropped.width, cropped.height);
+    y += frameH + STRIP_GAP;
   }
+  // footer
+  const tx = makeTxId(); const dateStr = new Date().toLocaleDateString('id-ID',{day:'2-digit',month:'short',year:'numeric'});
+  rcCtx.fillStyle = '#111'; rcCtx.font = `${Math.round(pW*0.03)}px monospace`; rcCtx.textAlign='center';
+  rcCtx.fillText(`${LOCATION_LABEL} • ${dateStr}`, pW/2, pH - footerH + 28);
+  drawBarcodeLike(rcCtx, pH - footerH + 36, pW, pad);
+  lastPrintDataUrl = receiptCanvas.toDataURL('image/jpeg', 0.92);
 
-  // footer text
-  const dateStr = new Date().toLocaleDateString('id-ID',{day:'2-digit',month:'short',year:'numeric'});
-  rcCtx.fillStyle = '#111'; rcCtx.font = `${Math.round(canvasW*0.034)}px monospace`; rcCtx.textAlign='center';
-  rcCtx.fillText(`${LOCATION_LABEL} • ${dateStr}`, canvasW/2, canvasH - footerH + 28);
-  rcCtx.font = `${Math.round(canvasW*0.028)}px monospace`;
-  rcCtx.fillText('Scan QR untuk mengunduh foto', canvasW/2, canvasH - footerH + 60);
+  // UPLOAD: 1080x1920 vertical, stack 3 squares
+  uploadCanvas.width = UPLOAD_W; uploadCanvas.height = UPLOAD_H;
+  ucCtx.fillStyle = '#fffdf7'; ucCtx.fillRect(0,0,UPLOAD_W,UPLOAD_H);
+  ucCtx.fillStyle = '#111'; ucCtx.textAlign='center'; ucCtx.font='36px monospace';
+  ucCtx.fillText('VIZRIZE PHOTOBOOTH', UPLOAD_W/2, 64);
+  ucCtx.font='18px monospace'; ucCtx.fillText(`${LOCATION_LABEL} • Photobooth`, UPLOAD_W/2, 100);
+  // compute square for upload: leave padding and header/footer
+  const upPad = Math.round(UPLOAD_W*0.06);
+  const availableH = UPLOAD_H - 160; // header/footer approx
+  const upSquare = Math.floor((availableH - STRIP_GAP*2) / 3);
+  let upY = 120;
+  for(let i=0;i<3;i++){
+    const raw = rawCanvasArray[i];
+    const inner = Math.round(upSquare*0.06);
+    const cropped = cropCenter(raw, upSquare - inner*2, upSquare - inner*2);
+    const drawW = UPLOAD_W - upPad*2;
+    ucCtx.fillStyle = '#fff'; ucCtx.fillRect(upPad, upY, drawW, upSquare);
+    ucCtx.drawImage(cropped, upPad + inner, upY + inner, drawW - inner*2, upSquare - inner*2);
+    upY += upSquare + STRIP_GAP;
+  }
+  ucCtx.textAlign='center'; ucCtx.font='16px monospace'; ucCtx.fillText('Scan QR untuk mengunduh foto', UPLOAD_W/2, UPLOAD_H - 60);
+  lastUploadDataUrl = uploadCanvas.toDataURL('image/jpeg', 0.98);
 
-  // finalize
-  lastReceiptDataUrl = receiptCanvas.toDataURL('image/jpeg', 0.92);
-  photoPreview.src = lastReceiptDataUrl;
-  txIdEl.textContent = makeTxId();
-  dateTextEl.textContent = dateStr;
-  totalPriceEl.textContent = 'Rp 0';
-  footerText.textContent = `${LOCATION_LABEL} • ${dateStr}`;
-
-  receiptCard.style.display='block';
-  previewControls.style.display='flex';
-  document.getElementById('cameraWrap').style.display='none';
+  // preview show print preview
+  photoPreview.src = lastPrintDataUrl;
+  txIdEl.textContent = tx; dateTextEl.textContent = dateStr; footerText.textContent = `${LOCATION_LABEL} • ${dateStr}`;
+  receiptCard.style.display = 'block'; previewControls.style.display = 'flex'; document.getElementById('cameraWrap').style.display = 'none';
 }
 
-/* Visual flash effect */
-function doFlash(){
-  flashEl.style.opacity = '0.95';
-  setTimeout(()=>{ flashEl.style.opacity = '0'; }, 160);
-}
+/* ===== HIGH LEVEL CAPTURE FLOW ===== */
+startBtn.addEventListener('click', async ()=>{
+  if(audioCtx.state === 'suspended') await audioCtx.resume();
+  startBtn.style.display = 'none';
 
-function makeTxId(){
-  const t = Date.now().toString(36).toUpperCase().slice(-8);
-  return `VZ-${t}`;
-}
+  if(captureMode === 'single'){
+    await countdown(3);
+    shutter(); doFlash();
+    const raw = captureRawCanvas();
+    renderSingle(raw);
+  } else if(captureMode === 'strip'){
+    const raws = [];
+    for(let i=0;i<3;i++){
+      await countdown(3);
+      shutter(); doFlash();
+      raws.push(captureRawCanvas());
+      if(i<2) await new Promise(r=>setTimeout(r,500));
+    }
+    await renderStrip(raws);
+  }
+});
 
-/* ========== Upload to Cloudinary ========== */
-async function uploadReceiptImage(dataUrl){
-  if (!dataUrl) throw new Error('Tidak ada gambar');
+/* ===== upload to Cloudinary (client side) ===== */
+async function uploadToCloudinary(dataUrl){
+  if(!dataUrl) throw new Error('Tidak ada gambar');
   const form = new FormData();
   form.append('file', dataUrl);
   form.append('upload_preset', UPLOAD_PRESET);
-  form.append('folder', 'vizrize_photobooth');
-
-  const resp = await fetch(`https://api.cloudinary.com/v1_1/${CLOUD_NAME}/image/upload`, {
-    method: 'POST',
-    body: form
-  });
-
-  if (!resp.ok) {
+  // (optional) form.append('folder','vizrize_temp');
+  const resp = await fetch(`https://api.cloudinary.com/v1_1/${CLOUD_NAME}/image/upload`, { method:'POST', body: form });
+  if(!resp.ok){
     const txt = await resp.text().catch(()=>null);
     throw new Error('Cloudinary upload gagal: ' + (txt || resp.status));
   }
   const json = await resp.json();
-  if (!json.secure_url) throw new Error('Tidak ada URL dari Cloudinary');
+  if(!json.secure_url) throw new Error('Tidak ada URL dari Cloudinary');
   return json.secure_url;
 }
 
-/* ========== QR + return flow ========== */
-async function showQr(viewerUrl){
-  qrcodeDiv.innerHTML='';
-  new QRCode(qrcodeDiv,{text:viewerUrl,width:300,height:300,colorDark:'#000',colorLight:'#fff',correctLevel:QRCode.CorrectLevel.H});
-  qrUrlEl.textContent = viewerUrl;
-  qrOverlay.style.display='flex';
+/* ===== show QR and return flow ===== */
+async function showQr(url){
+  qrcodeDiv.innerHTML=''; new QRCode(qrcodeDiv,{text:url,width:260,height:260,correctLevel:QRCode.CorrectLevel.H});
+  qrUrlEl.textContent = url;
+  qrOverlay.style.display = 'flex';
   for(let i=RETURN_SECONDS;i>0;i--){
     qrCountdownEl.textContent = `Kembali ke kamera dalam ${i} detik...`;
     await new Promise(r=>setTimeout(r,1000));
   }
-  qrOverlay.style.display='none';
-  qrcodeDiv.innerHTML='';
-  qrUrlEl.textContent='';
-  qrCountdownEl.textContent='';
-  receiptCard.style.display='none';
-  previewControls.style.display='none';
-  startBtn.style.display='block';
-  document.getElementById('cameraWrap').style.display='flex';
+  qrOverlay.style.display = 'none'; qrcodeDiv.innerHTML=''; qrUrlEl.textContent = ''; qrCountdownEl.textContent = '';
+  receiptCard.style.display = 'none'; previewControls.style.display = 'none'; startBtn.style.display = 'inline-block'; document.getElementById('cameraWrap').style.display = 'flex';
 }
 
-/* cleanup */
-window.addEventListener('beforeunload', ()=>{
-  const stream = video.srcObject;
-  if(stream && stream.getTracks) stream.getTracks().forEach(t=>t.stop());
-});
+/* cleanup camera */
+window.addEventListener('beforeunload', ()=>{ const s = video.srcObject; if(s && s.getTracks) s.getTracks().forEach(t=>t.stop()); });
 
-/* accessibility: space to start */
-window.addEventListener('keydown', (e)=>{
-  if(e.code === 'Space' && startBtn.style.display !== 'none'){
-    e.preventDefault();
-    startBtn.click();
-  }
-});
+/* spacebar to start if mode selected */
+window.addEventListener('keydown',(e)=>{ if(e.code==='Space' && !startBtn.disabled && startBtn.style.display !== 'none'){ e.preventDefault(); startBtn.click(); } });
 </script>
 </body>
 </html>
