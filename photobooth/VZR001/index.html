@@ -651,19 +651,21 @@ function preparePreviewAndFinal(captured){
     console.warn('preview image creation failed', e);
   }
 
+// ... (di dalam fungsi preparePreviewAndFinal) ...
+
   // prepare dither (for print) from noShadow canvas
   lastDitherDataUrl = floydDither(noShadow, PRINT_W);
 
-  // --- TAMBAHKAN KODE INI UNTUK PRINT OTOMATIS ---
+  // --- UBAH KODE INI UNTUK PRINT OTOMATIS ---
   if (window.flutter_inappwebview) {
-    console.log('Memicu print otomatis...');
-    // Kirim data gambar (tanpa shadow) ke Flutter
-    const dataUrl = lastNoShadowCanvas.toDataURL('image/png');
-    window.flutter_inappwebview.callHandler('printHandler', dataUrl);
+    console.log('Memicu print otomatis dengan gambar dither...');
+    
+    // BENAR: Ini mengirim gambar hitam-putih 'lastDitherDataUrl'
+    window.flutter_inappwebview.callHandler('printHandler', lastDitherDataUrl);
   }
   // ----------------------------------------------
 
-} // <--- SEKARANG INI AKHIR FUNGSINYAs
+} // <--- AKHIR FUNGSI
 /* ================== Upload & QR popup ================== */
 
 async function uploadFinalWithShadowAndShowQr(){
@@ -730,15 +732,21 @@ retakeBtn.addEventListener('click', async ()=>{
 });
 
 printBtn.addEventListener('click', ()=>{
-  if(window.AndroidPrinter && lastDitherDataUrl){
-    try{ window.AndroidPrinter.printImage(lastDitherDataUrl); }catch(e){ alert('Failed to call AndroidPrinter: ' + e.message); }
-  } else { 
+  if (window.flutter_inappwebview) {
+    // BENAR: Kirim 'lastDitherDataUrl'
+    if (lastDitherDataUrl) {
+        window.flutter_inappwebview.callHandler('printHandler', lastDitherDataUrl);
+    } else {
+        alert('No dithered image ready.');
+    }
+  } else {
+    // ... (kode window.open untuk web) ...
     if(lastDitherDataUrl){
       const w = window.open(); w.document.body.style.margin = '0';
       const img = w.document.createElement('img'); img.src = lastDitherDataUrl; img.style.width='100%';
-      w.document.body.appendChild(img); 
+      w.document.body.appendChild(img);
     } else alert('No printable image ready.');
-  }
+  }
 });
 
 uploadBtn.addEventListener('click', async ()=>{
