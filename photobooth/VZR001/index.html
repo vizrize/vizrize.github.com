@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8"/>
 <meta name="viewport" content="width=device-width,initial-scale=1"/>
-<title>Vizrize Photobooth</title>
+<title>Vizrize Photobooth — Layered Preview (Fixed)</title>
 <script src="qrcode.min.js"></script>
 <style>
 :root{
@@ -853,11 +853,28 @@ async function uploadCanvasToCloudinary(canvas){
 }
 
 function showQrPopup(url){
-  qrcodeHost.innerHTML = '';
-  new QRCode(qrcodeHost, { text: url, width: 250, height: 250, correctLevel: QRCode.CorrectLevel.M });
-  barcodeUrlText.textContent = url; 
-  barcodePopup.style.display = 'flex';
+  qrcodeHost.innerHTML = ''; // Hapus QR lama
+  barcodeUrlText.textContent = url; // 1. Atur teksnya dulu
+  barcodePopup.style.display = 'flex'; // 2. TAMPILKAN POPUP-nya
   barcodePopup.onclick = (e)=>{ if(e.target === barcodePopup) barcodePopup.style.display = 'none'; };
+
+  // 3. --- INI PERBAIKANNYA ---
+  // Beri browser jeda 50 milidetik untuk selesai menampilkan popup,
+  // BARU kita gambar QR code di dalamnya.
+  setTimeout(function() {
+    try {
+      new QRCode(qrcodeHost, { 
+        text: url, 
+        width: 250, 
+        height: 250, 
+        correctLevel: QRCode.CorrectLevel.M 
+      });
+    } catch(e) {
+      console.error("Gagal membuat QR Code:", e);
+      // Ini akan muncul jika qrcode.min.js GAGAL di-load
+      alert("Gagal memuat script QR Code."); 
+    }
+  }, 50); // 50ms adalah jeda yang sangat aman
 }
 
 /* ================== Events ================== */
