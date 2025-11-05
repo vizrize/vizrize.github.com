@@ -599,19 +599,20 @@ function composeFinalForPrint(captured) {
   const leftX = 0; // REVISI: Margin kiri adalah 0
   const rightX = canvas.width; // REVISI: Margin kanan adalah 0
 
-  // --- 4. Gambar Header ---
-  currentY += padding;
-  ctx.font = `bold ${headerFontSize}px monospace`;
-  ctx.textAlign = 'center'; // Header tetap di tengah
-  ctx.fillText('VIZRIZE PHOTOBOOTH', canvas.width / 2, currentY + headerFontSize - (padding/2));
-  currentY += headerFontSize;
-  ctx.font = `normal ${subHeaderFontSize}px monospace`;
-  ctx.fillText('Jakarta Photobooth', canvas.width / 2, currentY + subHeaderFontSize);
-  currentY += subHeaderFontSize + padding;
-  
-  drawDashedLine(ctx, leftX, currentY, rightX, currentY); // Dashed line (full-width)
-  currentY += 5 + padding;
+// --- 4. Gambar Header (REVISI: Rata Kiri) ---
+currentY += padding;
+ctx.font = `bold ${headerFontSize}px monospace`;
+ctx.textAlign = 'left'; // UBAH KE 'left'
+ctx.fillText('VIZRIZE PHOTOBOOTH', leftX, currentY + headerFontSize - (padding/2)); // UBAH KE 'leftX'
+currentY += headerFontSize;
 
+ctx.font = `normal ${subHeaderFontSize}px monospace`;
+ctx.textAlign = 'left'; // UBAH KE 'left'
+ctx.fillText('Jakarta Photobooth', leftX, currentY + subHeaderFontSize); // UBAH KE 'leftX'
+currentY += subHeaderFontSize + padding;
+  
+drawDashedLine(ctx, leftX, currentY, rightX, currentY); // Dashed line (full-width)
+currentY += 8 + padding;
   // --- 5. Gambar Foto (Full-width) ---
   if (captured.length === 1) {
     const photoH = Math.round(photoW * (3/4));
