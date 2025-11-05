@@ -535,92 +535,150 @@ function roundRect(ctx, x, y, w, h, r, fill, stroke){
   if(fill) ctx.fill();
   if(stroke) ctx.stroke();
 }
-/* ================== Compose Canvas KHUSUS CETAK (SERBAGUNA) ================== */
+/* ================== Compose Canvas KHUSUS CETAK (REVISI FINAL) ================== */
 /*
   Fungsi ini membuat gambar BARU khusus untuk printer
-  - Lebar 384px (PRINT_W), TANPA margin
-  - Teks LEBIH BESAR dan Jelas
+  - Lebar 384px (PRINT_W), TANPA margin kiri/kanan
+  - Teks LEBIH BESAR dan Jelas (Hitam pekat)
+  - Menggambar DETAIL STRUK (Subtotal, Tax, Total)
   - Mengatur layout 1-strip atau 3-strip secara otomatis
 */
 function composeFinalForPrint(captured) {
   const canvas = printCanvas; // Menggunakan kanvas cetak
   canvas.width = PRINT_W; // 384px
 
-  // --- REVISI: Teks lebih besar agar jelas ---
-  const headerFontSize = 28;
-  const footerFontSize = 18;
+  // --- Font besar agar jelas di printer ---
+  const headerFontSize = 26;
+  const subHeaderFontSize = 16;
+  const receiptFontSize = 20;
+  const totalFontSize = 22;
+  const footerFontSize = 16;
   const padding = 8; // Jarak 8px
   const photoW = PRINT_W; // Lebar penuh, X=0, tanpa margin
 
+  // --- 1. Hitung Tinggi Foto ---
   let photoTotalHeight = 0;
-  
   if (captured.length === 1) {
-    // Kalkulasi tinggi untuk 1-strip
-    photoTotalHeight = Math.round(photoW * (3/4)); // Aspek rasio 4:3
+    photoTotalHeight = Math.round(photoW * (3/4)); // 4:3
   } else {
-    // REVISI: Kalkulasi tinggi untuk 3-strip (tanpa margin)
     const photoH = Math.round(photoW * (3/4));
-    // (Tinggi foto * 3) + (Jarak 8px * 2)
     photoTotalHeight = (photoH * captured.length) + (padding * (captured.length - 1));
   }
 
-  // Hitung total tinggi kanvas berdasarkan semua elemen
+  // --- 2. Hitung Total Tinggi Canvas ---
   let totalHeight = 0;
   totalHeight += padding; // Jarak atas
-  totalHeight += headerFontSize; // Header
-  totalHeight += padding; // Jarak 8px
-  totalHeight += photoTotalHeight; // Blok Foto (1 atau 3)
-  totalHeight += padding; // Jarak 8px
-  totalHeight += footerFontSize; // Footer
+  totalHeight += headerFontSize; // "VIZRIZE PHOTOBOOTH"
+  totalHeight += subHeaderFontSize; // "Jakarta Photobooth"
+  totalHeight += padding; // Jarak ke dashed line
+  totalHeight += 5; // Dashed line
+  totalHeight += padding; // Jarak ke foto
+  totalHeight += photoTotalHeight; // Blok Foto
+  totalHeight += padding; // Jarak ke dashed line
+  totalHeight += 5; // Dashed line
+  totalHeight += padding; // Jarak ke subtotal
+  totalHeight += receiptFontSize; // Subtotal
+  totalHeight += receiptFontSize; // Tax
+  totalHeight += padding; // Jarak ke total
+  totalHeight += totalFontSize; // Total
+  totalHeight += padding; // Jarak ke dashed line
+  totalHeight += 5; // Dashed line
+  totalHeight += padding; // Jarak ke thank you
+  totalHeight += footerFontSize; // "THANK YOU"
+  totalHeight += footerFontSize; // "PHOTORECEIPT"
   totalHeight += padding; // Jarak bawah
 
+  // --- 3. Set Canvas dan Mulai Menggambar ---
   canvas.height = totalHeight;
   const ctx = canvas.getContext('2d');
-  
-  // Latar belakang putih bersih
   ctx.fillStyle = '#ffffff';
   ctx.fillRect(0, 0, canvas.width, canvas.height);
+  ctx.fillStyle = '#000000'; // Teks hitam pekat (agar tidak di-dither)
   
   let currentY = 0;
-  
-  // --- 1. Gambar Header (X=0, font besar) ---
-  ctx.fillStyle = '#000000'; // HITAM PEKAT (agar tidak di-dither)
-  ctx.font = `bold ${headerFontSize}px monospace`;
-  ctx.textAlign = 'left';
-  currentY += padding; 
-  // Kita buat simpel saja untuk printer
-  ctx.fillText('VIZRIZE PHOTOBOOTH', 0, currentY + headerFontSize - (padding/2)); 
-  currentY += headerFontSize + padding;
+  const leftX = 0; // REVISI: Margin kiri adalah 0
+  const rightX = canvas.width; // REVISI: Margin kanan adalah 0
 
-  // --- 2. Gambar Foto (X=0, tanpa margin) ---
+  // --- 4. Gambar Header ---
+  currentY += padding;
+  ctx.font = `bold ${headerFontSize}px monospace`;
+  ctx.textAlign = 'center'; // Header tetap di tengah
+  ctx.fillText('VIZRIZE PHOTOBOOTH', canvas.width / 2, currentY + headerFontSize - (padding/2));
+  currentY += headerFontSize;
+  ctx.font = `normal ${subHeaderFontSize}px monospace`;
+  ctx.fillText('Jakarta Photobooth', canvas.width / 2, currentY + subHeaderFontSize);
+  currentY += subHeaderFontSize + padding;
+  
+  drawDashedLine(ctx, leftX, currentY, rightX, currentY); // Dashed line (full-width)
+  currentY += 5 + padding;
+
+  // --- 5. Gambar Foto (Full-width) ---
   if (captured.length === 1) {
-    // Mode 1-strip
     const photoH = Math.round(photoW * (3/4));
     const cropped = cropCenterTo4x3(captured[0], photoW);
     ctx.drawImage(cropped, 0, currentY, photoW, photoH);
-    currentY += photoH + padding;
+    currentY += photoH;
   } else {
-    // Mode 3-strip
     const photoH = Math.round(photoW * (3/4));
     captured.forEach((c, i) => {
       const cropped = cropCenterTo4x3(c, photoW);
       ctx.drawImage(cropped, 0, currentY, photoW, photoH);
       currentY += photoH;
-      if (i < captured.length - 1) {
-        currentY += padding; // Jarak 8px antar foto
-      }
+      if (i < captured.length - 1) currentY += padding; // Jarak 8px antar foto
     });
-    // Jarak 8px setelah blok foto
-    currentY += padding; 
   }
+  currentY += padding;
 
-  // --- 3. Gambar Footer (X=0, font besar) ---
-  ctx.fillStyle = '#000000'; // HITAM PEKAT
-  ctx.font = `normal ${footerFontSize}px monospace`;
+  // --- 6. Gambar Footer (Detail Receipt) ---
+  drawDashedLine(ctx, leftX, currentY, rightX, currentY); // Dashed line (full-width)
+  currentY += 5 + padding;
+
+  const subtotal = 15000;
+  const tax = Math.round(subtotal * 0.1);
+  const total = subtotal + tax;
+  
+  ctx.font = `normal ${receiptFontSize}px monospace`;
   ctx.textAlign = 'left';
-  ctx.fillText('~ PHOTORECEIPT by VizRize ~', 0, currentY + footerFontSize - (padding/2));
+  ctx.fillText('SUBTOTAL', leftX, currentY + receiptFontSize); // X=0
+  ctx.textAlign = 'right';
+  ctx.fillText('Rp' + subtotal.toLocaleString('id-ID'), rightX, currentY + receiptFontSize); // X=384
+  currentY += receiptFontSize;
 
-  return canvas; // Kembalikan kanvas yang siap di-dither
+  ctx.textAlign = 'left';
+  ctx.fillText('TAX (10%)', leftX, currentY + receiptFontSize); // X=0
+  ctx.textAlign = 'right';
+  ctx.fillText('Rp' + tax.toLocaleString('id-ID'), rightX, currentY + receiptFontSize); // X=384
+  currentY += receiptFontSize + padding;
+  
+  ctx.font = `bold ${totalFontSize}px monospace`;
+  ctx.textAlign = 'left';
+  ctx.fillText('TOTAL', leftX, currentY + totalFontSize); // X=0
+  ctx.textAlign = 'right';
+  ctx.fillText('Rp' + total.toLocaleString('id-ID'), rightX, currentY + totalFontSize); // X=384
+  currentY += totalFontSize + padding;
+
+  drawDashedLine(ctx, leftX, currentY, rightX, currentY); // Dashed line (full-width)
+  currentY += 5 + padding;
+  
+  ctx.font = `normal ${footerFontSize}px monospace`;
+  ctx.textAlign = 'center'; // Teks footer boleh tengah lagi
+  ctx.fillText('THANK YOU ~ HAVE A NICE DAY!', canvas.width / 2, currentY + footerFontSize);
+  currentY += footerFontSize;
+  ctx.font = `bold ${footerFontSize}px monospace`;
+  ctx.fillText('~ PHOTORECEIPT by VizRize ~', canvas.width / 2, currentY + footerFontSize);
+  
+  return canvas;
+}
+
+// Helper function untuk garis putus-putus
+function drawDashedLine(ctx, x1, y1, x2, y2) {
+    ctx.beginPath();
+    ctx.setLineDash([4, 4]); // 4px garis, 4px spasi
+    ctx.moveTo(x1, y1);
+    ctx.lineTo(x2, y2);
+    ctx.strokeStyle = '#000000'; // Hitam pekat
+    ctx.stroke();
+    ctx.setLineDash([]); // Reset
 }
 /* ================== Flow: preview, upload, print ================== */
 
