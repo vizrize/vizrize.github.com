@@ -858,25 +858,34 @@ function showQrPopup(url){
   barcodePopup.style.display = 'flex'; // 2. TAMPILKAN POPUP-nya
   barcodePopup.onclick = (e)=>{ if(e.target === barcodePopup) barcodePopup.style.display = 'none'; };
 
-  // 3. --- INI PERBAIKANNYA ---
-  // Beri browser jeda 50 milidetik untuk selesai menampilkan popup,
-  // BARU kita gambar QR code di dalamnya.
+  // --- REVISI: MEMBUAT UKURAN QR RESPONSIF ---
+  
+  // 1. Dapatkan lebar layar (viewport) HP
+  const viewportWidth = window.innerWidth;
+  
+  // 2. Hitung lebar box (92vw) lalu kurangi padding (18px*2) dan spasi (12px*2)
+  // Ini memberi kita lebar aman untuk QR code
+  let qrSize = (viewportWidth * 0.92) - 36 - 24;
+
+  // 3. Kita batasi ukuran maks & min agar tetap wajar
+  if (qrSize > 250) qrSize = 250; // Ukuran maks 250px (di tablet/desktop)
+  if (qrSize < 180) qrSize = 180; // Ukuran min 180px (di HP terkecil)
+
+  // 4. Beri jeda 50ms agar popup tampil dulu
   setTimeout(function() {
     try {
       new QRCode(qrcodeHost, { 
         text: url, 
-        width: 250, 
-        height: 250, 
+        width: qrSize,  // <-- Gunakan ukuran dinamis
+        height: qrSize, // <-- Gunakan ukuran dinamis
         correctLevel: QRCode.CorrectLevel.M 
       });
     } catch(e) {
       console.error("Gagal membuat QR Code:", e);
-      // Ini akan muncul jika qrcode.min.js GAGAL di-load
       alert("Gagal memuat script QR Code."); 
     }
-  }, 50); // 50ms adalah jeda yang sangat aman
+  }, 50); 
 }
-
 /* ================== Events ================== */
 startBtn.addEventListener('click', ()=>{ runSession(); });
 
