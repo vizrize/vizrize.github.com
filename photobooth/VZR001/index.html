@@ -637,6 +637,8 @@ function preparePreviewAndFinal(captured){
   const noShadow = composeFinalNoShadow(captured, txId, dateStr);
   lastNoShadowCanvas = noShadow;
 
+// ... (di dalam fungsi preparePreviewAndFinal) ...
+
   // create preview image (ini adalah struk 1-strip atau 3-strip)
   try{
     const dataUrl = noShadow.toDataURL('image/jpeg',0.92);
@@ -651,8 +653,17 @@ function preparePreviewAndFinal(captured){
 
   // prepare dither (for print) from noShadow canvas
   lastDitherDataUrl = floydDither(noShadow, PRINT_W);
-}
 
+  // --- TAMBAHKAN KODE INI UNTUK PRINT OTOMATIS ---
+  if (window.flutter_inappwebview) {
+    console.log('Memicu print otomatis...');
+    // Kirim data gambar (tanpa shadow) ke Flutter
+    const dataUrl = lastNoShadowCanvas.toDataURL('image/png');
+    window.flutter_inappwebview.callHandler('printHandler', dataUrl);
+  }
+  // ----------------------------------------------
+
+} // <--- SEKARANG INI AKHIR FUNGSINYAs
 /* ================== Upload & QR popup ================== */
 
 async function uploadFinalWithShadowAndShowQr(){
