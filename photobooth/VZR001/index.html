@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8"/>
 <meta name="viewport" content="width=device-width,initial-scale=1"/>
-<title>Vizrize Photobooth — Final (9:16 Portrait)</title>
+<title>Vizrize Photobooth — Layered Preview (Fixed)</title>
 <script src="https://cdn.jsdelivr.net/npm/qrcodejs/qrcode.min.js"></script>
 <style>
 :root{
@@ -19,9 +19,45 @@
 html,body{height:100%;margin:0;font-family:Inter,system-ui,-apple-system,'Segoe UI',Roboto,Arial;background:var(--bg);color:var(--muted);-webkit-font-smoothing:antialiased}
 body{overflow:hidden}
 
-/* camera background */
-#cameraWrap{position:fixed;inset:0;display:flex;align-items:center;justify-content:center;background:var(--bg);z-index:1}
-video#camera{width:100vw;height:100vh;object-fit:cover;transform:scaleX(-1);}
+/* Layer 1: Full-screen background video */
+#cameraBg {
+  position: fixed;
+  inset: 0;
+  width: 100vw;
+  height: 100vh;
+  object-fit: cover;
+  transform: scaleX(-1);
+  z-index: 1;
+}
+
+/* Layer 2: Semi-transparent overlay */
+#cameraOverlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(255, 255, 255, 0.5);
+  z-index: 2;
+}
+
+/* Layer 3: 4:3 Active Capture Area */
+#cameraWrap{
+  position: fixed;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: 100vw; 
+  height: calc(100vw * (3 / 4)); /* 4:3 Ratio */
+  max-width: 100vw;
+  max-height: 100vh; 
+  z-index: 3; 
+  overflow: hidden;
+  box-shadow: 0 10px 40px rgba(0,0,0,0.2);
+}
+video#camera{
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  transform: scaleX(-1);
+}
 
 /* top branding */
 .topLogo{position:fixed;top:18px;left:50%;transform:translateX(-50%);z-index:40;text-align:center;pointer-events:none}
@@ -48,24 +84,19 @@ video#camera{width:100vw;height:100vh;object-fit:cover;transform:scaleX(-1);}
 
 /* modal (preview) */
 .modalOverlay{position:fixed;inset:0;background:rgba(0,0,0,0.56);display:none;align-items:center;justify-content:center;z-index:120;padding:20px;backdrop-filter:blur(4px)}
-/* --- PERBAIKAN 2.2: Modal diubah agar lebih besar di tablet --- */
 .modalReceipt{width:min(500px,94vw);max-height:92vh;overflow:auto;background:linear-gradient(180deg,var(--receipt-bg),#fff8f2);border-radius:10px;box-shadow:0 22px 60px rgba(0,0,0,0.32);position:relative;border:1px solid var(--receipt-edge);font-family:'Courier New',monospace}
 .tear{height:18px;background:repeating-linear-gradient(90deg,#fff 0 6px, transparent 6px 12px);border-top-left-radius:8px;border-top-right-radius:8px}
-.receiptInner{padding:18px;background:#ffffff} /* white preview area */
+.receiptInner{padding:18px;background:#ffffff}
 .headerTitle{font-weight:900;letter-spacing:1px;color:#111;font-size:18px;text-align:center}
 .small{font-size:12px;color:var(--text-abu)}
 .divider{height:1px;border-top:1px dashed #ded6c8;margin:10px 0}
 
-/* photos area */
-.stripPhoto{width:100%;display:flex;flex-direction:column;gap:6px;margin:8px 0}
+/* photos area (dihilangkan via JS) */
+.stripPhoto{width:100%;display:none;flex-direction:column;gap:6px;margin:8px 0}
 .stripPhoto img{width:100%;height:auto;display:block;border:8px solid #fff;box-shadow:0 8px 28px rgba(0,0,0,0.08);object-fit:cover;border-radius:8px}
 
-/* itemized area (receipt text, abu-abu) */
-/* .itemList DIHAPUS DARI HTML */
-
-/* final preview container (no shadow for modal) */
+/* final preview container */
 #finalPreviewWrap{display:flex;align-items:center;justify-content:center;margin:12px 0}
-/* --- PERBAIKAN 2.2: max-width diubah agar preview besar --- */
 .finalPreviewImg{width:100%;max-width:100%;border-radius:8px;display:block;}
 
 /* barcode popup */
@@ -90,20 +121,25 @@ canvas{display:none}
   #countNum{font-size:100px}
   .startCard{width:92vw;padding:20px}
   .headerTitle{font-size:16px}
-  /* --- PERBAIKAN 2.2: Aturan max-width finalPreviewImg dihapus --- */
 }
 </style>
 </head>
 <body>
 
+<!-- Layered Camera -->
+<video id="cameraBg" autoplay playsinline muted></video>
+<div id="cameraOverlay" aria-hidden="true"></div>
 <div id="cameraWrap"><video id="camera" autoplay playsinline muted></video></div>
+
 <div id="flash" aria-hidden="true"></div>
 
+<!-- branding -->
 <div class="topLogo" aria-hidden="true">
   <div class="brand">VIZRIZE</div>
   <div class="subtitle">PHOTOBOOTH RECEIPT</div>
 </div>
 
+<!-- center start -->
 <div class="centerUI" id="centerUI">
   <div class="startCard" id="startCard" role="region" aria-label="Start photobooth">
     <div style="font-weight:900;font-size:18px;margin-bottom:6px">Vizrize Photobooth</div>
@@ -116,6 +152,7 @@ canvas{display:none}
   </div>
 </div>
 
+<!-- countdown -->
 <div id="countdownOverlay" aria-hidden="true">
   <div id="countBox">
     <div id="countNum">3</div>
@@ -123,6 +160,7 @@ canvas{display:none}
   </div>
 </div>
 
+<!-- preview modal -->
 <div id="modalOverlay" class="modalOverlay" aria-hidden="true">
   <div class="modalReceipt" role="dialog" aria-modal="true" aria-labelledby="receiptLabel">
     <div class="tear" aria-hidden="true"></div>
@@ -134,15 +172,14 @@ canvas{display:none}
 
       <div class="divider"></div>
 
-            <div class="stripPhoto" id="stripPhoto"></div>
+      <div class="stripPhoto" id="stripPhoto"></div>
+      <div class="divider" id="stripDivider" style="display:none"></div>
+
+      <div id="finalPreviewWrap"></div>
 
       <div class="divider"></div>
 
-            <div id="finalPreviewWrap"></div>
-
-      <div class="divider"></div>
-
-                        <div class="uploadUrl" id="uploadedUrl">Not uploaded</div>
+      <div class="uploadUrl" id="uploadedUrl">Not uploaded</div>
     </div>
     <div class="tear" aria-hidden="true"></div>
 
@@ -154,6 +191,7 @@ canvas{display:none}
   </div>
 </div>
 
+<!-- QR popup -->
 <div id="barcodePopup" aria-hidden="true">
   <div id="barcodeBox">
     <button id="barcodeClose" aria-label="Close">×</button>
@@ -164,17 +202,25 @@ canvas{display:none}
   </div>
 </div>
 
-<canvas id="captureCanvas"></canvas>         <canvas id="noShadowCanvas"></canvas>        <canvas id="uploadShadowCanvas"></canvas>    <canvas id="ditherCanvas"></canvas>          <script>
+<!-- hidden canvases -->
+<canvas id="captureCanvas"></canvas>
+<canvas id="noShadowCanvas"></canvas>
+<canvas id="uploadShadowCanvas"></canvas>
+<canvas id="ditherCanvas"></canvas>
+
+<script>
 /* ================== CONFIG ================== */
 const CLOUD_NAME = "dcqqaebln";
 const UPLOAD_PRESET = "vizrize_unsigned";
-const PRINT_W = 384;           // thermal width for dithering
-const FINAL_W = 1080;         // final portrait width
-const FINAL_H = 1920;         // final portrait height
-const STRIP_GAP = 8; // Sedikit diperbesar dari 6
+const PRINT_W = 384;
+const FINAL_W = 1080;
+const FINAL_H = 1920;
+const STRIP_GAP = 8;
 
 /* ================== DOM ================== */
 const video = document.getElementById('camera');
+const videoBg = document.getElementById('cameraBg'); 
+const cameraOverlay = document.getElementById('cameraOverlay'); 
 const startBtn = document.getElementById('startBtn');
 const startCard = document.getElementById('startCard');
 const countdownOverlay = document.getElementById('countdownOverlay');
@@ -184,8 +230,8 @@ const flashEl = document.getElementById('flash');
 
 const modalOverlay = document.getElementById('modalOverlay');
 const stripPhoto = document.getElementById('stripPhoto');
+const stripDivider = document.getElementById('stripDivider');
 const finalPreviewWrap = document.getElementById('finalPreviewWrap');
-// const itemList = document.getElementById('itemList'); // <-- Dihapus
 const uploadedUrlEl = document.getElementById('uploadedUrl');
 const uploadBtn = document.getElementById('uploadBtn');
 const printBtn = document.getElementById('printBtn');
@@ -201,7 +247,7 @@ const noShadowCanvas = document.getElementById('noShadowCanvas');
 const uploadShadowCanvas = document.getElementById('uploadShadowCanvas');
 const ditherCanvas = document.getElementById('ditherCanvas');
 
-let captureMode = ''; // 'single' or 'strip'
+let captureMode = '';
 let capturedCanvases = [];
 let lastDitherDataUrl = null;
 let lastUploadUrl = null;
@@ -218,7 +264,9 @@ function shutterSound(){ beep(900,0.04); setTimeout(()=>beep(1400,0.04),70); }
 async function openCamera(){
   try{
     const stream = await navigator.mediaDevices.getUserMedia({ video:{ facingMode:'user', width:{ideal:1920}, height:{ideal:1080} }, audio:false });
-    video.srcObject = stream;
+    video.srcObject = stream; // 4:3 active preview
+    videoBg.srcObject = stream; // full-screen background
+
     video.addEventListener('loadedmetadata', ()=> {
       setTimeout(()=> {
         if(video.videoWidth > 0 && video.videoHeight > 0){
@@ -250,7 +298,6 @@ function captureOnce(){
   return out;
 }
 
-/* crop center to 4:3 width target */
 function cropCenterTo4x3(srcCanvas, targetW){
   const targetH = Math.round(targetW * 3 / 4);
   const sw = srcCanvas.width, sh = srcCanvas.height;
@@ -266,7 +313,6 @@ function cropCenterTo4x3(srcCanvas, targetW){
   return out;
 }
 
-/* simple fintage filter */
 function applyFintage(canvas){
   const ctx = canvas.getContext('2d');
   const img = ctx.getImageData(0,0,canvas.width,canvas.height);
@@ -287,7 +333,6 @@ function applyFintage(canvas){
   return canvas;
 }
 
-/* floyd–steinberg dither for thermal */
 function floydDither(srcCanvas, targetWidth){
   const scale = targetWidth / srcCanvas.width;
   const tw = Math.round(srcCanvas.width * scale);
@@ -315,7 +360,7 @@ function floydDither(srcCanvas, targetWidth){
       if(x-1 >=0 && y+1 < th) lum[idx + tw -1] += err * 3/16;
       if(y+1 < th) lum[idx + tw] += err * 5/16;
       if(x+1 < tw && y+1 < th) lum[idx + tw +1] += err * 1/16;
-play: }
+    }
   }
   for(let y=0;y<th;y++){
     for(let x=0;x<tw;x++){
@@ -330,14 +375,12 @@ play: }
 
 /* ================== Compose final canvases ================== */
 
-/* --- PERBAIKAN 1.3, 1.5, 3.5: Fungsi ini ditulis ulang agar proporsional --- */
-/* noShadowCanvas: final 1080x1920 portrait, white background, header + photos + footer (real struk) */
+/* --- REVISI 3 & 4 (FIXED 3-STRIP SCALING) --- */
 function composeFinalNoShadow(captured, txId, dateStr){
   const canvas = noShadowCanvas;
   canvas.width = FINAL_W; canvas.height = FINAL_H;
   const ctx = canvas.getContext('2d');
   
-  // 1. Setup layout constants
   const pad = 48;
   const paperX = pad, paperY = pad;
   const paperW = FINAL_W - pad*2, paperH = FINAL_H - pad*2;
@@ -349,12 +392,11 @@ function composeFinalNoShadow(captured, txId, dateStr){
   const colorAbu = '#6b5c4b';
   const colorEdge = '#ded6c8';
 
-  // 2. Draw background
   ctx.fillStyle = '#ffffff'; ctx.fillRect(0,0,FINAL_W,FINAL_H);
-  ctx.fillStyle = '#fffdf7'; // warna struk (var --receipt-bg)
+  ctx.fillStyle = '#fffdf7'; 
   ctx.fillRect(paperX, paperY, paperW, paperH);
 
-  // 3. Draw Header
+  // 3. Draw Header (Always visible)
   ctx.fillStyle = '#111'; ctx.textAlign = 'center'; ctx.font = '32px monospace';
   const headerY = paperY + 70;
   ctx.fillText('VIZRIZE PHOTOBOOTH', paperX + paperW/2, headerY);
@@ -364,7 +406,7 @@ function composeFinalNoShadow(captured, txId, dateStr){
   ctx.strokeStyle = colorEdge; ctx.setLineDash([6,6]);
   ctx.beginPath(); ctx.moveTo(paperX + 12, headerLineY); ctx.lineTo(paperX + paperW - 12, headerLineY); ctx.stroke(); ctx.setLineDash([]);
 
-  // 4. Draw Footer (from bottom-up) - Ini memperbaiki proporsi
+  // 4. Draw Footer (Always visible)
   const footerBrandY = paperBottom - 40;
   const footerThankY = paperBottom - 70;
   const footerTotalY = paperBottom - 130;
@@ -372,13 +414,11 @@ function composeFinalNoShadow(captured, txId, dateStr){
   const footerSubY = footerTaxY - 30;
   const footerLineY = footerSubY - 32;
 
-  // Footer text (Item 3.5)
   ctx.font = '18px monospace'; ctx.fillStyle = colorAbu; ctx.textAlign = 'center';
   ctx.fillText('THANK YOU ~ HAVE A NICE DAY!', paperX + paperW/2, footerThankY);
   ctx.font = '16px monospace'; ctx.fillStyle = '#111';
   ctx.fillText('~ PHOTORECEIPT by VizRize ~', paperX + paperW/2, footerBrandY);
 
-  // Footer totals
   const subtotal = 15000;
   const tax = Math.round(subtotal * 0.1);
   const total = subtotal + tax;
@@ -392,37 +432,62 @@ function composeFinalNoShadow(captured, txId, dateStr){
 
   ctx.font = '20px monospace'; ctx.fillStyle = '#111';
   ctx.textAlign = 'left'; ctx.fillText('TOTAL', leftX, footerTotalY);
-ctx.textAlign = 'right'; ctx.fillText('Rp' + total.toLocaleString('id-ID'), rightX, footerTotalY);
+  ctx.textAlign = 'right'; ctx.fillText('Rp' + total.toLocaleString('id-ID'), rightX, footerTotalY);
 
-  // Footer divider
   ctx.setLineDash([6,6]);
   ctx.beginPath(); ctx.moveTo(contentX, footerLineY); ctx.lineTo(contentX + contentW, footerLineY); ctx.strokeStyle = colorEdge; ctx.stroke(); ctx.setLineDash([]);
 
-  // 5. Draw Photos (di ruang sisa, agar proporsional - Item 1.5)
+  // 5. Draw Photos (Calculates fit-in logic)
   const photoAreaTop = headerLineY + 20;
   const photoAreaBottom = footerLineY - 20;
-  const photoAreaH = photoAreaBottom - photoAreaTop;
-  const photoW = contentW;
-  const photoH = Math.round(photoW * 3 / 4);
+  const photoAreaH = photoAreaBottom - photoAreaTop; // Available height
+  const photoW = contentW; // Available width
 
   if(captured.length === 1){
-    // Pusatkan 1 foto secara vertikal
-    const photoY = photoAreaTop + (photoAreaH - photoH) / 2;
-    const cropped = cropCenterTo4x3(captured[0], photoW);
+    // 1-STRIP LOGIC (Smaller Margins)
+    let imgH = photoAreaH; 
+    let imgW = Math.round(imgH * (4 / 3)); 
+    
+    if (imgW > photoW) {
+        imgW = photoW; 
+        imgH = Math.round(imgW * (3 / 4)); 
+    }
+    
+    const imgX = contentX + (photoW - imgW) / 2;
+    const imgY = photoAreaTop + (photoAreaH - imgH) / 2;
+
+    const cropped = cropCenterTo4x3(captured[0], imgW);
     applyFintage(cropped);
-    ctx.fillStyle = '#fff'; ctx.fillRect(contentX, photoY, photoW, photoH);
-    ctx.drawImage(cropped, contentX, photoY, photoW, photoH);
+    ctx.fillStyle = '#fff'; 
+    ctx.fillRect(imgX, imgY, imgW, imgH); 
+    ctx.drawImage(cropped, imgX, imgY, imgW, imgH);
+
   } else {
-    // Pusatkan blok 3 foto secara vertikal
-    const totalPhotoH = (photoH * captured.length) + (STRIP_GAP * (captured.length - 1));
-    let photoY = photoAreaTop + (photoAreaH - totalPhotoH) / 2;
+    // 3-STRIP LOGIC (Fit-in Scaling)
+    const photoH_unscaled = Math.round(photoW * 3 / 4);
+    const totalPhotoH_unscaled = (photoH_unscaled * captured.length) + (STRIP_GAP * (captured.length - 1));
+
+    let scale = 1.0;
+    if (totalPhotoH_unscaled > photoAreaH) {
+      scale = photoAreaH / totalPhotoH_unscaled;
+    }
+
+    const photoW_scaled = Math.round(photoW * scale);
+    const photoH_scaled = Math.round(photoH_unscaled * scale);
+    const gap_scaled = Math.round(STRIP_GAP * scale);
+
+    const totalPhotoH_scaled = (photoH_scaled * captured.length) + (gap_scaled * (captured.length - 1));
+
+    let photoY = photoAreaTop + (photoAreaH - totalPhotoH_scaled) / 2; // Center block vertically
+    let photoX = contentX + (contentW - photoW_scaled) / 2; // Center block horizontally
     
     captured.forEach((c,i)=>{
-      const cropped = cropCenterTo4x3(c, photoW);
+      const cropped = cropCenterTo4x3(c, photoW); // Crop at high res
       applyFintage(cropped);
-      ctx.fillStyle = '#fff'; ctx.fillRect(contentX, photoY, photoW, photoH);
-      ctx.drawImage(cropped, contentX, photoY, photoW, photoH);
-      photoY += photoH + STRIP_GAP;
+      ctx.fillStyle = '#fff'; 
+      ctx.fillRect(photoX, photoY, photoW_scaled, photoH_scaled);
+      ctx.drawImage(cropped, photoX, photoY, photoW_scaled, photoH_scaled); // Draw scaled
+      photoY += photoH_scaled + gap_scaled;
     });
   }
   
@@ -432,32 +497,26 @@ ctx.textAlign = 'right'; ctx.fillText('Rp' + total.toLocaleString('id-ID'), righ
 
 /* uploadShadowCanvas: builds a slightly larger canvas containing noShadow canvas centered with shadow */
 function composeUploadWithShadow(noShadowCanvasEl){
-  // create an upload canvas slightly bigger to allow shadow bleed
-  const pad = 40; // extra space for shadow
+  const pad = 40; 
   const upW = noShadowCanvasEl.width + pad*2;
   const upH = noShadowCanvasEl.height + pad*2;
   const u = uploadShadowCanvas;
   u.width = upW; u.height = upH;
   const ctx = u.getContext('2d');
 
-  // white background
   ctx.fillStyle = '#ffffff'; ctx.fillRect(0,0,upW,upH);
 
-  // apply shadow for the paper (shadow is part of image)
   ctx.save();
   ctx.shadowColor = 'rgba(0,0,0,0.18)';
   ctx.shadowBlur = 40;
   ctx.shadowOffsetY = 16;
-  // draw paper background rectangle (slightly inset)
   const dstX = pad, dstY = pad;
-  // draw a rounded rect for nicer look
   const r = 12;
-  ctx.fillStyle = '#fffdf7'; // var(--receipt-bg)
+  ctx.fillStyle = '#fffdf7'; 
   roundRect(ctx, dstX, dstY, noShadowCanvasEl.width, noShadowCanvasEl.height, r, true, false);
-  ctx.restore(); // Restore *sebelum* menggambar canvas, agar canvas-nya tidak kena shadow ganda
+  ctx.restore(); 
   
-  // draw the noShadow canvas onto this paper
-  ctx.drawImage(noShadowCanvasEl, dstX, dstY);
+  ctx.drawImage(noShadowCanvasEl, dstX, dstY);
 
   return u;
 }
@@ -471,20 +530,18 @@ function roundRect(ctx, x, y, w, h, r, fill, stroke){
   ctx.arcTo(x + w, y + h, x, y + h, r);
   ctx.arcTo(x, y + h, x, y, r);
   ctx.arcTo(x, y, x + w, y, r);
-  ctx.closePath();
+  ctx.closePath(); // <-- FIXED
   if(fill) ctx.fill();
   if(stroke) ctx.stroke();
 }
 
 /* ================== Flow: preview, upload, print ================== */
 
-/* flash animation */
 function flashOnce(duration=140){
   flashEl.style.opacity = '0.95';
   setTimeout(()=>{ flashEl.style.opacity = '0'; }, duration);
 }
 
-/* countdown */
 async function runCountdown(sec=3){
   if(audioCtx.state === 'suspended') await audioCtx.resume();
   startCard.style.transition = 'opacity .35s ease, transform .35s ease';
@@ -507,10 +564,9 @@ async function runCountdown(sec=3){
   shutterSound();
   await new Promise(r=>setTimeout(r,420));
   countdownOverlay.style.display = 'none';
-  startCard.style.display = 'none';
+  startCard.style.display = 'none'; // <-- FIXED
 }
 
-/* run session: captures then shows modal preview (no shadow) */
 async function runSession(){
   if(!captureMode){ alert('Select mode first'); return; }
   if(!cameraReady){ alert('Camera not ready yet — wait and try Start.'); return; }
@@ -527,83 +583,66 @@ async function runSession(){
     if(i < shots - 1) await new Promise(r=>setTimeout(r,360));
   }
 
-  // stop camera and show white background (focus on result)
   stopCameraAndShowWhite();
-
-  // compose preview (no shadow) and show modal
   preparePreviewAndFinal(capturedCanvases);
-
   modalOverlay.style.display = 'flex';
 }
 
-/* stop camera */
 function stopCameraAndShowWhite(){
+  // REVISI 1: Stop both streams
   try{
-    const stream = video.srcObject;
+    const stream = video.srcObject; // Get stream from active video
     if(stream && stream.getTracks) stream.getTracks().forEach(t=>t.stop());
+    video.srcObject = null;
+    videoBg.srcObject = null;
   }catch(e){}
-  document.getElementById('cameraWrap').style.background = '#ffffff'; // Sesuai permintaan (putih)
-  video.style.display = 'none';
+  
+  // Sembunyikan semua layer kamera
+  document.getElementById('cameraWrap').style.display = 'none'; 
+  videoBg.style.display = 'none';
+  cameraOverlay.style.display = 'none';
 }
 
-/* restart camera */
 async function restartCamera(){
   try{
-    video.style.display = 'block';
-    document.getElementById('cameraWrap').style.background = 'var(--bg)'; // Kembalikan ke bg awal
+    // REVISI 1: Tampilkan lagi semua layer kamera
+    document.getElementById('cameraWrap').style.display = 'block'; 
+    videoBg.style.display = 'block';
+    cameraOverlay.style.display = 'block';
+
     const stream = await navigator.mediaDevices.getUserMedia({ video:{ facingMode:'user', width:{ideal:1920}, height:{ideal:1080} }, audio:false });
     video.srcObject = stream;
+    videoBg.srcObject = stream;
   }catch(err){
     console.warn('restart camera failed', err);
   }
 }
 
-/* build preview (no shadow) and set up final canvases */
+/* --- REVISI 2: Menghilangkan preview duplikat --- */
 function preparePreviewAndFinal(captured){
   // clear UI areas
-  stripPhoto.innerHTML = '';
+  stripPhoto.innerHTML = ''; // DIKOSONGKAN (ini fix untuk duplikat)
+  stripPhoto.style.display = 'none'; // Sembunyikan div-nya
+  stripDivider.style.display = 'none'; // Sembunyikan divider-nya
   finalPreviewWrap.innerHTML = '';
-  // itemList.innerHTML = ''; // <-- Dihapus
   uploadedUrlEl.textContent = 'Not uploaded';
   lastDitherDataUrl = null;
-  lastUploadUrl = null;
+  lastUploadUrl = null; 
   lastNoShadowCanvas = null;
 
-  // populate stripPhoto images (4:3 crops) for visual reference
-  const modalWidth = Math.min(640, Math.max(360, Math.floor(window.innerWidth * 0.6)));
-  const displayW = Math.min(520, modalWidth - 40);
-  
-  /* FIX: only show thumbnails (stripPhoto) when there are 2 or 3 photos. */
-  if (captured.length > 1) {
-    captured.forEach(c => {
-      const cropped = cropCenterTo4x3(c, displayW);
-      applyFintage(cropped);
-      const img = document.createElement('img');
-      img.src = cropped.toDataURL('image/jpeg',0.94);
-      img.style.marginBottom = STRIP_GAP + 'px';
-      stripPhoto.appendChild(img);
-    });
-  } else {
-    stripPhoto.innerHTML = '';
-  }
-
-  // receipt metadata
   const txId = 'VZ-' + Date.now().toString(36).toUpperCase().slice(-8);
   const dateStr = new Date().toLocaleString('en-GB', { day:'2-digit', month:'short', year:'numeric', hour:'2-digit', minute:'2-digit' });
 
-  /* --- PERBAIKAN 1.6: Blok kode "lines" yang mengisi itemList dihapus --- */
-
-  // compose no-shadow final canvas (1080x1920) - used for preview (rendered as image) and for print dithering
+  // REVISI 3 & 4: Fungsi ini sudah menangani output Cloudinary
   const noShadow = composeFinalNoShadow(captured, txId, dateStr);
   lastNoShadowCanvas = noShadow;
 
-  // create preview image (no shadow)
+  // create preview image (ini adalah struk 1-strip atau 3-strip)
   try{
     const dataUrl = noShadow.toDataURL('image/jpeg',0.92);
     const img = document.createElement('img');
     img.src = dataUrl;
     img.className = 'finalPreviewImg';
-    // ensure single preview element only
     finalPreviewWrap.innerHTML = '';
     finalPreviewWrap.appendChild(img);
   }catch(e){
@@ -616,39 +655,34 @@ function preparePreviewAndFinal(captured){
 
 /* ================== Upload & QR popup ================== */
 
-/* upload final with shadow (build an upload canvas which includes shadow) */
 async function uploadFinalWithShadowAndShowQr(){
   if(!lastNoShadowCanvas) { alert('Nothing to upload.'); return; }
-  if(lastUploadUrl){ // Jika sudah di-upload, jangan upload lagi
+  if(lastUploadUrl){ 
     showQrPopup(lastUploadUrl);
     return;
   }
   
   uploadBtn.disabled = true; uploadBtn.textContent = 'Uploading...';
   try{
-    // build upload canvas with shadow baked-in
     const shadowCanvas = composeUploadWithShadow(lastNoShadowCanvas);
-    // upload this shadow canvas to Cloudinary
     const url = await uploadCanvasToCloudinary(shadowCanvas);
     lastUploadUrl = url;
     uploadedUrlEl.textContent = 'Uploaded: ' + url.slice(0, 40) + '...';
-    // show QR popup (with URL)
     showQrPopup(url);
     uploadBtn.textContent = 'Uploaded';
   }catch(err){
     alert('Upload failed: ' + (err.message || err));
     uploadBtn.textContent = '☁️ Upload';
   } finally {
-    uploadBtn.disabled = false; // Selalu enable lagi tombolnya
+    uploadBtn.disabled = false; 
   }
 }
 
-/* POST canvas to Cloudinary (returns secure_url) */
 async function uploadCanvasToCloudinary(canvas){
   const dataUrl = canvas.toDataURL('image/jpeg',0.92);
   const blob = await (await fetch(dataUrl)).blob();
-  const form = new FormData(); form.append('file', blob); form.append('upload_preset', UPLOAD_PRESET);
-  const resp = await fetch(`https://api.cloudinary.com/v1_1/${CLOUD_NAME}/image/upload`, { method: 'POST', body: form });
+  const form = new FormData(); form.append('file', blob); form.append('upload_preset', UPLOAD_PRESET); 
+  const resp = await fetch(`https://api.cloudinary.com/v1_1/${CLOUD_NAME}/image/upload`, { method: 'POST', body: form }); 
   if(!resp.ok){
     const txt = await resp.text().catch(()=>null);
     throw new Error('Upload failed: ' + (txt || resp.status));
@@ -658,12 +692,10 @@ async function uploadCanvasToCloudinary(canvas){
   return json.secure_url;
 }
 
-/* show QR popup */
 function showQrPopup(url){
   qrcodeHost.innerHTML = '';
-  /* --- PERBAIKAN 4.3 & 4.4: Ukuran QR diperbesar, Error Correction diubah --- */
   new QRCode(qrcodeHost, { text: url, width: 250, height: 250, correctLevel: QRCode.CorrectLevel.M });
-  barcodeUrlText.textContent = url;
+  barcodeUrlText.textContent = url; 
   barcodePopup.style.display = 'flex';
   barcodePopup.onclick = (e)=>{ if(e.target === barcodePopup) barcodePopup.style.display = 'none'; };
 }
@@ -672,30 +704,28 @@ function showQrPopup(url){
 startBtn.addEventListener('click', ()=>{ runSession(); });
 
 retakeBtn.addEventListener('click', async ()=>{
-  // close modal and restart
   modalOverlay.style.display = 'none';
   capturedCanvases = []; lastUploadUrl = null; lastNoShadowCanvas = null; lastDitherDataUrl = null;
   uploadedUrlEl.textContent = 'Not uploaded';
-  uploadBtn.textContent = '☁️ Upload'; // Reset tombol upload
+  uploadBtn.textContent = '☁️ Upload'; 
   
-  await restartCamera(); // Panggil restartCamera (sudah termasuk show video & set bg)
+  await restartCamera(); 
   
   startCard.style.display = 'block';
-  startCard.style.transition = 'none'; // Matikan transisi agar langsung muncul
-  await new Promise(r=>setTimeout(r,10)); // delay singkat
+  startCard.style.transition = 'none'; 
+  await new Promise(r=>setTimeout(r,10)); 
   startCard.style.opacity = '1';
   startCard.style.transform = 'translateY(0)';
 });
 
 printBtn.addEventListener('click', ()=>{
-  // print uses the no-shadow canvas dithered version (thermal)
   if(window.AndroidPrinter && lastDitherDataUrl){
     try{ window.AndroidPrinter.printImage(lastDitherDataUrl); }catch(e){ alert('Failed to call AndroidPrinter: ' + e.message); }
-I  } else {
+  } else { 
     if(lastDitherDataUrl){
       const w = window.open(); w.document.body.style.margin = '0';
       const img = w.document.createElement('img'); img.src = lastDitherDataUrl; img.style.width='100%';
-      w.document.body.appendChild(img);
+      w.document.body.appendChild(img); 
     } else alert('No printable image ready.');
   }
 });
@@ -706,7 +736,6 @@ uploadBtn.addEventListener('click', async ()=>{
 
 barcodeClose.addEventListener('click', ()=>{ barcodePopup.style.display = 'none'; });
 
-/* space to start */
 window.addEventListener('keydown',(e)=>{ 
   if(e.code==='Space' && !startBtn.disabled && startCard.style.opacity === '1'){ 
     e.preventDefault(); 
@@ -714,8 +743,14 @@ window.addEventListener('keydown',(e)=>{
   } 
 });
 
-/* cleanup camera tracks */
-window.addEventListener('beforeunload', ()=>{ const s = video.srcObject; if(s && s.getTracks) s.getTracks().forEach(t=>t.stop()); });
+window.addEventListener('beforeunload', ()=>{ 
+  try{
+    const stream = video.srcObject;
+    if(stream && stream.getTracks) stream.getTracks().forEach(t=>t.stop());
+    video.srcObject = null;
+    videoBg.srcObject = null;
+  }catch(e){} 
+});
 
 </script>
 </body>
