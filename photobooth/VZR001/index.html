@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8"/>
 <meta name="viewport" content="width=device-width,initial-scale=1"/>
-<title>Vizrize Photobooth — Layered Preview (Fixed)</title>
+<title>Vizrize Photobooth</title>
 <script src="qrcode.min.js"></script>
 <style>
 :root{
@@ -866,35 +866,47 @@ function showQrPopup(url){
   barcodePopup.style.display = 'flex'; // 2. TAMPILKAN POPUP-nya
   barcodePopup.onclick = (e)=>{ if(e.target === barcodePopup) barcodePopup.style.display = 'none'; };
 
-  // --- REVISI: JEDA LEBIH LAMA + UKURAN LEBIH AMAN ---
+  // --- REVISI: METODE POLLING (ANTI GAGAL TIMING) ---
   
-  // Beri jeda 150ms agar HP Anda PASTI selesai render 'display:flex'
-  setTimeout(function() {
+  let attempts = 0; // Jumlah percobaan
+  const maxAttempts = 50; // Max 50x percobaan (total 500ms)
+  
+  const interval = setInterval(function() {
     
-    // 1. Dapatkan lebar DIV POPUP-nya (ini lebih akurat drpd layar)
-    // qrcodeHost adalah div di dalam barcodeBox
-    const boxLebar = qrcodeHost.offsetWidth;
-    
-    // 2. Tentukan ukuran QR (misal: 90% dari lebar box)
-    let qrSize = boxLebar * 0.9;
+    // 3. Cek apakah DIV popup-nya sudah punya ukuran
+    if (qrcodeHost.offsetWidth > 0) {
+        // --- SUKSES! Div sudah di-render ---
+        clearInterval(interval); // Hentikan polling
+        
+        // 4. Hitung ukuran QR yang aman
+        let qrSize = qrcodeHost.offsetWidth * 0.9; // 90% dari lebar box
+        if (qrSize > 250) qrSize = 250;
+        if (qrSize < 150) qrSize = 150;
 
-    // 3. Kita batasi ukuran maks & min
-    if (qrSize > 250) qrSize = 250; // Ukuran maks 250px
-    if (qrSize < 150) qrSize = 150; // Ukuran min 150px (jika box-nya terlalu kecil)
-
-    try {
-      new QRCode(qrcodeHost, { 
-        text: url, 
-        width: qrSize,  // <-- Gunakan ukuran dinamis
-        height: qrSize, // <-- Gunakan ukuran dinamis
-        correctLevel: QRCode.CorrectLevel.M 
-      });
-    } catch(e) {
-      console.error("Gagal membuat QR Code:", e);
-      // Ini akan muncul jika qrcode.min.js GAGAL di-load
-      alert("Script QR Code GAGAL dijalankan."); 
+        // 5. Baru gambar QR-nya
+        try {
+            new QRCode(qrcodeHost, { 
+                text: url, 
+                width: qrSize, 
+                height: qrSize, 
+                correctLevel: QRCode.CorrectLevel.M 
+            });
+        } catch(e) {
+            console.error("Gagal membuat QR Code:", e);
+            alert("Script QR Code GAGAL dijalankan."); 
+        }
+    } 
+    // Jika 10x percobaan (100ms) belum bisa, coba lagi...
+    else if (attempts > maxAttempts) {
+        // --- GAGAL TOTAL (setelah 500ms) ---
+        clearInterval(interval);
+        console.error("Popup render timeout. Gagal menggambar QR.");
+        alert("Gagal me-render popup QR. Coba lagi.");
     }
-  }, 150); // <-- JEDA KITA BUAT LEBIH LAMA: 150ms
+    
+    attempts++; // Tambah jumlah percobaan
+    
+  }, 10); // Cek setiap 10 milidetik
 }
 /* ================== Events ================== */
 startBtn.addEventListener('click', ()=>{ runSession(); });
