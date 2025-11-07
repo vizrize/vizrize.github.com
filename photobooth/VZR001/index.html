@@ -101,7 +101,15 @@ video#camera{
 
 /* barcode popup */
 #barcodePopup{position:fixed;inset:0;display:none;align-items:center;justify-content:center;z-index:140;background:rgba(0,0,0,0.6)}
-#barcodeBox{width:min(680px,92vw);background:var(--receipt-bg);border-radius:10px;padding:18px;border:1px dashed var(--receipt-edge);box-shadow:0 26px 70px rgba(0,0,0,0.36);text-align:center}
+#barcodeBox{
+  width:min(680px, 92vw);
+  background:var(--receipt-bg);
+  border-radius: 10px;
+  padding: 18px;
+  border: 2px solid var(--receipt-edge); /* UBAH: dari 'dashed' ke 'solid' (lebih ringan) */
+  /* HAPUS: box-shadow (sesuai permintaan Anda) */
+  text-align:center;
+}
 #barcodeClose{position:absolute;top:12px;right:18px;border:0;background:transparent;font-size:22px;cursor:pointer}
 #barcodeHint{color:var(--text-abu);font-size:13px;margin-bottom:8px}
 #qrcodeHost{display:flex;align-items:center;justify-content:center;padding:8px}
