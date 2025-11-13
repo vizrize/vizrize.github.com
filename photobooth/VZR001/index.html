@@ -3,8 +3,8 @@
 <head>
 <meta charset="utf-8"/>
 <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover"/>
-<title>VIZRIZE</title>
-<script src="qrcode.min.js"></script>
+<title>VIZRIZE LABS — FINAL FIX</title>
+<script src="qrcode.min.js"></script> 
 <style>
 @import url('https://fonts.googleapis.com/css2?family=Space+Mono:wght@400;700&family=Inter:wght@400;700;900&display=swap');
 
@@ -100,7 +100,7 @@ video#camera {
   display: none;
   align-items: center;
   justify-content: center;
-  background: transparent; 
+  background: transparent;
   z-index: 30;
 }
 #countNum { 
@@ -222,7 +222,7 @@ video#camera {
 
 #finalPreviewWrap { 
   margin: 10px 0; display: flex; justify-content: center; 
-  min-height: 200px; /* Pastikan ada tinggi minimal agar terlihat jika loading */
+  min-height: 200px; 
 }
 .finalPreviewImg { width: 100%; display: block; border: 1px solid #ddd; }
 .uploadUrl { 
@@ -230,25 +230,39 @@ video#camera {
   color: #999; font-family: 'Space Mono', monospace;
 }
 
+/* === QR POPUP FIXED CSS === */
 #barcodePopup { 
   position: fixed; inset: 0; display: none; 
   align-items: center; justify-content: center; 
   z-index: 140; background: rgba(0,0,0,0.95); 
 }
 #barcodeBox { 
-  width: min(600px, 90vw); background: #111; 
+  /* Ukuran Box */
+  width: min(600px, 90vw); 
+  background: #111; 
   border: 2px solid var(--accent-neon);
-  padding: 30px; text-align: center; position: relative; 
-  color: #fff; font-family: 'Space Mono', monospace;
+  padding: 30px; 
+  text-align: center; 
+  position: relative; 
+  color: #fff; 
+  font-family: 'Space Mono', monospace;
 }
 #barcodeClose { 
   position: absolute; top: 10px; right: 15px; border: 0; 
   background: transparent; font-size: 24px; cursor: pointer; 
   color: #fff; 
 }
+/* --- INI KUNCI PERBAIKAN QR --- */
+/* Jangan pakai 'fit-content'. Berikan ukuran default yang pasti */
 #qrcodeHost { 
-  padding: 15px; display: flex; justify-content: center; 
-  background: #fff; margin: 20px auto; width: fit-content;
+  padding: 15px; 
+  /* Paksa jadi kotak putih 250x250 di tengah secara default */
+  width: 250px; 
+  height: 250px;
+  background: #fff; 
+  margin: 20px auto; 
+  border-radius: 4px;
+  display: block; /* Pastikan block */
 }
 #barcodeUrlText { font-size:12px; color:#888; margin-top:10px; }
 
@@ -261,14 +275,20 @@ canvas { display: none; }
   #cameraWrap { border-width: 6px; width: 94%; max-width: 1024px; }
   .startBtn { border-width: 5px; }
   .startCard { border-width: 2px; width: min(90%, 700px); }
+  /* Tablet QR lebih besar */
+  #qrcodeHost { width: 300px; height: 300px; } 
+}
+/* Small Phone Tweaks */
+@media (max-width: 360px) {
+  #qrcodeHost { width: 200px; height: 200px; }
 }
 </style>
 </head>
 <body>
 
 <div class="topHeader">
-  <div class="badge">PHOTORECEIPT</div>
-  <div class="headerTitle">VIZRIZE</div>
+  <div class="badge">PROTOTYPE_V1</div>
+  <div class="headerTitle">VIZRIZE LABS</div>
 </div>
 
 <div id="cameraWrap">
@@ -288,7 +308,7 @@ canvas { display: none; }
       <button id="mode1" class="modeBtn" data-mode="single">1 STRIP</button>
       <button id="mode3" class="modeBtn" data-mode="strip">3 STRIP</button>
     </div>
-    <button id="startBtn" class="startBtn" disabled>START</button>
+    <button id="startBtn" class="startBtn" disabled>INITIATE</button>
   </div>
 </div>
 
@@ -491,14 +511,14 @@ function composeFinalNoShadow(captured, txId, dateStr){
   const paperX = pad, paperY = pad;
   const paperW = FINAL_W - pad*2, paperH = FINAL_H - pad*2;
   
-  // FIX BUG: Define coordinates FIRST
+  // Define coordinates FIRST
   const paperBottom = paperY + paperH;
   const contentX = paperX + 20;
   const contentW = paperW - 40;
   const colorAbu = '#6b5c4b';
   const colorEdge = '#ded6c8';
 
-  // Calculate Footer Positions FIRST (to know where photos must stop)
+  // Calculate Footer Positions
   const footerBrandY = paperBottom - 40;
   const footerThankY = paperBottom - 70;
   const footerTotalY = paperBottom - 130;
@@ -510,11 +530,10 @@ function composeFinalNoShadow(captured, txId, dateStr){
   const headerY = paperY + 70;
   const headerLineY = headerY + 58;
 
-  // Background
   ctx.fillStyle = '#ffffff'; ctx.fillRect(0,0,FINAL_W,FINAL_H);
   ctx.fillStyle = '#fffdf7'; ctx.fillRect(paperX, paperY, paperW, paperH);
 
-  // Draw Header
+  // Header
   ctx.fillStyle = '#111'; ctx.textAlign = 'center'; ctx.font = '32px monospace';
   ctx.fillText('VIZRIZE PHOTOBOOTH', paperX + paperW/2, headerY);
   ctx.font = '16px monospace'; ctx.fillStyle = colorAbu;
@@ -523,31 +542,32 @@ function composeFinalNoShadow(captured, txId, dateStr){
   ctx.strokeStyle = colorEdge; ctx.setLineDash([6,6]);
   ctx.beginPath(); ctx.moveTo(paperX + 12, headerLineY); ctx.lineTo(paperX + paperW - 12, headerLineY); ctx.stroke(); ctx.setLineDash([]);
 
-  // Draw Footer
+  // Footer
   ctx.font = '18px monospace'; ctx.fillStyle = colorAbu; ctx.textAlign = 'center';
   ctx.fillText('THANK YOU ~ HAVE A NICE DAY!', paperX + paperW/2, footerThankY);
   ctx.font = '16px monospace'; ctx.fillStyle = '#111';
   ctx.fillText('~ PHOTORECEIPT by VizRize ~', paperX + paperW/2, footerBrandY);
 
   const subtotal = 15000; const tax = Math.round(subtotal * 0.1); const total = subtotal + tax;
-  const leftX = contentX + 8; const rightX = contentX + contentW - 8;
-
+  
   ctx.font = '18px monospace'; ctx.fillStyle = colorAbu;
-  ctx.textAlign = 'left'; ctx.fillText('SUBTOTAL', leftX, footerSubY);
-  ctx.textAlign = 'right'; ctx.fillText('Rp' + subtotal.toLocaleString('id-ID'), rightX, footerSubY);
-  ctx.textAlign = 'left'; ctx.fillText('TAX (10%)', leftX, footerTaxY);
-  ctx.textAlign = 'right'; ctx.fillText('Rp' + tax.toLocaleString('id-ID'), rightX, footerTaxY);
+  ctx.textAlign = 'left'; ctx.fillText('SUBTOTAL', contentX + 8, footerSubY);
+  ctx.textAlign = 'right'; ctx.fillText('Rp' + subtotal.toLocaleString('id-ID'), contentX + contentW - 8, footerSubY);
+  
+  ctx.textAlign = 'left'; ctx.fillText('TAX (10%)', contentX + 8, footerTaxY);
+  ctx.textAlign = 'right'; ctx.fillText('Rp' + tax.toLocaleString('id-ID'), contentX + contentW - 8, footerTaxY);
+  
   ctx.font = '20px monospace'; ctx.fillStyle = '#111';
-  ctx.textAlign = 'left'; ctx.fillText('TOTAL', leftX, footerTotalY);
-  ctx.textAlign = 'right'; ctx.fillText('Rp' + total.toLocaleString('id-ID'), rightX, footerTotalY);
+  ctx.textAlign = 'left'; ctx.fillText('TOTAL', contentX + 8, footerTotalY);
+  ctx.textAlign = 'right'; ctx.fillText('Rp' + total.toLocaleString('id-ID'), contentX + contentW - 8, footerTotalY);
 
   ctx.setLineDash([6,6]);
   ctx.beginPath(); ctx.moveTo(contentX, footerLineY); ctx.lineTo(contentX + contentW, footerLineY); ctx.strokeStyle = colorEdge; ctx.stroke(); ctx.setLineDash([]);
 
-  // --- PHOTO LOGIC (THE FIX) ---
+  // --- PHOTO LOGIC ---
   const photoAreaTop = headerLineY + 20;
   const photoAreaBottom = footerLineY - 20;
-  const photoAreaH = photoAreaBottom - photoAreaTop; // Valid Height
+  const photoAreaH = photoAreaBottom - photoAreaTop; 
   const photoW = contentW;
 
   if(captured.length === 1){
@@ -561,13 +581,13 @@ function composeFinalNoShadow(captured, txId, dateStr){
     ctx.fillStyle = '#fff'; ctx.fillRect(imgX, imgY, imgW, imgH); 
     ctx.drawImage(cropped, imgX, imgY, imgW, imgH);
   } else {
-    // 3-STRIP SCALING (The real fix for "kepotong")
+    // 3-STRIP SCALING
     const idealPhotoH = Math.round(photoW * 3 / 4);
     const totalNeededH = (idealPhotoH * captured.length) + (STRIP_GAP * (captured.length - 1));
     
     let scale = 1.0;
     if (totalNeededH > photoAreaH) {
-        scale = photoAreaH / totalNeededH; // Scale down if too tall
+        scale = photoAreaH / totalNeededH; 
     }
 
     const scaledPhotoW = photoW * scale;
@@ -575,8 +595,8 @@ function composeFinalNoShadow(captured, txId, dateStr){
     const scaledGap = STRIP_GAP * scale;
     const scaledTotalH = (scaledPhotoH * captured.length) + (scaledGap * (captured.length - 1));
 
-    let photoY = photoAreaTop + (photoAreaH - scaledTotalH) / 2; // Center vertically
-    let photoX = contentX + (contentW - scaledPhotoW) / 2; // Center horizontally
+    let photoY = photoAreaTop + (photoAreaH - scaledTotalH) / 2; 
+    let photoX = contentX + (contentW - scaledPhotoW) / 2;
 
     captured.forEach((c,i)=>{
       const cropped = cropCenterTo4x3(c, photoW); 
@@ -820,28 +840,21 @@ async function uploadCanvasToCloudinary(canvas){
   return json.secure_url;
 }
 
-// REVISI: QR Popup Responsif & Sabar
+// REVISI: QR Popup Fix (Dimensi Pasti)
 function showQrPopup(url){
   qrcodeHost.innerHTML = ''; 
   barcodeUrlText.textContent = url; 
   barcodePopup.style.display = 'flex'; 
   barcodePopup.onclick = (e)=>{ if(e.target === barcodePopup) barcodePopup.style.display = 'none'; };
 
-  let attempts = 0; const maxAttempts = 50;
-  const interval = setInterval(function() {
-    if (qrcodeHost.offsetWidth > 0) {
-        clearInterval(interval);
-        let qrSize = qrcodeHost.offsetWidth * 0.9; 
-        if (qrSize > 250) qrSize = 250;
-        if (qrSize < 150) qrSize = 150;
-        try {
-            new QRCode(qrcodeHost, { text: url, width: qrSize, height: qrSize, correctLevel: QRCode.CorrectLevel.M });
-        } catch(e) { console.error(e); alert("QR Script Gagal."); }
-    } else if (attempts > maxAttempts) {
-        clearInterval(interval); alert("Gagal render QR.");
+  setTimeout(() => {
+    try {
+        const width = qrcodeHost.offsetWidth || 250; 
+        new QRCode(qrcodeHost, { text: url, width: width, height: width, correctLevel: QRCode.CorrectLevel.M });
+    } catch(e) { 
+        console.error(e); alert("QR Script Gagal."); 
     }
-    attempts++;
-  }, 10);
+  }, 150);
 }
 
 startBtn.addEventListener('click', runSession);
