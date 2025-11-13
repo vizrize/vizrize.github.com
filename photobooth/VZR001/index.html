@@ -2,218 +2,349 @@
 <html lang="en">
 <head>
 <meta charset="utf-8"/>
-<meta name="viewport" content="width=device-width,initial-scale=1"/>
-<title>Vizrize Photobooth</title>
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover"/>
+<title>VIZRIZE LABS — TABLET OPTIMIZED</title>
 <script src="qrcode.min.js"></script>
 <style>
+@import url('https://fonts.googleapis.com/css2?family=Space+Mono:wght@400;700&family=Inter:wght@400;700;900&display=swap');
+
 :root{
-  --bg:#f0ede7;
-  --muted:#2b2b2b;
-  --accent:#111;
-  --receipt-bg:#fffdf7;
-  --receipt-edge:#e6dfd4;
-  --text-abu:#6b5c4b;
-  --upload-shadow: rgba(0,0,0,0.18);
+  /* INDUSTRIAL POP PALETTE */
+  --bg-dark: #1a1a1c;       
+  --bg-light: #2c2c2f;      
+  --border-grey: #5a5a60;   
+  --accent-neon: #ccff00;   /* Acid Green */
+  --accent-sec: #00ffff;    /* Cyan */
+  --text-light: #f0f0f0;    
+  --text-dark: #0a0a0b;     
+  --receipt-bg: #fffdf7;    
+  --receipt-edge: #e6dfd4;  
+  
+  /* Layout Variables Default (HP) */
+  --header-h: 12%;     
+  --top-area-h: 60%;   
+  --controls-h: 40%;   
 }
+
 *{box-sizing:border-box}
-html,body{height:100%;margin:0;font-family:Inter,system-ui,-apple-system,'Segoe UI',Roboto,Arial;background:var(--bg);color:var(--muted);-webkit-font-smoothing:antialiased}
-body{overflow:hidden}
-
-/* Layer 1: Full-screen background video */
-#cameraBg {
-  position: fixed;
-  inset: 0;
-  width: 100vw;
-  height: 100vh;
-  object-fit: cover;
-  transform: scaleX(-1);
-  z-index: 1;
+html,body{
+  height:100%; margin:0; overflow: hidden;
+  font-family: 'Inter', sans-serif;
+  background: var(--bg-dark); 
+  color: var(--text-light);
+  -webkit-font-smoothing:antialiased;
+  position: fixed; width: 100%;
 }
 
-/* Layer 2: Semi-transparent overlay */
-#cameraOverlay {
-  position: fixed;
-  inset: 0;
-  background: rgba(255, 255, 255, 0.5);
-  z-index: 2;
+/* === UTILITIES === */
+.font-mono { font-family: 'Space Mono', monospace; }
+
+/* === 1. HEADER === */
+.topHeader {
+  position: absolute;
+  top: 0; left: 0; right: 0;
+  height: var(--header-h);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  z-index: 20;
+  background: var(--bg-dark);
+  border-bottom: 1px solid var(--border-grey);
+  padding-top: env(safe-area-inset-top);
+}
+.badge {
+  background: var(--accent-neon);
+  color: var(--text-dark);
+  padding: 4px 10px;
+  border-radius: 4px;
+  font-size: clamp(10px, 2vw, 14px);
+  font-weight: 900;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+  margin-bottom: 4px;
+}
+.headerTitle {
+  font-family: 'Space Mono', monospace;
+  font-size: clamp(18px, 5vw, 32px);
+  font-weight: 700;
+  letter-spacing: -1px;
+  color: var(--text-light);
 }
 
-/* Layer 3: 4:3 Active Capture Area */
-#cameraWrap{
-  position: fixed;
-  top: 50%;
+/* === 2. KAMERA (4:3 FIXED) === */
+#cameraWrap {
+  position: absolute;
   left: 50%;
-  transform: translate(-50%, -50%);
-  width: 100vw; 
-  height: calc(100vw * (3 / 4)); /* 4:3 Ratio */
-  max-width: 100vw;
-  max-height: 100vh; 
-  z-index: 3; 
+  transform: translateX(-50%);
+  top: calc(var(--header-h) + 2%); 
+  
+  /* UPDATE: Lebar dibuat lebih fleksibel untuk tablet */
+  width: 94%; 
+  max-width: 1024px; /* Batas maksimal jauh lebih besar untuk tablet */
+  
+  aspect-ratio: 4 / 3; 
+  max-height: calc(var(--top-area-h) - var(--header-h) - 20px);
+
+  background: #000;
+  z-index: 5;
+  border: 4px solid var(--border-grey);
+  border-radius: 12px;
+  box-shadow: 0 10px 40px rgba(0,0,0,0.6);
   overflow: hidden;
-  box-shadow: 0 10px 40px rgba(0,0,0,0.2);
 }
-video#camera{
+
+video#camera {
   width: 100%;
   height: 100%;
   object-fit: cover;
   transform: scaleX(-1);
 }
 
-/* top branding */
-.topLogo{position:fixed;top:18px;left:50%;transform:translateX(-50%);z-index:40;text-align:center;pointer-events:none}
-.brand{font-weight:900;color:var(--accent);letter-spacing:1px;font-size:20px}
-.subtitle{font-size:13px;color:#444;margin-top:2px}
-
-/* center start */
-.centerUI{position:fixed;inset:0;display:flex;align-items:center;justify-content:center;z-index:42;pointer-events:none;padding:28px}
-.startCard{width:min(720px,94vw);max-width:720px;text-align:center;background:rgba(255,255,255,0.96);border-radius:14px;padding:26px 20px;box-shadow:0 22px 60px rgba(0,0,0,0.16);pointer-events:auto;backdrop-filter:blur(3px);transition:opacity .45s ease, transform .45s ease}
-.controlsRowTop{display:flex;gap:12px;justify-content:center;margin-bottom:14px}
-.modeBtn{flex:1;padding:14px 16px;border-radius:12px;border:1px solid rgba(0,0,0,0.06);background:#fff;font-weight:900;cursor:pointer}
-.modeBtn.selected{background:linear-gradient(90deg,#fff,#faf8f6);box-shadow:0 10px 28px rgba(0,0,0,0.06)}
-.startBtn{display:inline-block;padding:16px 34px;border-radius:999px;border:0;font-weight:900;background:linear-gradient(90deg,#fff,#faf8f6);color:var(--accent);font-size:20px;cursor:pointer;box-shadow:0 12px 34px rgba(0,0,0,0.14)}
-.startNote{font-size:13px;color:var(--text-abu);margin-top:10px}
-
-/* countdown */
-#countdownOverlay{position:fixed;inset:0;display:none;align-items:center;justify-content:center;z-index:70;pointer-events:none}
-#countBox{display:flex;align-items:center;justify-content:center;flex-direction:column;gap:12px}
-#countNum{font-size:140px;color:#fff;text-shadow:0 18px 44px rgba(0,0,0,0.5);font-weight:900;transform-origin:center;transition:all .24s}
-#countLabel{color:#fff;font-weight:700;text-shadow:0 8px 18px rgba(0,0,0,0.35)}
-
-/* flash */
-#flash{position:fixed;inset:0;background:#fff;opacity:0;pointer-events:none;z-index:75;transition:opacity 140ms ease-out}
-
-/* modal (preview) */
-.modalOverlay{position:fixed;inset:0;background:rgba(0,0,0,0.56);display:none;align-items:center;justify-content:center;z-index:120;padding:20px;backdrop-filter:blur(4px)}
-.modalReceipt{width:min(500px,94vw);max-height:92vh;overflow:auto;background:linear-gradient(180deg,var(--receipt-bg),#fff8f2);border-radius:10px;box-shadow:0 22px 60px rgba(0,0,0,0.32);position:relative;border:1px solid var(--receipt-edge);font-family:'Courier New',monospace}
-.tear{height:18px;background:repeating-linear-gradient(90deg,#fff 0 6px, transparent 6px 12px);border-top-left-radius:8px;border-top-right-radius:8px}
-.receiptInner{padding:18px;background:#ffffff}
-.headerTitle{font-weight:900;letter-spacing:1px;color:#111;font-size:18px;text-align:center}
-.small{font-size:12px;color:var(--text-abu)}
-.divider{height:1px;border-top:1px dashed #ded6c8;margin:10px 0}
-
-/* photos area (dihilangkan via JS) */
-.stripPhoto{width:100%;display:none;flex-direction:column;gap:6px;margin:8px 0}
-.stripPhoto img{width:100%;height:auto;display:block;border:8px solid #fff;box-shadow:0 8px 28px rgba(0,0,0,0.08);object-fit:cover;border-radius:8px}
-
-/* final preview container */
-#finalPreviewWrap{display:flex;align-items:center;justify-content:center;margin:12px 0}
-.finalPreviewImg{width:100%;max-width:100%;border-radius:8px;display:block;}
-
-/* barcode popup */
-#barcodePopup{position:fixed;inset:0;display:none;align-items:center;justify-content:center;z-index:140;background:rgba(0,0,0,0.6)}
-#barcodeBox{
-  width:min(680px, 92vw);
-  background:var(--receipt-bg);
-  border-radius: 10px;
-  padding: 18px;
-  border: 2px solid var(--receipt-edge); /* UBAH: dari 'dashed' ke 'solid' (lebih ringan) */
-  /* HAPUS: box-shadow (sesuai permintaan Anda) */
-  text-align:center;
+/* Countdown */
+#countdownOverlay {
+  position: absolute;
+  inset: 0;
+  display: none;
+  align-items: center;
+  justify-content: center;
+  background: rgba(0,0,0,0.2);
+  z-index: 30;
+  backdrop-filter: blur(2px);
 }
-#barcodeClose{position:absolute;top:12px;right:18px;border:0;background:transparent;font-size:22px;cursor:pointer}
-#barcodeHint{color:var(--text-abu);font-size:13px;margin-bottom:8px}
-#qrcodeHost{display:flex;align-items:center;justify-content:center;padding:8px}
+#countNum { 
+  font-size: clamp(80px, 25vw, 200px); /* Font countdown lebih besar di tablet */
+  font-weight: 900; 
+  color: var(--accent-neon);
+  font-family: 'Space Mono', monospace;
+  text-shadow: 6px 6px 0 #000;
+}
 
-/* controls */
-.controlsRow{display:flex;gap:12px;justify-content:center;margin-top:12px;padding:14px}
-.action{padding:10px 14px;border-radius:8px;border:none;font-weight:800;cursor:pointer}
-.printBtn{background:#111;color:#fff}
-.uploadBtn{background:#fff;border:1px solid rgba(0,0,0,0.08)}
-.retakeBtn{background:#fff;border:1px solid rgba(0,0,0,0.08)}
+/* === 3. KONTROL === */
+.centerUI {
+  position: absolute;
+  bottom: 0; left: 0; right: 0;
+  height: var(--controls-h); 
+  background: var(--bg-light); 
+  border-top: 2px solid var(--accent-neon); 
+  z-index: 10;
+  
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: clamp(15px, 3vh, 40px); /* Jarak lebih lega di tablet */
+  
+  padding-bottom: env(safe-area-inset-bottom);
+  background-image: radial-gradient(#3a3a3e 15%, transparent 16%);
+  background-size: 12px 12px;
+  box-shadow: 0 -10px 40px rgba(0,0,0,0.5);
+}
 
-/* hidden canvases */
-canvas{display:none}
+.startCard {
+  width: min(90%, 700px); /* Kartu kontrol lebih lebar di tablet (700px) */
+  text-align: center;
+  padding: clamp(20px, 4vw, 40px);
+  border: 1px dashed var(--border-grey);
+  border-radius: 16px;
+  background: rgba(0,0,0,0.2);
+}
 
-/* responsive */
-@media (max-width:820px){
-  #countNum{font-size:100px}
-  .startCard{width:92vw;padding:20px}
-  .headerTitle{font-size:16px}
+/* Tombol Pilih Strip */
+.controlsRowTop {
+  display: flex;
+  gap: 20px;
+  justify-content: center;
+  margin-bottom: clamp(15px, 3vh, 30px);
+}
+.modeBtn {
+  flex: 1;
+  padding: clamp(12px, 2.5vh, 24px); /* Padding tombol mode lebih besar */
+  border-radius: 8px;
+  border: 1px solid var(--border-grey);
+  background: var(--bg-dark);
+  color: #aaa;
+  font-family: 'Space Mono', monospace;
+  font-weight: 700;
+  cursor: pointer;
+  font-size: clamp(12px, 3vw, 18px); /* Font tombol mode responsive */
+  text-transform: uppercase;
+  transition: all 0.2s;
+}
+.modeBtn.selected {
+  background: var(--text-light);
+  color: var(--text-dark);
+  border-color: var(--accent-neon);
+  box-shadow: 0 0 20px rgba(204, 255, 0, 0.3);
+  transform: translateY(-4px);
+}
+
+/* Tombol START Utama */
+.startBtn {
+  display: inline-block;
+  width: 100%;
+  padding: clamp(20px, 5vh, 32px); /* Tombol start sangat besar di tablet */
+  border-radius: 12px;
+  border: 4px solid var(--accent-neon);
+  background: transparent;
+  color: var(--accent-neon);
+  font-size: clamp(24px, 7vw, 48px); /* Font sangat besar */
+  font-weight: 900;
+  font-family: 'Inter', sans-serif;
+  text-transform: uppercase;
+  cursor: pointer;
+  transition: all 0.1s;
+  letter-spacing: 4px;
+  box-shadow: inset 0 0 30px rgba(204, 255, 0, 0.1), 0 15px 30px rgba(0,0,0,0.4);
+}
+.startBtn:active {
+  background: var(--accent-neon);
+  color: var(--text-dark);
+  transform: scale(0.98);
+}
+.startBtn:disabled { opacity: 0.3; cursor: not-allowed; filter: grayscale(1); box-shadow: none; }
+
+/* Flash */
+#flash { position: fixed; inset: 0; background: #fff; opacity: 0; pointer-events: none; z-index: 100; transition: opacity 140ms ease-out; }
+
+/* --- MODAL PREVIEW --- */
+.modalOverlay { 
+  position: fixed; inset: 0; background: rgba(0,0,0,0.95); 
+  display: none; align-items: center; justify-content: center; 
+  z-index: 120; padding: 20px; backdrop-filter: blur(5px); 
+}
+.modalReceipt { 
+  /* Modal lebih besar di tablet */
+  width: min(600px, 90vw); 
+  max-height: 90vh; overflow: auto; 
+  background: var(--receipt-bg); border-radius: 8px; padding: 0; 
+  font-family: 'Space Mono', monospace; color: var(--text-dark); 
+  box-shadow: 0 0 80px rgba(0,0,0,0.9);
+  border: 6px solid var(--bg-light);
+}
+.receiptInner { padding: 30px; }
+.controlsRow { 
+  display: flex; gap: 15px; justify-content: center; 
+  padding: 25px; background: var(--bg-dark); border-top: 4px solid var(--accent-neon);
+}
+.action { 
+  flex: 1; padding: 18px; border-radius: 6px; border: none; 
+  font-weight: 700; cursor: pointer; font-size: clamp(12px, 3vw, 16px); 
+  text-transform: uppercase; font-family: 'Space Mono', monospace;
+}
+.printBtn { background: var(--accent-neon); color: var(--text-dark); }
+.uploadBtn { background: var(--text-light); color: var(--text-dark); }
+.retakeBtn { background: transparent; color: #fff; border: 1px solid #555; }
+
+#finalPreviewWrap { margin: 10px 0; display: flex; justify-content: center; }
+.finalPreviewImg { width: 100%; display: block; border: 1px solid #ddd; }
+.uploadUrl { 
+  text-align:center; margin-top:10px; font-size:12px; 
+  color: #999; font-family: 'Space Mono', monospace;
+}
+
+/* Barcode */
+#barcodePopup { 
+  position: fixed; inset: 0; display: none; 
+  align-items: center; justify-content: center; 
+  z-index: 140; background: rgba(0,0,0,0.95); 
+}
+#barcodeBox { 
+  width: min(680px, 90vw); background: #111; 
+  border: 2px solid var(--accent-neon);
+  padding: 40px; text-align: center; position: relative; 
+  color: #fff; font-family: 'Space Mono', monospace;
+}
+#barcodeClose { 
+  position: absolute; top: 15px; right: 20px; border: 0; 
+  background: transparent; font-size: 32px; cursor: pointer; 
+  color: #fff; 
+}
+#qrcodeHost { 
+  padding: 20px; display: flex; justify-content: center; 
+  background: #fff; margin: 25px auto; width: fit-content;
+  border-radius: 8px;
+}
+#barcodeUrlText { 
+  font-size:14px; color:#888; margin-top:15px;
+}
+
+/* Hidden Canvas */
+canvas { display: none; }
+.stripPhoto { display: none; } 
+
+/* === TABLET SPECIFIC BREAKPOINT === */
+/* Ini kuncinya: Jika layar lebih lebar dari 768px (Tablet/Desktop) */
+@media (min-width: 768px) {
+  :root {
+    /* Di tablet, header bisa lebih kecil biar kamera makin lega */
+    --header-h: 10%;
+    --top-area-h: 65%; /* Kamera dapet 65% */
+    --controls-h: 35%; /* Kontrol 35% */
+  }
+  
+  /* Border & Shadow lebih tebal di tablet */
+  #cameraWrap { border-width: 6px; }
+  .startBtn { border-width: 5px; }
+  .startCard { border-width: 2px; }
 }
 </style>
 </head>
 <body>
 
-<!-- Layered Camera -->
-<video id="cameraBg" autoplay playsinline muted></video>
-<div id="cameraOverlay" aria-hidden="true"></div>
-<div id="cameraWrap"><video id="camera" autoplay playsinline muted></video></div>
+<div class="topHeader">
+  <div class="badge">PHOTO RECEIPT</div>
+  <div class="headerTitle">VIZRIZE</div>
+</div>
+
+<div id="cameraWrap">
+  <video id="camera" autoplay playsinline muted></video>
+  <div id="countdownOverlay" aria-hidden="true">
+    <div id="countBox">
+      <div id="countNum">3</div>
+    </div>
+  </div>
+</div>
 
 <div id="flash" aria-hidden="true"></div>
 
-<!-- branding -->
-<div class="topLogo" aria-hidden="true">
-  <div class="brand">VIZRIZE</div>
-  <div class="subtitle">PHOTOBOOTH RECEIPT</div>
-</div>
-
-<!-- center start -->
 <div class="centerUI" id="centerUI">
-  <div class="startCard" id="startCard" role="region" aria-label="Start photobooth">
-    <div style="font-weight:900;font-size:18px;margin-bottom:6px">Vizrize Photobooth</div>
-    <div class="controlsRowTop">
-      <button id="mode1" class="modeBtn" data-mode="single">📸 1 Strip</button>
-      <button id="mode3" class="modeBtn" data-mode="strip">📸 3 Strip</button>
-    </div>
-    <button id="startBtn" class="startBtn" disabled>Start</button>
-    <div class="startNote">Choose mode → press Start → follow countdown</div>
-  </div>
+  <div class="startCard">
+    <div class="controlsRowTop">
+      <button id="mode1" class="modeBtn" data-mode="single">1 STRIP</button>
+      <button id="mode3" class="modeBtn" data-mode="strip">3 STRIP</button>
+    </div>
+    <button id="startBtn" class="startBtn" disabled>START</button>
+  </div>
 </div>
 
-<!-- countdown -->
-<div id="countdownOverlay" aria-hidden="true">
-  <div id="countBox">
-    <div id="countNum">3</div>
-    <div id="countLabel">Get Ready</div>
-  </div>
-</div>
-
-<!-- preview modal -->
 <div id="modalOverlay" class="modalOverlay" aria-hidden="true">
-  <div class="modalReceipt" role="dialog" aria-modal="true" aria-labelledby="receiptLabel">
-    <div class="tear" aria-hidden="true"></div>
-    <div class="receiptInner" id="receiptInner">
-      <div style="text-align:center">
-        <div class="headerTitle" id="receiptLabel">VIZRIZE PHOTOBOOTH</div>
-        <div class="small" id="receiptSub">Jakarta · Photobooth</div>
-      </div>
-
-      <div class="divider"></div>
-
-      <div class="stripPhoto" id="stripPhoto"></div>
-      <div class="divider" id="stripDivider" style="display:none"></div>
-
-      <div id="finalPreviewWrap"></div>
-
-      <div class="divider"></div>
-
-      <div class="uploadUrl" id="uploadedUrl">Not uploaded</div>
-    </div>
-    <div class="tear" aria-hidden="true"></div>
-
-    <div class="controlsRow">
-      <button id="printBtn" class="action printBtn">🖨️ Print</button>
-      <button id="uploadBtn" class="action uploadBtn">☁️ Upload</button>
-      <button id="retakeBtn" class="action retakeBtn">↩️ Retake</button>
-    </div>
-  </div>
+  <div class="modalReceipt" role="dialog" aria-modal="true" aria-labelledby="receiptLabel">
+    <div class="receiptInner" id="receiptInner">
+      <div id="finalPreviewWrap"></div>
+      <div class="uploadUrl" id="uploadedUrl">WAITING FOR UPLOAD...</div>
+    </div>
+    <div class="controlsRow">
+      <button id="printBtn" class="action printBtn">PRINT</button>
+      <button id="uploadBtn" class="action uploadBtn">UPLOAD</button>
+      <button id="retakeBtn" class="action retakeBtn">RETAKE</button>
+    </div>
+  </div>
 </div>
 
-<!-- QR popup -->
 <div id="barcodePopup" aria-hidden="true">
-  <div id="barcodeBox">
-    <button id="barcodeClose" aria-label="Close">×</button>
-    <div style="font-weight:900;margin-bottom:8px">SCAN RESULT</div>
-    <div id="barcodeHint">Scan to view / download</div>
-    <div id="qrcodeHost"></div>
-    <div id="barcodeUrlText" style="font-size:12px;color:var(--text-abu);word-break:break-all;max-width:90%;margin:auto"></div>
-  </div>
+  <div id="barcodeBox">
+    <button id="barcodeClose" aria-label="Close">×</button>
+    <div style="font-weight:700; letter-spacing:1px; font-size:20px;">SCAN TO DOWNLOAD</div>
+    <div id="qrcodeHost"></div>
+    <div id="barcodeUrlText"></div>
+  </div>
 </div>
 
-<!-- hidden canvases -->
 <canvas id="captureCanvas"></canvas>
 <canvas id="noShadowCanvas"></canvas>
-<canvas id="printCanvas"></canvas>    <canvas id="uploadShadowCanvas"></canvas>
+<canvas id="printCanvas"></canvas>
+<canvas id="uploadShadowCanvas"></canvas>
 <canvas id="ditherCanvas"></canvas>
 
 <script>
@@ -227,18 +358,12 @@ const STRIP_GAP = 8;
 
 /* ================== DOM ================== */
 const video = document.getElementById('camera');
-const videoBg = document.getElementById('cameraBg'); 
-const cameraOverlay = document.getElementById('cameraOverlay'); 
 const startBtn = document.getElementById('startBtn');
-const startCard = document.getElementById('startCard');
 const countdownOverlay = document.getElementById('countdownOverlay');
 const countNum = document.getElementById('countNum');
-const countLabel = document.getElementById('countLabel');
 const flashEl = document.getElementById('flash');
 
 const modalOverlay = document.getElementById('modalOverlay');
-const stripPhoto = document.getElementById('stripPhoto');
-const stripDivider = document.getElementById('stripDivider');
 const finalPreviewWrap = document.getElementById('finalPreviewWrap');
 const uploadedUrlEl = document.getElementById('uploadedUrl');
 const uploadBtn = document.getElementById('uploadBtn');
@@ -252,9 +377,9 @@ const barcodeUrlText = document.getElementById('barcodeUrlText');
 
 const captureCanvas = document.getElementById('captureCanvas');
 const noShadowCanvas = document.getElementById('noShadowCanvas');
+const printCanvas = document.getElementById('printCanvas');
 const uploadShadowCanvas = document.getElementById('uploadShadowCanvas');
 const ditherCanvas = document.getElementById('ditherCanvas');
-const printCanvas = document.getElementById('printCanvas'); // <-- TAMBAHKAN BARIS INI
 
 let captureMode = '';
 let capturedCanvases = [];
@@ -271,23 +396,21 @@ function shutterSound(){ beep(900,0.04); setTimeout(()=>beep(1400,0.04),70); }
 
 /* ================== CAMERA ================== */
 async function openCamera(){
-  try{
-    const stream = await navigator.mediaDevices.getUserMedia({ video:{ facingMode:'user', width:{ideal:1920}, height:{ideal:1080} }, audio:false });
-    video.srcObject = stream; // 4:3 active preview
-    videoBg.srcObject = stream; // full-screen background
-
-    video.addEventListener('loadedmetadata', ()=> {
-      setTimeout(()=> {
-        if(video.videoWidth > 0 && video.videoHeight > 0){
-          cameraReady = true;
-          if(captureMode) startBtn.disabled = false;
-        }
-      }, 220);
-    }, { once: true });
-  }catch(err){
-    console.error('Camera open failed:', err);
-    alert('Cannot access camera: '+(err.message||err));
-  }
+  try{
+    const stream = await navigator.mediaDevices.getUserMedia({ video:{ facingMode:'user', width:{ideal:1920}, height:{ideal:1080} }, audio:false });
+    video.srcObject = stream; 
+    video.addEventListener('loadedmetadata', ()=> {
+      setTimeout(()=> {
+        if(video.videoWidth > 0 && video.videoHeight > 0){
+          cameraReady = true;
+          if(captureMode) startBtn.disabled = false;
+        }
+      }, 220);
+    }, { once: true });
+  }catch(err){
+    console.error('Camera open failed:', err);
+    alert('Cannot access camera: '+(err.message||err));
+  }
 }
 openCamera();
 
@@ -296,333 +419,233 @@ document.getElementById('mode3').addEventListener('click', ()=>{ captureMode='st
 
 /* ================== CAPTURE helpers ================== */
 function captureOnce(){
-  const vw = video.videoWidth || 0;
-  const vh = video.videoHeight || 0;
-  if(!vw || !vh) return null;
-  captureCanvas.width = vw; captureCanvas.height = vh;
-  const ctx = captureCanvas.getContext('2d');
-  ctx.save(); ctx.scale(-1,1); ctx.drawImage(video, -vw, 0, vw, vh); ctx.restore();
-  const out = document.createElement('canvas'); out.width = vw; out.height = vh;
-  out.getContext('2d').drawImage(captureCanvas,0,0);
-  return out;
+  const vw = video.videoWidth || 0;
+  const vh = video.videoHeight || 0;
+  if(!vw || !vh) return null;
+  captureCanvas.width = vw; captureCanvas.height = vh;
+  const ctx = captureCanvas.getContext('2d');
+  ctx.save(); ctx.scale(-1,1); ctx.drawImage(video, -vw, 0, vw, vh); ctx.restore();
+  const out = document.createElement('canvas'); out.width = vw; out.height = vh;
+  out.getContext('2d').drawImage(captureCanvas,0,0);
+  return out;
 }
 
 function cropCenterTo4x3(srcCanvas, targetW){
-  const targetH = Math.round(targetW * 3 / 4);
-  const sw = srcCanvas.width, sh = srcCanvas.height;
-  const srcRatio = sw/sh, tgtRatio = targetW/targetH;
-  let sx, sy, swc, shc;
-  if(srcRatio > tgtRatio){
-    shc = sh; swc = Math.round(shc * tgtRatio); sx = Math.floor((sw - swc)/2); sy = 0;
-  } else {
-    swc = sw; shc = Math.round(swc / tgtRatio); sx = 0; sy = Math.floor((sh - shc)/2);
-  }
-  const out = document.createElement('canvas'); out.width = targetW; out.height = targetH;
-  out.getContext('2d').drawImage(srcCanvas, sx, sy, swc, shc, 0, 0, targetW, targetH);
-  return out;
+  const targetH = Math.round(targetW * 3 / 4);
+  const sw = srcCanvas.width, sh = srcCanvas.height;
+  const srcRatio = sw/sh, tgtRatio = targetW/targetH;
+  let sx, sy, swc, shc;
+  if(srcRatio > tgtRatio){
+    shc = sh; swc = Math.round(shc * tgtRatio); sx = Math.floor((sw - swc)/2); sy = 0;
+  } else {
+    swc = sw; shc = Math.round(swc / tgtRatio); sx = 0; sy = Math.floor((sh - shc)/2);
+  }
+  const out = document.createElement('canvas'); out.width = targetW; out.height = targetH;
+  out.getContext('2d').drawImage(srcCanvas, sx, sy, swc, shc, 0, 0, targetW, targetH);
+  return out;
 }
 
 function applyFintage(canvas){
-  const ctx = canvas.getContext('2d');
-  const img = ctx.getImageData(0,0,canvas.width,canvas.height);
-  const d = img.data;
-  for(let i=0;i<d.length;i+=4){
-    const r=d[i], g=d[i+1], b=d[i+2];
-    let tr = (r*0.393 + g*0.769 + b*0.189);
-    let tg = (r*0.349 + g*0.686 + b*0.168);
-    let tb = (r*0.272 + g*0.534 + b*0.131);
-    tr = Math.min(255, ((tr-128)*1.03)+128);
-    tg = Math.min(255, ((tg-128)*1.02)+128);
-    tb = Math.min(255, ((tb-128)*0.98)+128);
-    d[i]=tr; d[i+1]=tg; d[i+2]=tb;
-    const grain = (Math.random()-0.5)*8;
-    d[i]+=grain; d[i+1]+=grain; d[i+2]+=grain;
-  }
-  ctx.putImageData(img,0,0);
-  return canvas;
+  const ctx = canvas.getContext('2d');
+  const img = ctx.getImageData(0,0,canvas.width,canvas.height);
+  const d = img.data;
+  for(let i=0;i<d.length;i+=4){
+    const r=d[i], g=d[i+1], b=d[i+2];
+    let tr = (r*0.393 + g*0.769 + b*0.189);
+    let tg = (r*0.349 + g*0.686 + b*0.168);
+    let tb = (r*0.272 + g*0.534 + b*0.131);
+    tr = Math.min(255, ((tr-128)*1.03)+128);
+    tg = Math.min(255, ((tg-128)*1.02)+128);
+    tb = Math.min(255, ((tb-128)*0.98)+128);
+    d[i]=tr; d[i+1]=tg; d[i+2]=tb;
+    const grain = (Math.random()-0.5)*8;
+    d[i]+=grain; d[i+1]+=grain; d[i+2]+=grain;
+  }
+  ctx.putImageData(img,0,0);
+  return canvas;
 }
 
 function floydDither(srcCanvas, targetWidth){
-  const scale = targetWidth / srcCanvas.width;
-  const tw = Math.round(srcCanvas.width * scale);
-  const th = Math.round(srcCanvas.height * scale);
-  ditherCanvas.width = tw; ditherCanvas.height = th;
-  const dctx = ditherCanvas.getContext('2d');
-  dctx.drawImage(srcCanvas, 0, 0, tw, th);
-  const img = dctx.getImageData(0,0,tw,th);
-  const data = img.data;
-  const lum = new Float32Array(tw*th);
-  for(let y=0;y<th;y++){
-    for(let x=0;x<tw;x++){
-      const i=(y*tw+x)*4;
-      lum[y*tw+x] = 0.299*data[i] + 0.587*data[i+1] + 0.114*data[i+2];
-    }
-  }
-  for(let y=0;y<th;y++){
-    for(let x=0;x<tw;x++){
-      const idx = y*tw+x;
-      const oldv = lum[idx];
-      const newv = oldv < 128 ? 0 : 255;
-      const err = oldv - newv;
-      lum[idx] = newv;
-      if(x+1 < tw) lum[idx+1] += err * 7/16;
-      if(x-1 >=0 && y+1 < th) lum[idx + tw -1] += err * 3/16;
-      if(y+1 < th) lum[idx + tw] += err * 5/16;
-      if(x+1 < tw && y+1 < th) lum[idx + tw +1] += err * 1/16;
-    }
-  }
-  for(let y=0;y<th;y++){
-    for(let x=0;x<tw;x++){
-      const i=(y*tw+x)*4;
-      const v = lum[y*tw+x];
-      data[i]=data[i+1]=data[i+2]=v; data[i+3]=255;
-    }
-  }
-  dctx.putImageData(img,0,0);
-  return ditherCanvas.toDataURL('image/png');
+  const scale = targetWidth / srcCanvas.width;
+  const tw = Math.round(srcCanvas.width * scale);
+  const th = Math.round(srcCanvas.height * scale);
+  ditherCanvas.width = tw; ditherCanvas.height = th;
+  const dctx = ditherCanvas.getContext('2d');
+  dctx.drawImage(srcCanvas, 0, 0, tw, th);
+  const img = dctx.getImageData(0,0,tw,th);
+  const data = img.data;
+  const lum = new Float32Array(tw*th);
+  for(let y=0;y<th;y++){
+    for(let x=0;x<tw;x++){
+      const i=(y*tw+x)*4;
+      lum[y*tw+x] = 0.299*data[i] + 0.587*data[i+1] + 0.114*data[i+2];
+    }
+  }
+  for(let y=0;y<th;y++){
+    for(let x=0;x<tw;x++){
+      const idx = y*tw+x;
+      const oldv = lum[idx];
+      const newv = oldv < 128 ? 0 : 255;
+      const err = oldv - newv;
+      lum[idx] = newv;
+      if(x+1 < tw) lum[idx+1] += err * 7/16;
+      if(x-1 >=0 && y+1 < th) lum[idx + tw -1] += err * 3/16;
+      if(y+1 < th) lum[idx + tw] += err * 5/16;
+      if(x+1 < tw && y+1 < th) lum[idx + tw +1] += err * 1/16;
+    }
+  }
+  for(let y=0;y<th;y++){
+    for(let x=0;x<tw;x++){
+      const i=(y*tw+x)*4;
+      const v = lum[y*tw+x];
+      data[i]=data[i+1]=data[i+2]=v; data[i+3]=255;
+    }
+  }
+  dctx.putImageData(img,0,0);
+  return ditherCanvas.toDataURL('image/png');
 }
 
-/* ================== Compose final canvases ================== */
+/* ================== COMPOSE FUNCTIONS ================== */
 
-/* --- REVISI 3 & 4 (FIXED 3-STRIP SCALING) --- */
+// 1. PREVIEW (1080p, Margin)
 function composeFinalNoShadow(captured, txId, dateStr){
-  const canvas = noShadowCanvas;
-  canvas.width = FINAL_W; canvas.height = FINAL_H;
-  const ctx = canvas.getContext('2d');
-  
-  const pad = 48;
-  const paperX = pad, paperY = pad;
-  const paperW = FINAL_W - pad*2, paperH = FINAL_H - pad*2;
-  const paperBottom = paperY + paperH;
-  const contentX = paperX + 20;
-  const contentW = paperW - 40;
-  const leftX = contentX + 8;
-  const rightX = contentX + contentW - 8;
-  const colorAbu = '#6b5c4b';
-  const colorEdge = '#ded6c8';
+  const canvas = noShadowCanvas;
+  canvas.width = FINAL_W; canvas.height = FINAL_H;
+  const ctx = canvas.getContext('2d');
+  
+  const pad = 48;
+  const paperX = pad, paperY = pad;
+  const paperW = FINAL_W - pad*2, paperH = FINAL_H - pad*2;
+  const paperBottom = paperY + paperH;
+  const contentX = paperX + 20;
+  const contentW = paperW - 40;
+  const colorAbu = '#6b5c4b';
+  const colorEdge = '#ded6c8';
 
-  ctx.fillStyle = '#ffffff'; ctx.fillRect(0,0,FINAL_W,FINAL_H);
-  ctx.fillStyle = '#fffdf7'; 
-  ctx.fillRect(paperX, paperY, paperW, paperH);
+  ctx.fillStyle = '#ffffff'; ctx.fillRect(0,0,FINAL_W,FINAL_H);
+  ctx.fillStyle = '#fffdf7'; ctx.fillRect(paperX, paperY, paperW, paperH);
 
-  // 3. Draw Header (Always visible)
-  ctx.fillStyle = '#111'; ctx.textAlign = 'center'; ctx.font = '32px monospace';
-  const headerY = paperY + 70;
-  ctx.fillText('VIZRIZE PHOTOBOOTH', paperX + paperW/2, headerY);
-  ctx.font = '16px monospace'; ctx.fillStyle = colorAbu;
-  ctx.fillText('Jakarta • Photobooth', paperX + paperW/2, headerY + 32);
-  const headerLineY = headerY + 58;
-  ctx.strokeStyle = colorEdge; ctx.setLineDash([6,6]);
-  ctx.beginPath(); ctx.moveTo(paperX + 12, headerLineY); ctx.lineTo(paperX + paperW - 12, headerLineY); ctx.stroke(); ctx.setLineDash([]);
+  // Header
+  ctx.fillStyle = '#111'; ctx.textAlign = 'center'; ctx.font = '32px monospace';
+  const headerY = paperY + 70;
+  ctx.fillText('VIZRIZE PHOTOBOOTH', paperX + paperW/2, headerY);
+  ctx.font = '16px monospace'; ctx.fillStyle = colorAbu;
+  ctx.fillText('Jakarta • Photobooth', paperX + paperW/2, headerY + 32);
+  const headerLineY = headerY + 58;
+  ctx.strokeStyle = colorEdge; ctx.setLineDash([6,6]);
+  ctx.beginPath(); ctx.moveTo(paperX + 12, headerLineY); ctx.lineTo(paperX + paperW - 12, headerLineY); ctx.stroke(); ctx.setLineDash([]);
 
-  // 4. Draw Footer (Always visible)
-  const footerBrandY = paperBottom - 40;
-  const footerThankY = paperBottom - 70;
-  const footerTotalY = paperBottom - 130;
-  const footerTaxY = footerTotalY - 34;
-  const footerSubY = footerTaxY - 30;
-  const footerLineY = footerSubY - 32;
+  // Footer
+  const footerBrandY = paperBottom - 40;
+  const footerThankY = paperBottom - 70;
+  const footerTotalY = paperBottom - 130;
+  const footerTaxY = footerTotalY - 34;
+  const footerSubY = footerTaxY - 30;
+  const footerLineY = footerSubY - 32;
 
-  ctx.font = '18px monospace'; ctx.fillStyle = colorAbu; ctx.textAlign = 'center';
-  ctx.fillText('THANK YOU ~ HAVE A NICE DAY!', paperX + paperW/2, footerThankY);
-  ctx.font = '16px monospace'; ctx.fillStyle = '#111';
-  ctx.fillText('~ PHOTORECEIPT by VizRize ~', paperX + paperW/2, footerBrandY);
+  ctx.font = '18px monospace'; ctx.fillStyle = colorAbu; ctx.textAlign = 'center';
+  ctx.fillText('THANK YOU ~ HAVE A NICE DAY!', paperX + paperW/2, footerThankY);
+  ctx.font = '16px monospace'; ctx.fillStyle = '#111';
+  ctx.fillText('~ PHOTORECEIPT by VizRize ~', paperX + paperW/2, footerBrandY);
 
-  const subtotal = 15000;
-  const tax = Math.round(subtotal * 0.1);
-  const total = subtotal + tax;
+  const subtotal = 15000; const tax = Math.round(subtotal * 0.1); const total = subtotal + tax;
+  const leftX = contentX + 8; const rightX = contentX + contentW - 8;
 
-  ctx.font = '18px monospace'; ctx.fillStyle = colorAbu;
-  ctx.textAlign = 'left'; ctx.fillText('SUBTOTAL', leftX, footerSubY);
-  ctx.textAlign = 'right'; ctx.fillText('Rp' + subtotal.toLocaleString('id-ID'), rightX, footerSubY);
+  ctx.font = '18px monospace'; ctx.fillStyle = colorAbu;
+  ctx.textAlign = 'left'; ctx.fillText('SUBTOTAL', leftX, footerSubY);
+  ctx.textAlign = 'right'; ctx.fillText('Rp' + subtotal.toLocaleString('id-ID'), rightX, footerSubY);
+  ctx.textAlign = 'left'; ctx.fillText('TAX (10%)', leftX, footerTaxY);
+  ctx.textAlign = 'right'; ctx.fillText('Rp' + tax.toLocaleString('id-ID'), rightX, footerTaxY);
+  ctx.font = '20px monospace'; ctx.fillStyle = '#111';
+  ctx.textAlign = 'left'; ctx.fillText('TOTAL', leftX, footerTotalY);
+  ctx.textAlign = 'right'; ctx.fillText('Rp' + total.toLocaleString('id-ID'), rightX, footerTotalY);
 
-  ctx.textAlign = 'left'; ctx.fillText('TAX (10%)', leftX, footerTaxY);
-  ctx.textAlign = 'right'; ctx.fillText('Rp' + tax.toLocaleString('id-ID'), rightX, footerTaxY);
+  ctx.setLineDash([6,6]);
+  ctx.beginPath(); ctx.moveTo(contentX, footerLineY); ctx.lineTo(contentX + contentW, footerLineY); ctx.strokeStyle = colorEdge; ctx.stroke(); ctx.setLineDash([]);
 
-  ctx.font = '20px monospace'; ctx.fillStyle = '#111';
-  ctx.textAlign = 'left'; ctx.fillText('TOTAL', leftX, footerTotalY);
-  ctx.textAlign = 'right'; ctx.fillText('Rp' + total.toLocaleString('id-ID'), rightX, footerTotalY);
+  // Photos
+  const photoAreaTop = headerLineY + 20;
+  const photoAreaBottom = footerLineY - 20;
+  const photoAreaH = photoAreaBottom - photoAreaTop;
+  const photoW = contentW;
+  const photoH_3strip = Math.round(photoW * 3 / 4);
 
-  ctx.setLineDash([6,6]);
-  ctx.beginPath(); ctx.moveTo(contentX, footerLineY); ctx.lineTo(contentX + contentW, footerLineY); ctx.strokeStyle = colorEdge; ctx.stroke(); ctx.setLineDash([]);
-
-  // 5. Draw Photos (Calculates fit-in logic)
-  const photoAreaTop = headerLineY + 20;
-  const photoAreaBottom = footerLineY - 20;
-  const photoAreaH = photoAreaBottom - photoAreaTop; // Available height
-  const photoW = contentW; // Available width
-
-  if(captured.length === 1){
-    // 1-STRIP LOGIC (Smaller Margins)
-    let imgH = photoAreaH; 
-    let imgW = Math.round(imgH * (4 / 3)); 
-    
-    if (imgW > photoW) {
-        imgW = photoW; 
-        imgH = Math.round(imgW * (3 / 4)); 
-    }
-    
-    const imgX = contentX + (photoW - imgW) / 2;
-    const imgY = photoAreaTop + (photoAreaH - imgH) / 2;
-
-    const cropped = cropCenterTo4x3(captured[0], imgW);
-    applyFintage(cropped);
-    ctx.fillStyle = '#fff'; 
-    ctx.fillRect(imgX, imgY, imgW, imgH); 
-    ctx.drawImage(cropped, imgX, imgY, imgW, imgH);
-
-  } else {
-    // 3-STRIP LOGIC (Fit-in Scaling)
-    const photoH_unscaled = Math.round(photoW * 3 / 4);
-    const totalPhotoH_unscaled = (photoH_unscaled * captured.length) + (STRIP_GAP * (captured.length - 1));
-
-    let scale = 1.0;
-    if (totalPhotoH_unscaled > photoAreaH) {
-      scale = photoAreaH / totalPhotoH_unscaled;
-    }
-
-    const photoW_scaled = Math.round(photoW * scale);
-    const photoH_scaled = Math.round(photoH_unscaled * scale);
-    const gap_scaled = Math.round(STRIP_GAP * scale);
-
-    const totalPhotoH_scaled = (photoH_scaled * captured.length) + (gap_scaled * (captured.length - 1));
-
-    let photoY = photoAreaTop + (photoAreaH - totalPhotoH_scaled) / 2; // Center block vertically
-    let photoX = contentX + (contentW - photoW_scaled) / 2; // Center block horizontally
-    
-    captured.forEach((c,i)=>{
-      const cropped = cropCenterTo4x3(c, photoW); // Crop at high res
-      applyFintage(cropped);
-      ctx.fillStyle = '#fff'; 
-      ctx.fillRect(photoX, photoY, photoW_scaled, photoH_scaled);
-      ctx.drawImage(cropped, photoX, photoY, photoW_scaled, photoH_scaled); // Draw scaled
-      photoY += photoH_scaled + gap_scaled;
-    });
-  }
-  
-  return canvas;
+  if(captured.length === 1){
+    let imgH = photoAreaH; 
+    let imgW = Math.round(imgH * (4 / 3)); 
+    if (imgW > photoW) { imgW = photoW; imgH = Math.round(imgW * (3 / 4)); }
+    const imgX = contentX + (photoW - imgW) / 2;
+    const imgY = photoAreaTop + (photoAreaH - imgH) / 2;
+    const cropped = cropCenterTo4x3(captured[0], imgW);
+    applyFintage(cropped);
+    ctx.fillStyle = '#fff'; ctx.fillRect(imgX, imgY, imgW, imgH); 
+    ctx.drawImage(cropped, imgX, imgY, imgW, imgH);
+  } else {
+    const totalPhotoH = (photoH_3strip * captured.length) + (STRIP_GAP * (captured.length - 1));
+    let photoY = photoAreaTop + (photoAreaH - totalPhotoH) / 2; 
+    captured.forEach((c,i)=>{
+      const cropped = cropCenterTo4x3(c, photoW);
+      applyFintage(cropped);
+      ctx.fillStyle = '#fff'; ctx.fillRect(contentX, photoY, photoW, photoH_3strip);
+      ctx.drawImage(cropped, contentX, photoY, photoW, photoH_3strip);
+      photoY += photoH_3strip + STRIP_GAP;
+    });
+  }
+  return canvas;
 }
 
-
-/* uploadShadowCanvas: builds a slightly larger canvas containing noShadow canvas centered with shadow */
-function composeUploadWithShadow(noShadowCanvasEl){
-  const pad = 40; 
-  const upW = noShadowCanvasEl.width + pad*2;
-  const upH = noShadowCanvasEl.height + pad*2;
-  const u = uploadShadowCanvas;
-  u.width = upW; u.height = upH;
-  const ctx = u.getContext('2d');
-
-  ctx.fillStyle = '#ffffff'; ctx.fillRect(0,0,upW,upH);
-
-  ctx.save();
-  ctx.shadowColor = 'rgba(0,0,0,0.18)';
-  ctx.shadowBlur = 40;
-  ctx.shadowOffsetY = 16;
-  const dstX = pad, dstY = pad;
-  const r = 12;
-  ctx.fillStyle = '#fffdf7'; 
-  roundRect(ctx, dstX, dstY, noShadowCanvasEl.width, noShadowCanvasEl.height, r, true, false);
-  ctx.restore(); 
-  
-  ctx.drawImage(noShadowCanvasEl, dstX, dstY);
-
-  return u;
-}
-
-/* helper: rounded rect */
-function roundRect(ctx, x, y, w, h, r, fill, stroke){
-  if (typeof r === 'undefined') r = 5;
-  ctx.beginPath();
-  ctx.moveTo(x + r, y);
-  ctx.arcTo(x + w, y, x + w, y + h, r);
-  ctx.arcTo(x + w, y + h, x, y + h, r);
-  ctx.arcTo(x, y + h, x, y, r);
-  ctx.arcTo(x, y, x + w, y, r);
-  ctx.closePath(); // <-- FIXED
-  if(fill) ctx.fill();
-  if(stroke) ctx.stroke();
-}
-/* ================== Compose Canvas KHUSUS CETAK (REVISI FINAL) ================== */
-/*
-  Fungsi ini membuat gambar BARU khusus untuk printer
-  - Lebar 384px (PRINT_W), TANPA margin kiri/kanan
-  - Teks LEBIH BESAR dan Jelas (Hitam pekat)
-  - Menggambar DETAIL STRUK (Subtotal, Tax, Total)
-  - Mengatur layout 1-strip atau 3-strip secara otomatis
-*/
+// 2. PRINT (384px, No Margin, Big Font, Spasi Bawah)
 function composeFinalForPrint(captured) {
-  const canvas = printCanvas; // Menggunakan kanvas cetak
-  canvas.width = PRINT_W; // 384px
+  const canvas = printCanvas; 
+  canvas.width = PRINT_W; 
 
-  // --- Font besar agar jelas di printer ---
-  const headerFontSize = 26;
-  const subHeaderFontSize = 16;
-  const receiptFontSize = 20;
-  const totalFontSize = 22;
-  const footerFontSize = 16;
-  const padding = 8; // Jarak 8px
-  const photoW = PRINT_W; // Lebar penuh, X=0, tanpa margin
+  const headerFontSize = 26; const subHeaderFontSize = 16;
+  const receiptFontSize = 20; const totalFontSize = 22;
+  const footerFontSize = 16; const padding = 8; 
+  const photoW = PRINT_W; 
 
-  // --- 1. Hitung Tinggi Foto ---
   let photoTotalHeight = 0;
   if (captured.length === 1) {
-    photoTotalHeight = Math.round(photoW * (3/4)); // 4:3
+    photoTotalHeight = Math.round(photoW * (3/4)); 
   } else {
     const photoH = Math.round(photoW * (3/4));
     photoTotalHeight = (photoH * captured.length) + (padding * (captured.length - 1));
   }
 
-  // --- 2. Hitung Total Tinggi Canvas ---
   let totalHeight = 0;
-  totalHeight += padding; // Jarak atas
-  totalHeight += headerFontSize; // "VIZRIZE PHOTOBOOTH"
-  totalHeight += subHeaderFontSize; // "Jakarta Photobooth"
-  totalHeight += padding; // Jarak ke dashed line
-  totalHeight += 5; // Dashed line
-  totalHeight += padding; // Jarak ke foto
-  totalHeight += photoTotalHeight; // Blok Foto
-  totalHeight += padding; // Jarak ke dashed line
-  totalHeight += 5; // Dashed line
-  totalHeight += padding; // Jarak ke subtotal
-  totalHeight += receiptFontSize; // Subtotal
-  totalHeight += receiptFontSize; // Tax
-  totalHeight += padding; // Jarak ke total
-  totalHeight += totalFontSize; // Total
-  totalHeight += padding; // Jarak ke dashed line
-  totalHeight += 5; // Dashed line
-  totalHeight += padding; // Jarak ke thank you
-  totalHeight += footerFontSize; // "THANK YOU"
-  totalHeight += footerFontSize; // "PHOTORECEIPT"
-  totalHeight += padding; // Jarak bawah
-  totalHeight += 100;
+  totalHeight += padding; 
+  totalHeight += headerFontSize; 
+  totalHeight += subHeaderFontSize; 
+  totalHeight += padding + 5 + padding; 
+  totalHeight += photoTotalHeight; 
+  totalHeight += padding + 5 + padding; 
+  totalHeight += receiptFontSize + receiptFontSize + padding + totalFontSize;
+  totalHeight += padding + 5 + padding; 
+  totalHeight += footerFontSize + footerFontSize + padding; 
+  totalHeight += 50; // SPASI SOBEK
 
-  // --- 3. Set Canvas dan Mulai Menggambar ---
   canvas.height = totalHeight;
   const ctx = canvas.getContext('2d');
-  ctx.fillStyle = '#ffffff';
-  ctx.fillRect(0, 0, canvas.width, canvas.height);
-  ctx.fillStyle = '#000000'; // Teks hitam pekat (agar tidak di-dither)
+  ctx.fillStyle = '#ffffff'; ctx.fillRect(0, 0, canvas.width, canvas.height);
+  ctx.fillStyle = '#000000'; 
   
   let currentY = 0;
-  const leftX = 0; // REVISI: Margin kiri adalah 0
-  const rightX = canvas.width; // REVISI: Margin kanan adalah 0
+  const leftX = 0; const rightX = canvas.width;
 
-// --- 4. Gambar Header (REVISI: Rata Tengah) ---
-currentY += padding;
-ctx.font = `bold ${headerFontSize}px monospace`;
-ctx.textAlign = 'center'; // KEMBALIKAN ke 'center'
-ctx.fillText('VIZRIZE PHOTOBOOTH', canvas.width / 2, currentY + headerFontSize - (padding/2)); // KEMBALIKAN ke 'canvas.width / 2'
-currentY += headerFontSize;
+  // Header (CENTER)
+  currentY += padding;
+  ctx.font = `bold ${headerFontSize}px monospace`;
+  ctx.textAlign = 'center'; 
+  ctx.fillText('VIZRIZE PHOTOBOOTH', canvas.width / 2, currentY + headerFontSize - (padding/2));
+  currentY += headerFontSize;
+  ctx.font = `normal ${subHeaderFontSize}px monospace`;
+  ctx.fillText('Jakarta Photobooth', canvas.width / 2, currentY + subHeaderFontSize);
+  currentY += subHeaderFontSize + padding;
+  
+  drawDashedLine(ctx, leftX, currentY, rightX, currentY); 
+  currentY += 5 + padding;
 
-ctx.font = `normal ${subHeaderFontSize}px monospace`;
-ctx.textAlign = 'center'; // KEMBALIKAN ke 'center'
-ctx.fillText('Jakarta Photobooth', canvas.width / 2, currentY + subHeaderFontSize); // KEMBALIKAN ke 'canvas.width / 2'
-currentY += subHeaderFontSize + padding;
-  
-drawDashedLine(ctx, leftX, currentY, rightX, currentY); // Dashed line (full-width)
-currentY += 5 + padding;
-  // --- 5. Gambar Foto (Full-width) ---
+  // Photo (No Margin)
   if (captured.length === 1) {
     const photoH = Math.round(photoW * (3/4));
     const cropped = cropCenterTo4x3(captured[0], photoW);
@@ -634,44 +657,37 @@ currentY += 5 + padding;
       const cropped = cropCenterTo4x3(c, photoW);
       ctx.drawImage(cropped, 0, currentY, photoW, photoH);
       currentY += photoH;
-      if (i < captured.length - 1) currentY += padding; // Jarak 8px antar foto
+      if (i < captured.length - 1) currentY += padding; 
     });
   }
   currentY += padding;
 
-  // --- 6. Gambar Footer (Detail Receipt) ---
-  drawDashedLine(ctx, leftX, currentY, rightX, currentY); // Dashed line (full-width)
+  // Receipt Details (No Margin)
+  drawDashedLine(ctx, leftX, currentY, rightX, currentY); 
   currentY += 5 + padding;
 
-  const subtotal = 15000;
-  const tax = Math.round(subtotal * 0.1);
-  const total = subtotal + tax;
+  const subtotal = 15000; const tax = Math.round(subtotal * 0.1); const total = subtotal + tax;
   
   ctx.font = `normal ${receiptFontSize}px monospace`;
-  ctx.textAlign = 'left';
-  ctx.fillText('SUBTOTAL', leftX, currentY + receiptFontSize); // X=0
-  ctx.textAlign = 'right';
-  ctx.fillText('Rp' + subtotal.toLocaleString('id-ID'), rightX, currentY + receiptFontSize); // X=384
+  ctx.textAlign = 'left'; ctx.fillText('SUBTOTAL', leftX, currentY + receiptFontSize); 
+  ctx.textAlign = 'right'; ctx.fillText('Rp' + subtotal.toLocaleString('id-ID'), rightX, currentY + receiptFontSize); 
   currentY += receiptFontSize;
 
-  ctx.textAlign = 'left';
-  ctx.fillText('TAX (10%)', leftX, currentY + receiptFontSize); // X=0
-  ctx.textAlign = 'right';
-  ctx.fillText('Rp' + tax.toLocaleString('id-ID'), rightX, currentY + receiptFontSize); // X=384
+  ctx.textAlign = 'left'; ctx.fillText('TAX (10%)', leftX, currentY + receiptFontSize); 
+  ctx.textAlign = 'right'; ctx.fillText('Rp' + tax.toLocaleString('id-ID'), rightX, currentY + receiptFontSize); 
   currentY += receiptFontSize + padding;
   
   ctx.font = `bold ${totalFontSize}px monospace`;
-  ctx.textAlign = 'left';
-  ctx.fillText('TOTAL', leftX, currentY + totalFontSize); // X=0
-  ctx.textAlign = 'right';
-  ctx.fillText('Rp' + total.toLocaleString('id-ID'), rightX, currentY + totalFontSize); // X=384
+  ctx.textAlign = 'left'; ctx.fillText('TOTAL', leftX, currentY + totalFontSize); 
+  ctx.textAlign = 'right'; ctx.fillText('Rp' + total.toLocaleString('id-ID'), rightX, currentY + totalFontSize); 
   currentY += totalFontSize + padding;
 
-  drawDashedLine(ctx, leftX, currentY, rightX, currentY); // Dashed line (full-width)
+  drawDashedLine(ctx, leftX, currentY, rightX, currentY); 
   currentY += 5 + padding;
   
+  // Footer (CENTER)
   ctx.font = `normal ${footerFontSize}px monospace`;
-  ctx.textAlign = 'center'; // Teks footer boleh tengah lagi
+  ctx.textAlign = 'center'; 
   ctx.fillText('THANK YOU ~ HAVE A NICE DAY!', canvas.width / 2, currentY + footerFontSize);
   currentY += footerFontSize;
   ctx.font = `bold ${footerFontSize}px monospace`;
@@ -680,291 +696,172 @@ currentY += 5 + padding;
   return canvas;
 }
 
-// Helper function untuk garis putus-putus
 function drawDashedLine(ctx, x1, y1, x2, y2) {
     ctx.beginPath();
-    ctx.setLineDash([4, 4]); // 4px garis, 4px spasi
+    ctx.setLineDash([4, 4]); 
     ctx.moveTo(x1, y1);
     ctx.lineTo(x2, y2);
-    ctx.strokeStyle = '#000000'; // Hitam pekat
+    ctx.strokeStyle = '#000000'; 
     ctx.stroke();
-    ctx.setLineDash([]); // Reset
+    ctx.setLineDash([]); 
 }
-/* ================== Flow: preview, upload, print ================== */
+
+function composeUploadWithShadow(noShadowCanvasEl){
+  const pad = 40; const upW = noShadowCanvasEl.width + pad*2; const upH = noShadowCanvasEl.height + pad*2;
+  const u = uploadShadowCanvas; u.width = upW; u.height = upH;
+  const ctx = u.getContext('2d');
+  ctx.fillStyle = '#ffffff'; ctx.fillRect(0,0,upW,upH);
+  ctx.save(); ctx.shadowColor = 'rgba(0,0,0,0.18)'; ctx.shadowBlur = 40; ctx.shadowOffsetY = 16;
+  const dstX = pad, dstY = pad; const r = 12;
+  ctx.fillStyle = '#fffdf7'; 
+  roundRect(ctx, dstX, dstY, noShadowCanvasEl.width, noShadowCanvasEl.height, r, true, false);
+  ctx.restore(); 
+  ctx.drawImage(noShadowCanvasEl, dstX, dstY);
+  return u;
+}
+
+function roundRect(ctx, x, y, w, h, r, fill, stroke){
+  if (typeof r === 'undefined') r = 5;
+  ctx.beginPath(); ctx.moveTo(x + r, y); ctx.arcTo(x + w, y, x + w, y + h, r); ctx.arcTo(x + w, y + h, x, y + h, r); ctx.arcTo(x, y + h, x, y, r); ctx.arcTo(x, y, x + w, y, r); ctx.closePath();
+  if(fill) ctx.fill(); if(stroke) ctx.stroke();
+}
+
+/* ================== FLOW ================== */
 
 function flashOnce(duration=140){
-  flashEl.style.opacity = '0.95';
-  setTimeout(()=>{ flashEl.style.opacity = '0'; }, duration);
+  flashEl.style.opacity = '0.95'; setTimeout(()=>{ flashEl.style.opacity = '0'; }, duration);
 }
 
 async function runCountdown(sec=3){
-  if(audioCtx.state === 'suspended') await audioCtx.resume();
-  startCard.style.transition = 'opacity .35s ease, transform .35s ease';
-  startCard.style.opacity = '0';
-  startCard.style.transform = 'translateY(12px) scale(.98)';
-  countdownOverlay.style.display = 'flex';
-  for(let i=sec;i>0;i--){
-    countNum.textContent = i;
-    countLabel.textContent = 'Get Ready';
-    countNum.style.transform = 'scale(1.12)';
-    speak(i.toString());
-    beep(1000 - (i*80), 0.12);
-    await new Promise(r=>setTimeout(r,360));
-    countNum.style.transform = 'scale(1)';
-    await new Promise(r=>setTimeout(r,640));
-  }
-  countNum.textContent = '📸';
-  countLabel.textContent = 'Click!';
-  speak('Click!');
-  shutterSound();
-  await new Promise(r=>setTimeout(r,420));
-  countdownOverlay.style.display = 'none';
-  startCard.style.display = 'none'; // <-- FIXED
+  if(audioCtx.state === 'suspended') await audioCtx.resume();
+  countdownOverlay.style.display = 'flex';
+  for(let i=sec;i>0;i--){
+    countNum.textContent = i;
+    speak(i.toString()); beep(1000 - (i*80), 0.12);
+    await new Promise(r=>setTimeout(r,1000)); 
+  }
+  countNum.textContent = '📸';
+  speak('Click!'); shutterSound();
+  await new Promise(r=>setTimeout(r,200));
+  countdownOverlay.style.display = 'none';
 }
 
 async function runSession(){
-  if(!captureMode){ alert('Select mode first'); return; }
-  if(!cameraReady){ alert('Camera not ready yet — wait and try Start.'); return; }
-  capturedCanvases = [];
-  const shots = (captureMode === 'single') ? 1 : 3;
+  if(!captureMode){ alert('Select mode first'); return; }
+  if(!cameraReady){ alert('Camera not ready yet'); return; }
+  capturedCanvases = [];
+  const shots = (captureMode === 'single') ? 1 : 3;
 
-  for(let i=0;i<shots;i++){
-    await runCountdown(3);
-    flashOnce(140); shutterSound(); await new Promise(r=>setTimeout(r,120));
-    if(!video.videoWidth || !video.videoHeight) await new Promise(r=>setTimeout(r,250));
-    const c = captureOnce();
-    if(!c){ alert('Capture failed — camera not ready.'); startCard.style.display='block'; startCard.style.opacity='1'; startCard.style.transform='translateY(0)'; return; }
-    capturedCanvases.push(c);
-    if(i < shots - 1) await new Promise(r=>setTimeout(r,360));
-  }
+  for(let i=0;i<shots;i++){
+    await runCountdown(3);
+    flashOnce(140); 
+    const c = captureOnce();
+    if(!c){ alert('Capture failed'); return; }
+    capturedCanvases.push(c);
+    if(i < shots - 1) await new Promise(r=>setTimeout(r,500));
+  }
 
-  stopCameraAndShowWhite();
-  preparePreviewAndFinal(capturedCanvases);
-  modalOverlay.style.display = 'flex';
+  preparePreviewAndFinal(capturedCanvases);
+  modalOverlay.style.display = 'flex';
 }
 
-function stopCameraAndShowWhite(){
-  // REVISI 1: Stop both streams
-  try{
-    const stream = video.srcObject; // Get stream from active video
-    if(stream && stream.getTracks) stream.getTracks().forEach(t=>t.stop());
-    video.srcObject = null;
-    videoBg.srcObject = null;
-  }catch(e){}
-  
-  // Sembunyikan semua layer kamera
-  document.getElementById('cameraWrap').style.display = 'none'; 
-  videoBg.style.display = 'none';
-  cameraOverlay.style.display = 'none';
-}
-
-async function restartCamera(){
-  try{
-    // REVISI 1: Tampilkan lagi semua layer kamera
-    document.getElementById('cameraWrap').style.display = 'block'; 
-    videoBg.style.display = 'block';
-    cameraOverlay.style.display = 'block';
-
-    const stream = await navigator.mediaDevices.getUserMedia({ video:{ facingMode:'user', width:{ideal:1920}, height:{ideal:1080} }, audio:false });
-    video.srcObject = stream;
-    videoBg.srcObject = stream;
-  }catch(err){
-    console.warn('restart camera failed', err);
-  }
-}
-
-/* build preview (no shadow) and set up final canvases */
 function preparePreviewAndFinal(captured){
-  // --- (Bagian clear UI Anda tetap sama) ---
-  stripPhoto.innerHTML = ''; 
-  stripPhoto.style.display = 'none'; 
-  stripDivider.style.display = 'none'; 
+  // Clean UI
   finalPreviewWrap.innerHTML = '';
   uploadedUrlEl.textContent = 'Not uploaded';
-  lastDitherDataUrl = null;
-  lastUploadUrl = null; 
-  lastNoShadowCanvas = null;
-  // ----------------------------------------
+  lastDitherDataUrl = null; lastUploadUrl = null; lastNoShadowCanvas = null;
 
   const txId = 'VZ-' + Date.now().toString(36).toUpperCase().slice(-8);
   const dateStr = new Date().toLocaleString('en-GB', { day:'2-digit', month:'short', year:'numeric', hour:'2-digit', minute:'2-digit' });
 
-  // === 1. BUAT PREVIEW MODAL (TIDAK DIUBAH) ===
-  // Ini tetap 1080x1920, cantik, ada margin.
+  // 1. PREVIEW (App)
   const noShadow = composeFinalNoShadow(captured, txId, dateStr);
-  lastNoShadowCanvas = noShadow; // Ini HANYA untuk PREVIEW MODAL
+  lastNoShadowCanvas = noShadow;
+  const dataUrl = noShadow.toDataURL('image/jpeg',0.92);
+  const img = document.createElement('img');
+  img.src = dataUrl; img.className = 'finalPreviewImg';
+  finalPreviewWrap.appendChild(img);
 
-  // Tampilkan preview di modal
-  try{
-    const dataUrl = noShadow.toDataURL('image/jpeg',0.92);
-    const img = document.createElement('img');
-    img.src = dataUrl;
-    img.className = 'finalPreviewImg';
-    finalPreviewWrap.innerHTML = '';
-    finalPreviewWrap.appendChild(img);
-  }catch(e){
-    console.warn('preview image creation failed', e);
-  }
+  // 2. PRINT (Printer) - No Margin, Big Font
+  console.log('Membuat layout cetak (tanpa margin)...');
+  const canvasForDither = composeFinalForPrint(captured);
+  lastDitherDataUrl = floydDither(canvasForDither, PRINT_W);
 
-  // === 2. BUAT GAMBAR UNTUK CETAK (REVISI) ===
-  // Panggil fungsi BARU kita yang serbaguna (untuk 1-strip ATAU 3-strip)
-  console.log('Membuat layout cetak (tanpa margin, font besar)...');
-  const canvasForDither = composeFinalForPrint(captured); // <--- BARIS KUNCI
-
-  // === 3. BUAT DITHER DARI KANVAS YANG TEPAT ===
-  lastDitherDataUrl = floydDither(canvasForDither, PRINT_W); 
-
-  // === 4. KIRIM DATA DITHER KE PRINTER (Otomatis) ===
+  // 3. AUTO PRINT
   if (window.flutter_inappwebview) {
-    console.log('Memicu print otomatis dengan gambar dither...');
-    // Kirim data yang sudah di-dither dan di-layout dengan benar
+    console.log('Memicu print otomatis...');
     window.flutter_inappwebview.callHandler('printHandler', lastDitherDataUrl);
   }
-}// <--- AKHIR FUNGSI
-/* ================== Upload & QR popup ================== */
+}
 
 async function uploadFinalWithShadowAndShowQr(){
-  if(!lastNoShadowCanvas) { alert('Nothing to upload.'); return; }
-  if(lastUploadUrl){ 
-    showQrPopup(lastUploadUrl);
-    return;
-  }
+  if(!lastNoShadowCanvas) { alert('Nothing to upload.'); return; }
+  if(lastUploadUrl){ showQrPopup(lastUploadUrl); return; }
   
   uploadBtn.disabled = true; uploadBtn.textContent = 'Uploading...';
-  try{
-    const shadowCanvas = composeUploadWithShadow(lastNoShadowCanvas);
-    const url = await uploadCanvasToCloudinary(shadowCanvas);
-    lastUploadUrl = url;
-    uploadedUrlEl.textContent = 'Uploaded: ' + url.slice(0, 40) + '...';
-    showQrPopup(url);
-    uploadBtn.textContent = 'Uploaded';
-  }catch(err){
-    alert('Upload failed: ' + (err.message || err));
-    uploadBtn.textContent = '☁️ Upload';
-  } finally {
-    uploadBtn.disabled = false; 
-  }
+  try{
+    const shadowCanvas = composeUploadWithShadow(lastNoShadowCanvas);
+    const url = await uploadCanvasToCloudinary(shadowCanvas);
+    lastUploadUrl = url;
+    uploadedUrlEl.textContent = 'Uploaded: ' + url.slice(0, 40) + '...';
+    showQrPopup(url);
+    uploadBtn.textContent = 'Uploaded';
+  }catch(err){
+    alert('Upload failed: ' + (err.message || err));
+    uploadBtn.textContent = '☁️ Upload';
+  } finally {
+    uploadBtn.disabled = false; 
+  }
 }
 
 async function uploadCanvasToCloudinary(canvas){
-  const dataUrl = canvas.toDataURL('image/jpeg',0.92);
-  const blob = await (await fetch(dataUrl)).blob();
-  const form = new FormData(); form.append('file', blob); form.append('upload_preset', UPLOAD_PRESET); 
-  const resp = await fetch(`https://api.cloudinary.com/v1_1/${CLOUD_NAME}/image/upload`, { method: 'POST', body: form }); 
-  if(!resp.ok){
-    const txt = await resp.text().catch(()=>null);
-    throw new Error('Upload failed: ' + (txt || resp.status));
-  }
-  const json = await resp.json();
-  if(!json.secure_url) throw new Error('No secure_url returned');
-  return json.secure_url;
+  const dataUrl = canvas.toDataURL('image/jpeg',0.92);
+  const blob = await (await fetch(dataUrl)).blob();
+  const form = new FormData(); form.append('file', blob); form.append('upload_preset', UPLOAD_PRESET); 
+  const resp = await fetch(`https://api.cloudinary.com/v1_1/${CLOUD_NAME}/image/upload`, { method: 'POST', body: form }); 
+  if(!resp.ok) throw new Error('Upload failed');
+  const json = await resp.json();
+  return json.secure_url;
 }
 
+// REVISI: QR Popup Responsif & Sabar
 function showQrPopup(url){
-  qrcodeHost.innerHTML = ''; // Hapus QR lama
-  barcodeUrlText.textContent = url; // 1. Atur teksnya dulu
-  barcodePopup.style.display = 'flex'; // 2. TAMPILKAN POPUP-nya
-  barcodePopup.onclick = (e)=>{ if(e.target === barcodePopup) barcodePopup.style.display = 'none'; };
+  qrcodeHost.innerHTML = ''; 
+  barcodeUrlText.textContent = url; 
+  barcodePopup.style.display = 'flex'; 
+  barcodePopup.onclick = (e)=>{ if(e.target === barcodePopup) barcodePopup.style.display = 'none'; };
 
-  // --- REVISI: METODE POLLING (ANTI GAGAL TIMING) ---
-  
-  let attempts = 0; // Jumlah percobaan
-  const maxAttempts = 50; // Max 50x percobaan (total 500ms)
-  
+  let attempts = 0; const maxAttempts = 50;
   const interval = setInterval(function() {
-    
-    // 3. Cek apakah DIV popup-nya sudah punya ukuran
     if (qrcodeHost.offsetWidth > 0) {
-        // --- SUKSES! Div sudah di-render ---
-        clearInterval(interval); // Hentikan polling
-        
-        // 4. Hitung ukuran QR yang aman
-        let qrSize = qrcodeHost.offsetWidth * 0.9; // 90% dari lebar box
+        clearInterval(interval);
+        let qrSize = qrcodeHost.offsetWidth * 0.9; 
         if (qrSize > 250) qrSize = 250;
         if (qrSize < 150) qrSize = 150;
-
-        // 5. Baru gambar QR-nya
         try {
-            new QRCode(qrcodeHost, { 
-                text: url, 
-                width: qrSize, 
-                height: qrSize, 
-                correctLevel: QRCode.CorrectLevel.M 
-            });
-        } catch(e) {
-            console.error("Gagal membuat QR Code:", e);
-            alert("Script QR Code GAGAL dijalankan."); 
-        }
-    } 
-    // Jika 10x percobaan (100ms) belum bisa, coba lagi...
-    else if (attempts > maxAttempts) {
-        // --- GAGAL TOTAL (setelah 500ms) ---
-        clearInterval(interval);
-        console.error("Popup render timeout. Gagal menggambar QR.");
-        alert("Gagal me-render popup QR. Coba lagi.");
+            new QRCode(qrcodeHost, { text: url, width: qrSize, height: qrSize, correctLevel: QRCode.CorrectLevel.M });
+        } catch(e) { console.error(e); alert("QR Script Gagal."); }
+    } else if (attempts > maxAttempts) {
+        clearInterval(interval); alert("Gagal render QR.");
     }
-    
-    attempts++; // Tambah jumlah percobaan
-    
-  }, 10); // Cek setiap 10 milidetik
+    attempts++;
+  }, 10);
 }
-/* ================== Events ================== */
-startBtn.addEventListener('click', ()=>{ runSession(); });
 
+startBtn.addEventListener('click', runSession);
 retakeBtn.addEventListener('click', async ()=>{
-  modalOverlay.style.display = 'none';
-  capturedCanvases = []; lastUploadUrl = null; lastNoShadowCanvas = null; lastDitherDataUrl = null;
-  uploadedUrlEl.textContent = 'Not uploaded';
-  uploadBtn.textContent = '☁️ Upload'; 
-  
-  await restartCamera(); 
-  
-  startCard.style.display = 'block';
-  startCard.style.transition = 'none'; 
-  await new Promise(r=>setTimeout(r,10)); 
-  startCard.style.opacity = '1';
-  startCard.style.transform = 'translateY(0)';
+  modalOverlay.style.display = 'none';
+  await openCamera(); // Re-init camera if stopped
 });
-
 printBtn.addEventListener('click', ()=>{
-  if (window.flutter_inappwebview) {
-    // BENAR: Kirim 'lastDitherDataUrl'
-    if (lastDitherDataUrl) {
-        window.flutter_inappwebview.callHandler('printHandler', lastDitherDataUrl);
-    } else {
-        alert('No dithered image ready.');
-    }
+  if (window.flutter_inappwebview && lastDitherDataUrl) {
+    window.flutter_inappwebview.callHandler('printHandler', lastDitherDataUrl);
   } else {
-    // ... (kode window.open untuk web) ...
-    if(lastDitherDataUrl){
-      const w = window.open(); w.document.body.style.margin = '0';
-      const img = w.document.createElement('img'); img.src = lastDitherDataUrl; img.style.width='100%';
-      w.document.body.appendChild(img);
-    } else alert('No printable image ready.');
+    alert("Print manual hanya di aplikasi");
   }
 });
-
-uploadBtn.addEventListener('click', async ()=>{
-  await uploadFinalWithShadowAndShowQr();
-});
-
+uploadBtn.addEventListener('click', uploadFinalWithShadowAndShowQr);
 barcodeClose.addEventListener('click', ()=>{ barcodePopup.style.display = 'none'; });
-
-window.addEventListener('keydown',(e)=>{ 
-  if(e.code==='Space' && !startBtn.disabled && startCard.style.opacity === '1'){ 
-    e.preventDefault(); 
-    startBtn.click(); 
-  } 
-});
-
-window.addEventListener('beforeunload', ()=>{ 
-  try{
-    const stream = video.srcObject;
-    if(stream && stream.getTracks) stream.getTracks().forEach(t=>t.stop());
-    video.srcObject = null;
-    videoBg.srcObject = null;
-  }catch(e){} 
-});
 
 </script>
 </body>
