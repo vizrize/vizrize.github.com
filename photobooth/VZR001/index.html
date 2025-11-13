@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8"/>
 <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover"/>
-<title>VIZRIZE LABS — FIXED 3-STRIP</title>
+<title>VIZRIZE</title>
 <script src="qrcode.min.js"></script>
 <style>
 @import url('https://fonts.googleapis.com/css2?family=Space+Mono:wght@400;700&family=Inter:wght@400;700;900&display=swap');
@@ -19,7 +19,6 @@
   --receipt-bg: #fffdf7;    
   --receipt-edge: #e6dfd4;  
   
-  /* Layout Variables */
   --header-h: 12%;     
   --top-area-h: 60%;   
   --controls-h: 40%;   
@@ -70,7 +69,7 @@ html,body{
   color: var(--text-light);
 }
 
-/* === 2. KAMERA (4:3 FIXED) === */
+/* === 2. KAMERA === */
 #cameraWrap {
   position: absolute;
   left: 50%;
@@ -95,23 +94,20 @@ video#camera {
   transform: scaleX(-1);
 }
 
-/* === REVISI: COUNTDOWN TRANSPARAN === */
 #countdownOverlay {
   position: absolute;
   inset: 0;
   display: none;
   align-items: center;
   justify-content: center;
-  background: transparent; /* Transparan */
+  background: transparent; 
   z-index: 30;
-  /* Hapus backdrop-filter: blur(2px); */
 }
 #countNum { 
   font-size: clamp(80px, 20vw, 140px); 
   font-weight: 900; 
-  color: #fff; /* Putih bersih */
+  color: #fff;
   font-family: 'Space Mono', monospace;
-  /* Shadow tebal agar terbaca di background apapun */
   text-shadow: 0 0 20px rgba(0,0,0,0.8), 4px 4px 0 #000;
 }
 
@@ -224,7 +220,10 @@ video#camera {
 .uploadBtn { background: var(--text-light); color: var(--text-dark); }
 .retakeBtn { background: transparent; color: #fff; border: 1px solid #555; }
 
-#finalPreviewWrap { margin: 10px 0; display: flex; justify-content: center; }
+#finalPreviewWrap { 
+  margin: 10px 0; display: flex; justify-content: center; 
+  min-height: 200px; /* Pastikan ada tinggi minimal agar terlihat jika loading */
+}
 .finalPreviewImg { width: 100%; display: block; border: 1px solid #ddd; }
 .uploadUrl { 
   text-align:center; margin-top:10px; font-size:10px; 
@@ -268,8 +267,8 @@ canvas { display: none; }
 <body>
 
 <div class="topHeader">
-  <div class="badge">PROTOTYPE_V1</div>
-  <div class="headerTitle">VIZRIZE LABS</div>
+  <div class="badge">PHOTORECEIPT</div>
+  <div class="headerTitle">VIZRIZE</div>
 </div>
 
 <div id="cameraWrap">
@@ -289,7 +288,7 @@ canvas { display: none; }
       <button id="mode1" class="modeBtn" data-mode="single">1 STRIP</button>
       <button id="mode3" class="modeBtn" data-mode="strip">3 STRIP</button>
     </div>
-    <button id="startBtn" class="startBtn" disabled>INITIATE</button>
+    <button id="startBtn" class="startBtn" disabled>START</button>
   </div>
 </div>
 
@@ -482,7 +481,7 @@ function floydDither(srcCanvas, targetWidth){
 
 /* ================== COMPOSE FUNCTIONS ================== */
 
-// 1. PREVIEW (1080p, Margin, Auto-Scale for 3-Strip)
+// 1. PREVIEW (1080p, Margin, Fixed Calculation)
 function composeFinalNoShadow(captured, txId, dateStr){
   const canvas = noShadowCanvas;
   canvas.width = FINAL_W; canvas.height = FINAL_H;
@@ -491,25 +490,15 @@ function composeFinalNoShadow(captured, txId, dateStr){
   const pad = 48;
   const paperX = pad, paperY = pad;
   const paperW = FINAL_W - pad*2, paperH = FINAL_H - pad*2;
+  
+  // FIX BUG: Define coordinates FIRST
+  const paperBottom = paperY + paperH;
   const contentX = paperX + 20;
   const contentW = paperW - 40;
   const colorAbu = '#6b5c4b';
   const colorEdge = '#ded6c8';
 
-  ctx.fillStyle = '#ffffff'; ctx.fillRect(0,0,FINAL_W,FINAL_H);
-  ctx.fillStyle = '#fffdf7'; ctx.fillRect(paperX, paperY, paperW, paperH);
-
-  // Header
-  ctx.fillStyle = '#111'; ctx.textAlign = 'center'; ctx.font = '32px monospace';
-  const headerY = paperY + 70;
-  ctx.fillText('VIZRIZE PHOTOBOOTH', paperX + paperW/2, headerY);
-  ctx.font = '16px monospace'; ctx.fillStyle = colorAbu;
-  ctx.fillText('Jakarta • Photobooth', paperX + paperW/2, headerY + 32);
-  const headerLineY = headerY + 58;
-  ctx.strokeStyle = colorEdge; ctx.setLineDash([6,6]);
-  ctx.beginPath(); ctx.moveTo(paperX + 12, headerLineY); ctx.lineTo(paperX + paperW - 12, headerLineY); ctx.stroke(); ctx.setLineDash([]);
-
-  // Footer
+  // Calculate Footer Positions FIRST (to know where photos must stop)
   const footerBrandY = paperBottom - 40;
   const footerThankY = paperBottom - 70;
   const footerTotalY = paperBottom - 130;
@@ -517,6 +506,24 @@ function composeFinalNoShadow(captured, txId, dateStr){
   const footerSubY = footerTaxY - 30;
   const footerLineY = footerSubY - 32;
 
+  // Calculate Header Positions
+  const headerY = paperY + 70;
+  const headerLineY = headerY + 58;
+
+  // Background
+  ctx.fillStyle = '#ffffff'; ctx.fillRect(0,0,FINAL_W,FINAL_H);
+  ctx.fillStyle = '#fffdf7'; ctx.fillRect(paperX, paperY, paperW, paperH);
+
+  // Draw Header
+  ctx.fillStyle = '#111'; ctx.textAlign = 'center'; ctx.font = '32px monospace';
+  ctx.fillText('VIZRIZE PHOTOBOOTH', paperX + paperW/2, headerY);
+  ctx.font = '16px monospace'; ctx.fillStyle = colorAbu;
+  ctx.fillText('Jakarta • Photobooth', paperX + paperW/2, headerY + 32);
+  
+  ctx.strokeStyle = colorEdge; ctx.setLineDash([6,6]);
+  ctx.beginPath(); ctx.moveTo(paperX + 12, headerLineY); ctx.lineTo(paperX + paperW - 12, headerLineY); ctx.stroke(); ctx.setLineDash([]);
+
+  // Draw Footer
   ctx.font = '18px monospace'; ctx.fillStyle = colorAbu; ctx.textAlign = 'center';
   ctx.fillText('THANK YOU ~ HAVE A NICE DAY!', paperX + paperW/2, footerThankY);
   ctx.font = '16px monospace'; ctx.fillStyle = '#111';
@@ -537,10 +544,10 @@ function composeFinalNoShadow(captured, txId, dateStr){
   ctx.setLineDash([6,6]);
   ctx.beginPath(); ctx.moveTo(contentX, footerLineY); ctx.lineTo(contentX + contentW, footerLineY); ctx.strokeStyle = colorEdge; ctx.stroke(); ctx.setLineDash([]);
 
-  // Photos Logic
+  // --- PHOTO LOGIC (THE FIX) ---
   const photoAreaTop = headerLineY + 20;
   const photoAreaBottom = footerLineY - 20;
-  const photoAreaH = photoAreaBottom - photoAreaTop;
+  const photoAreaH = photoAreaBottom - photoAreaTop; // Valid Height
   const photoW = contentW;
 
   if(captured.length === 1){
@@ -554,29 +561,25 @@ function composeFinalNoShadow(captured, txId, dateStr){
     ctx.fillStyle = '#fff'; ctx.fillRect(imgX, imgY, imgW, imgH); 
     ctx.drawImage(cropped, imgX, imgY, imgW, imgH);
   } else {
-    // REVISI: LOGIKA FIT-IN UNTUK 3-STRIP (Agar tidak kepotong)
-    // 1. Hitung tinggi total yang dibutuhkan (ideal)
+    // 3-STRIP SCALING (The real fix for "kepotong")
     const idealPhotoH = Math.round(photoW * 3 / 4);
     const totalNeededH = (idealPhotoH * captured.length) + (STRIP_GAP * (captured.length - 1));
     
-    // 2. Cek apakah muat
     let scale = 1.0;
     if (totalNeededH > photoAreaH) {
-        scale = photoAreaH / totalNeededH; // Kecilkan proporsional
+        scale = photoAreaH / totalNeededH; // Scale down if too tall
     }
 
-    // 3. Terapkan ukuran baru
     const scaledPhotoW = photoW * scale;
     const scaledPhotoH = idealPhotoH * scale;
     const scaledGap = STRIP_GAP * scale;
     const scaledTotalH = (scaledPhotoH * captured.length) + (scaledGap * (captured.length - 1));
 
-    // 4. Center vertikal & horizontal
-    let photoY = photoAreaTop + (photoAreaH - scaledTotalH) / 2; 
-    let photoX = contentX + (contentW - scaledPhotoW) / 2;
+    let photoY = photoAreaTop + (photoAreaH - scaledTotalH) / 2; // Center vertically
+    let photoX = contentX + (contentW - scaledPhotoW) / 2; // Center horizontally
 
     captured.forEach((c,i)=>{
-      const cropped = cropCenterTo4x3(c, photoW); // Crop tetap resolusi tinggi
+      const cropped = cropCenterTo4x3(c, photoW); 
       applyFintage(cropped);
       ctx.fillStyle = '#fff'; 
       ctx.fillRect(photoX, photoY, scaledPhotoW, scaledPhotoH);
@@ -615,7 +618,7 @@ function composeFinalForPrint(captured) {
   totalHeight += receiptFontSize + receiptFontSize + padding + totalFontSize;
   totalHeight += padding + 5 + padding; 
   totalHeight += footerFontSize + footerFontSize + padding; 
-  totalHeight += 50; // SPASI SOBEK
+  totalHeight += 50; 
 
   canvas.height = totalHeight;
   const ctx = canvas.getContext('2d');
@@ -625,7 +628,7 @@ function composeFinalForPrint(captured) {
   let currentY = 0;
   const leftX = 0; const rightX = canvas.width;
 
-  // Header (CENTER)
+  // Header
   currentY += padding;
   ctx.font = `bold ${headerFontSize}px monospace`;
   ctx.textAlign = 'center'; 
@@ -638,7 +641,7 @@ function composeFinalForPrint(captured) {
   drawDashedLine(ctx, leftX, currentY, rightX, currentY); 
   currentY += 5 + padding;
 
-  // Photo (No Margin)
+  // Photo
   if (captured.length === 1) {
     const photoH = Math.round(photoW * (3/4));
     const cropped = cropCenterTo4x3(captured[0], photoW);
@@ -655,7 +658,7 @@ function composeFinalForPrint(captured) {
   }
   currentY += padding;
 
-  // Receipt Details (No Margin)
+  // Receipt
   drawDashedLine(ctx, leftX, currentY, rightX, currentY); 
   currentY += 5 + padding;
 
@@ -678,7 +681,7 @@ function composeFinalForPrint(captured) {
   drawDashedLine(ctx, leftX, currentY, rightX, currentY); 
   currentY += 5 + padding;
   
-  // Footer (CENTER)
+  // Footer
   ctx.font = `normal ${footerFontSize}px monospace`;
   ctx.textAlign = 'center'; 
   ctx.fillText('THANK YOU ~ HAVE A NICE DAY!', canvas.width / 2, currentY + footerFontSize);
