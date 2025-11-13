@@ -3,24 +3,23 @@
 <head>
 <meta charset="utf-8"/>
 <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover"/>
-<title>VIZRIZE LABS — TABLET OPTIMIZED</title>
+<title>VIZRIZE LABS — FIXED 3-STRIP</title>
 <script src="qrcode.min.js"></script>
 <style>
 @import url('https://fonts.googleapis.com/css2?family=Space+Mono:wght@400;700&family=Inter:wght@400;700;900&display=swap');
 
 :root{
-  /* INDUSTRIAL POP PALETTE */
   --bg-dark: #1a1a1c;       
   --bg-light: #2c2c2f;      
   --border-grey: #5a5a60;   
-  --accent-neon: #ccff00;   /* Acid Green */
-  --accent-sec: #00ffff;    /* Cyan */
+  --accent-neon: #ccff00;   
+  --accent-sec: #00ffff;    
   --text-light: #f0f0f0;    
   --text-dark: #0a0a0b;     
   --receipt-bg: #fffdf7;    
   --receipt-edge: #e6dfd4;  
   
-  /* Layout Variables Default (HP) */
+  /* Layout Variables */
   --header-h: 12%;     
   --top-area-h: 60%;   
   --controls-h: 40%;   
@@ -36,7 +35,6 @@ html,body{
   position: fixed; width: 100%;
 }
 
-/* === UTILITIES === */
 .font-mono { font-family: 'Space Mono', monospace; }
 
 /* === 1. HEADER === */
@@ -56,9 +54,9 @@ html,body{
 .badge {
   background: var(--accent-neon);
   color: var(--text-dark);
-  padding: 4px 10px;
+  padding: 2px 8px;
   border-radius: 4px;
-  font-size: clamp(10px, 2vw, 14px);
+  font-size: clamp(10px, 2vw, 12px);
   font-weight: 900;
   letter-spacing: 1px;
   text-transform: uppercase;
@@ -66,7 +64,7 @@ html,body{
 }
 .headerTitle {
   font-family: 'Space Mono', monospace;
-  font-size: clamp(18px, 5vw, 32px);
+  font-size: clamp(18px, 5vw, 26px);
   font-weight: 700;
   letter-spacing: -1px;
   color: var(--text-light);
@@ -78,19 +76,15 @@ html,body{
   left: 50%;
   transform: translateX(-50%);
   top: calc(var(--header-h) + 2%); 
-  
-  /* UPDATE: Lebar dibuat lebih fleksibel untuk tablet */
-  width: 94%; 
-  max-width: 1024px; /* Batas maksimal jauh lebih besar untuk tablet */
-  
+  width: 90%; 
+  max-width: 600px; 
   aspect-ratio: 4 / 3; 
   max-height: calc(var(--top-area-h) - var(--header-h) - 20px);
-
   background: #000;
   z-index: 5;
   border: 4px solid var(--border-grey);
-  border-radius: 12px;
-  box-shadow: 0 10px 40px rgba(0,0,0,0.6);
+  border-radius: 8px;
+  box-shadow: 0 10px 30px rgba(0,0,0,0.5);
   overflow: hidden;
 }
 
@@ -101,23 +95,24 @@ video#camera {
   transform: scaleX(-1);
 }
 
-/* Countdown */
+/* === REVISI: COUNTDOWN TRANSPARAN === */
 #countdownOverlay {
   position: absolute;
   inset: 0;
   display: none;
   align-items: center;
   justify-content: center;
-  background: rgba(0,0,0,0.2);
+  background: transparent; /* Transparan */
   z-index: 30;
-  backdrop-filter: blur(2px);
+  /* Hapus backdrop-filter: blur(2px); */
 }
 #countNum { 
-  font-size: clamp(80px, 25vw, 200px); /* Font countdown lebih besar di tablet */
+  font-size: clamp(80px, 20vw, 140px); 
   font-weight: 900; 
-  color: var(--accent-neon);
+  color: #fff; /* Putih bersih */
   font-family: 'Space Mono', monospace;
-  text-shadow: 6px 6px 0 #000;
+  /* Shadow tebal agar terbaca di background apapun */
+  text-shadow: 0 0 20px rgba(0,0,0,0.8), 4px 4px 0 #000;
 }
 
 /* === 3. KONTROL === */
@@ -128,13 +123,11 @@ video#camera {
   background: var(--bg-light); 
   border-top: 2px solid var(--accent-neon); 
   z-index: 10;
-  
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  gap: clamp(15px, 3vh, 40px); /* Jarak lebih lega di tablet */
-  
+  gap: clamp(15px, 3vh, 25px);
   padding-bottom: env(safe-area-inset-bottom);
   background-image: radial-gradient(#3a3a3e 15%, transparent 16%);
   background-size: 12px 12px;
@@ -142,32 +135,31 @@ video#camera {
 }
 
 .startCard {
-  width: min(90%, 700px); /* Kartu kontrol lebih lebar di tablet (700px) */
+  width: min(85%, 450px);
   text-align: center;
-  padding: clamp(20px, 4vw, 40px);
+  padding: clamp(20px, 4vw, 30px);
   border: 1px dashed var(--border-grey);
-  border-radius: 16px;
+  border-radius: 12px;
   background: rgba(0,0,0,0.2);
 }
 
-/* Tombol Pilih Strip */
 .controlsRowTop {
   display: flex;
-  gap: 20px;
+  gap: 15px;
   justify-content: center;
-  margin-bottom: clamp(15px, 3vh, 30px);
+  margin-bottom: clamp(15px, 3vh, 25px);
 }
 .modeBtn {
   flex: 1;
-  padding: clamp(12px, 2.5vh, 24px); /* Padding tombol mode lebih besar */
-  border-radius: 8px;
+  padding: clamp(12px, 2vh, 16px);
+  border-radius: 6px;
   border: 1px solid var(--border-grey);
   background: var(--bg-dark);
   color: #aaa;
   font-family: 'Space Mono', monospace;
   font-weight: 700;
   cursor: pointer;
-  font-size: clamp(12px, 3vw, 18px); /* Font tombol mode responsive */
+  font-size: clamp(12px, 3vw, 14px);
   text-transform: uppercase;
   transition: all 0.2s;
 }
@@ -175,27 +167,26 @@ video#camera {
   background: var(--text-light);
   color: var(--text-dark);
   border-color: var(--accent-neon);
-  box-shadow: 0 0 20px rgba(204, 255, 0, 0.3);
-  transform: translateY(-4px);
+  box-shadow: 0 0 15px rgba(204, 255, 0, 0.3);
+  transform: translateY(-2px);
 }
 
-/* Tombol START Utama */
 .startBtn {
   display: inline-block;
   width: 100%;
-  padding: clamp(20px, 5vh, 32px); /* Tombol start sangat besar di tablet */
-  border-radius: 12px;
-  border: 4px solid var(--accent-neon);
+  padding: clamp(18px, 4vh, 24px);
+  border-radius: 8px;
+  border: 3px solid var(--accent-neon);
   background: transparent;
   color: var(--accent-neon);
-  font-size: clamp(24px, 7vw, 48px); /* Font sangat besar */
+  font-size: clamp(22px, 6vw, 32px);
   font-weight: 900;
   font-family: 'Inter', sans-serif;
   text-transform: uppercase;
   cursor: pointer;
   transition: all 0.1s;
-  letter-spacing: 4px;
-  box-shadow: inset 0 0 30px rgba(204, 255, 0, 0.1), 0 15px 30px rgba(0,0,0,0.4);
+  letter-spacing: 3px;
+  box-shadow: inset 0 0 20px rgba(204, 255, 0, 0.1), 0 10px 20px rgba(0,0,0,0.3);
 }
 .startBtn:active {
   background: var(--accent-neon);
@@ -204,7 +195,6 @@ video#camera {
 }
 .startBtn:disabled { opacity: 0.3; cursor: not-allowed; filter: grayscale(1); box-shadow: none; }
 
-/* Flash */
 #flash { position: fixed; inset: 0; background: #fff; opacity: 0; pointer-events: none; z-index: 100; transition: opacity 140ms ease-out; }
 
 /* --- MODAL PREVIEW --- */
@@ -214,22 +204,20 @@ video#camera {
   z-index: 120; padding: 20px; backdrop-filter: blur(5px); 
 }
 .modalReceipt { 
-  /* Modal lebih besar di tablet */
-  width: min(600px, 90vw); 
-  max-height: 90vh; overflow: auto; 
-  background: var(--receipt-bg); border-radius: 8px; padding: 0; 
+  width: min(500px, 94vw); max-height: 85vh; overflow: auto; 
+  background: var(--receipt-bg); border-radius: 4px; padding: 0; 
   font-family: 'Space Mono', monospace; color: var(--text-dark); 
-  box-shadow: 0 0 80px rgba(0,0,0,0.9);
-  border: 6px solid var(--bg-light);
+  box-shadow: 0 0 60px rgba(0,0,0,0.9);
+  border: 4px solid var(--bg-light);
 }
-.receiptInner { padding: 30px; }
+.receiptInner { padding: 20px; }
 .controlsRow { 
-  display: flex; gap: 15px; justify-content: center; 
-  padding: 25px; background: var(--bg-dark); border-top: 4px solid var(--accent-neon);
+  display: flex; gap: 10px; justify-content: center; 
+  padding: 20px; background: var(--bg-dark); border-top: 4px solid var(--accent-neon);
 }
 .action { 
-  flex: 1; padding: 18px; border-radius: 6px; border: none; 
-  font-weight: 700; cursor: pointer; font-size: clamp(12px, 3vw, 16px); 
+  flex: 1; padding: 14px; border-radius: 4px; border: none; 
+  font-weight: 700; cursor: pointer; font-size: clamp(10px, 3vw, 14px); 
   text-transform: uppercase; font-family: 'Space Mono', monospace;
 }
 .printBtn { background: var(--accent-neon); color: var(--text-dark); }
@@ -239,62 +227,49 @@ video#camera {
 #finalPreviewWrap { margin: 10px 0; display: flex; justify-content: center; }
 .finalPreviewImg { width: 100%; display: block; border: 1px solid #ddd; }
 .uploadUrl { 
-  text-align:center; margin-top:10px; font-size:12px; 
+  text-align:center; margin-top:10px; font-size:10px; 
   color: #999; font-family: 'Space Mono', monospace;
 }
 
-/* Barcode */
 #barcodePopup { 
   position: fixed; inset: 0; display: none; 
   align-items: center; justify-content: center; 
   z-index: 140; background: rgba(0,0,0,0.95); 
 }
 #barcodeBox { 
-  width: min(680px, 90vw); background: #111; 
+  width: min(600px, 90vw); background: #111; 
   border: 2px solid var(--accent-neon);
-  padding: 40px; text-align: center; position: relative; 
+  padding: 30px; text-align: center; position: relative; 
   color: #fff; font-family: 'Space Mono', monospace;
 }
 #barcodeClose { 
-  position: absolute; top: 15px; right: 20px; border: 0; 
-  background: transparent; font-size: 32px; cursor: pointer; 
+  position: absolute; top: 10px; right: 15px; border: 0; 
+  background: transparent; font-size: 24px; cursor: pointer; 
   color: #fff; 
 }
 #qrcodeHost { 
-  padding: 20px; display: flex; justify-content: center; 
-  background: #fff; margin: 25px auto; width: fit-content;
-  border-radius: 8px;
+  padding: 15px; display: flex; justify-content: center; 
+  background: #fff; margin: 20px auto; width: fit-content;
 }
-#barcodeUrlText { 
-  font-size:14px; color:#888; margin-top:15px;
-}
+#barcodeUrlText { font-size:12px; color:#888; margin-top:10px; }
 
-/* Hidden Canvas */
 canvas { display: none; }
 .stripPhoto { display: none; } 
 
-/* === TABLET SPECIFIC BREAKPOINT === */
-/* Ini kuncinya: Jika layar lebih lebar dari 768px (Tablet/Desktop) */
+/* Tablet Tweaks */
 @media (min-width: 768px) {
-  :root {
-    /* Di tablet, header bisa lebih kecil biar kamera makin lega */
-    --header-h: 10%;
-    --top-area-h: 65%; /* Kamera dapet 65% */
-    --controls-h: 35%; /* Kontrol 35% */
-  }
-  
-  /* Border & Shadow lebih tebal di tablet */
-  #cameraWrap { border-width: 6px; }
+  :root { --header-h: 10%; --top-area-h: 65%; --controls-h: 35%; }
+  #cameraWrap { border-width: 6px; width: 94%; max-width: 1024px; }
   .startBtn { border-width: 5px; }
-  .startCard { border-width: 2px; }
+  .startCard { border-width: 2px; width: min(90%, 700px); }
 }
 </style>
 </head>
 <body>
 
 <div class="topHeader">
-  <div class="badge">PHOTO RECEIPT</div>
-  <div class="headerTitle">VIZRIZE</div>
+  <div class="badge">PROTOTYPE_V1</div>
+  <div class="headerTitle">VIZRIZE LABS</div>
 </div>
 
 <div id="cameraWrap">
@@ -314,7 +289,7 @@ canvas { display: none; }
       <button id="mode1" class="modeBtn" data-mode="single">1 STRIP</button>
       <button id="mode3" class="modeBtn" data-mode="strip">3 STRIP</button>
     </div>
-    <button id="startBtn" class="startBtn" disabled>START</button>
+    <button id="startBtn" class="startBtn" disabled>INITIATE</button>
   </div>
 </div>
 
@@ -335,7 +310,7 @@ canvas { display: none; }
 <div id="barcodePopup" aria-hidden="true">
   <div id="barcodeBox">
     <button id="barcodeClose" aria-label="Close">×</button>
-    <div style="font-weight:700; letter-spacing:1px; font-size:20px;">SCAN TO DOWNLOAD</div>
+    <div style="font-weight:700; letter-spacing:1px;">SCAN TO DOWNLOAD</div>
     <div id="qrcodeHost"></div>
     <div id="barcodeUrlText"></div>
   </div>
@@ -507,7 +482,7 @@ function floydDither(srcCanvas, targetWidth){
 
 /* ================== COMPOSE FUNCTIONS ================== */
 
-// 1. PREVIEW (1080p, Margin)
+// 1. PREVIEW (1080p, Margin, Auto-Scale for 3-Strip)
 function composeFinalNoShadow(captured, txId, dateStr){
   const canvas = noShadowCanvas;
   canvas.width = FINAL_W; canvas.height = FINAL_H;
@@ -516,7 +491,6 @@ function composeFinalNoShadow(captured, txId, dateStr){
   const pad = 48;
   const paperX = pad, paperY = pad;
   const paperW = FINAL_W - pad*2, paperH = FINAL_H - pad*2;
-  const paperBottom = paperY + paperH;
   const contentX = paperX + 20;
   const contentW = paperW - 40;
   const colorAbu = '#6b5c4b';
@@ -563,12 +537,11 @@ function composeFinalNoShadow(captured, txId, dateStr){
   ctx.setLineDash([6,6]);
   ctx.beginPath(); ctx.moveTo(contentX, footerLineY); ctx.lineTo(contentX + contentW, footerLineY); ctx.strokeStyle = colorEdge; ctx.stroke(); ctx.setLineDash([]);
 
-  // Photos
+  // Photos Logic
   const photoAreaTop = headerLineY + 20;
   const photoAreaBottom = footerLineY - 20;
   const photoAreaH = photoAreaBottom - photoAreaTop;
   const photoW = contentW;
-  const photoH_3strip = Math.round(photoW * 3 / 4);
 
   if(captured.length === 1){
     let imgH = photoAreaH; 
@@ -581,14 +554,34 @@ function composeFinalNoShadow(captured, txId, dateStr){
     ctx.fillStyle = '#fff'; ctx.fillRect(imgX, imgY, imgW, imgH); 
     ctx.drawImage(cropped, imgX, imgY, imgW, imgH);
   } else {
-    const totalPhotoH = (photoH_3strip * captured.length) + (STRIP_GAP * (captured.length - 1));
-    let photoY = photoAreaTop + (photoAreaH - totalPhotoH) / 2; 
+    // REVISI: LOGIKA FIT-IN UNTUK 3-STRIP (Agar tidak kepotong)
+    // 1. Hitung tinggi total yang dibutuhkan (ideal)
+    const idealPhotoH = Math.round(photoW * 3 / 4);
+    const totalNeededH = (idealPhotoH * captured.length) + (STRIP_GAP * (captured.length - 1));
+    
+    // 2. Cek apakah muat
+    let scale = 1.0;
+    if (totalNeededH > photoAreaH) {
+        scale = photoAreaH / totalNeededH; // Kecilkan proporsional
+    }
+
+    // 3. Terapkan ukuran baru
+    const scaledPhotoW = photoW * scale;
+    const scaledPhotoH = idealPhotoH * scale;
+    const scaledGap = STRIP_GAP * scale;
+    const scaledTotalH = (scaledPhotoH * captured.length) + (scaledGap * (captured.length - 1));
+
+    // 4. Center vertikal & horizontal
+    let photoY = photoAreaTop + (photoAreaH - scaledTotalH) / 2; 
+    let photoX = contentX + (contentW - scaledPhotoW) / 2;
+
     captured.forEach((c,i)=>{
-      const cropped = cropCenterTo4x3(c, photoW);
+      const cropped = cropCenterTo4x3(c, photoW); // Crop tetap resolusi tinggi
       applyFintage(cropped);
-      ctx.fillStyle = '#fff'; ctx.fillRect(contentX, photoY, photoW, photoH_3strip);
-      ctx.drawImage(cropped, contentX, photoY, photoW, photoH_3strip);
-      photoY += photoH_3strip + STRIP_GAP;
+      ctx.fillStyle = '#fff'; 
+      ctx.fillRect(photoX, photoY, scaledPhotoW, scaledPhotoH);
+      ctx.drawImage(cropped, photoX, photoY, scaledPhotoW, scaledPhotoH);
+      photoY += scaledPhotoH + scaledGap;
     });
   }
   return canvas;
@@ -774,7 +767,7 @@ function preparePreviewAndFinal(captured){
   const txId = 'VZ-' + Date.now().toString(36).toUpperCase().slice(-8);
   const dateStr = new Date().toLocaleString('en-GB', { day:'2-digit', month:'short', year:'numeric', hour:'2-digit', minute:'2-digit' });
 
-  // 1. PREVIEW (App)
+  // 1. PREVIEW (App) - FIXED SCALING
   const noShadow = composeFinalNoShadow(captured, txId, dateStr);
   lastNoShadowCanvas = noShadow;
   const dataUrl = noShadow.toDataURL('image/jpeg',0.92);
@@ -851,7 +844,7 @@ function showQrPopup(url){
 startBtn.addEventListener('click', runSession);
 retakeBtn.addEventListener('click', async ()=>{
   modalOverlay.style.display = 'none';
-  await openCamera(); // Re-init camera if stopped
+  await openCamera(); 
 });
 printBtn.addEventListener('click', ()=>{
   if (window.flutter_inappwebview && lastDitherDataUrl) {
