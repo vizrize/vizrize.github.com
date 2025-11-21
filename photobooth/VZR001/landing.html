@@ -38,10 +38,11 @@ html,body{
 
 /* === 1. HEADER === */
 .topHeader {
-  position: absolute;
+  /* --- PERBAIKAN CSS KASAR: Sembunyikan default, HANYA JS yang boleh menampilkan --- */
+  display: none !important; 
+  position: absolute;
   top: 0; left: 0; right: 0;
   height: var(--header-h);
-  display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: center;
@@ -67,16 +68,16 @@ html,body{
   font-weight: 700;
   letter-spacing: -1px;
   color: var(--text-light);
-  /* --- PERUBAHAN UTAMA: Nama Event bisa diklik --- */
   cursor: pointer; 
 }
 
 /* === 1B. WELCOME SCREEN (LANDING PAGE) === */
 #welcomeScreen {
-  position: absolute;
-  inset: 0; /* Mengisi seluruh layar */
+  /* --- FINAL FIX: Fixed position agar menutupi semua --- */
+  position: fixed; 
+  top: 0; left: 0; right: 0; bottom: 0; 
   background: var(--bg-dark);
-  display: flex;
+  display: flex; 
   flex-direction: column;
   align-items: center;
   justify-content: center;
@@ -108,7 +109,6 @@ html,body{
 
 /* === 2. KAMERA === */
 #cameraWrap {
-  /* --- PERUBAHAN: Sembunyikan default --- */
   display: none; 
   position: absolute;
   left: 50%;
@@ -152,7 +152,6 @@ video#camera {
 
 /* === 3. KONTROL === */
 .centerUI {
-  /* --- PERUBAHAN: Sembunyikan default --- */
   display: none; 
   position: absolute;
   bottom: 0; left: 0; right: 0;
@@ -180,7 +179,6 @@ video#camera {
 }
 
 .controlsRowTop {
-  /* --- PERUBAHAN: Sembunyikan mode strip di awal screen kontrol --- */
   display: none;
   gap: 15px;
   justify-content: center;
@@ -237,7 +235,8 @@ video#camera {
 /* --- MODAL PREVIEW --- */
 .modalOverlay { 
   position: fixed; inset: 0; background: rgba(0,0,0,0.95); 
-  display: none; align-items: center; justify-content: center; 
+  display: none; 
+  align-items: center; justify-content: center; 
   z-index: 120; padding: 20px; backdrop-filter: blur(5px); 
 }
 .modalReceipt { 
@@ -278,7 +277,6 @@ video#camera {
   z-index: 140; background: rgba(0,0,0,0.95); 
 }
 #barcodeBox { 
-  /* Ukuran Box */
   width: min(600px, 90vw); 
   background: #111; 
   border: 2px solid var(--accent-neon);
@@ -293,17 +291,14 @@ video#camera {
   background: transparent; font-size: 24px; cursor: pointer; 
   color: #fff; 
 }
-/* --- INI KUNCI PERBAIKAN QR --- */
-/* Jangan pakai 'fit-content'. Berikan ukuran default yang pasti */
 #qrcodeHost { 
   padding: 15px; 
-  /* Paksa jadi kotak putih 250x250 di tengah secara default */
   width: 250px; 
   height: 250px;
   background: #fff; 
   margin: 20px auto; 
   border-radius: 4px;
-  display: block; /* Pastikan block */
+  display: block; 
 }
 #barcodeUrlText { font-size:12px; color:#888; margin-top:10px; }
 
@@ -327,7 +322,7 @@ canvas { display: none; }
 </head>
 <body>
 
-<div class="topHeader">
+<div class="topHeader" id="topHeader"> 
   <div class="badge">PHOTORECEIPT</div>
   <div class="headerTitle" id="headerTitle">VIZRIZE</div>
 </div>
@@ -353,7 +348,7 @@ canvas { display: none; }
 
 <div class="centerUI" id="centerUI">
   <div class="startCard">
-        <div class="controlsRowTop" id="controlsRowTop">
+    <div class="controlsRowTop" id="controlsRowTop">
       <button id="mode1" class="modeBtn" data-mode="single">1 STRIP</button>
       <button id="mode3" class="modeBtn" data-mode="strip">3 STRIP</button>
     </div>
@@ -431,6 +426,7 @@ const cameraWrap = document.getElementById('cameraWrap');
 const centerUI = document.getElementById('centerUI');
 const headerTitle = document.getElementById('headerTitle');
 const controlsRowTop = document.getElementById('controlsRowTop');
+const topHeader = document.getElementById('topHeader'); 
 
 let captureMode = '';
 let capturedCanvases = [];
@@ -439,13 +435,13 @@ let lastUploadUrl = null;
 let lastNoShadowCanvas = null;
 let cameraReady = false;
 
-/* ================== AUDIO ================== */
+/* ================== AUDIO (TIDAK BERUBAH) ================== */
 const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
 function beep(freq=1000,dur=0.06){ try{ const o=audioCtx.createOscillator(), g=audioCtx.createGain(); o.type='sine'; o.frequency.setValueAtTime(freq,audioCtx.currentTime); g.gain.setValueAtTime(0.06,audioCtx.currentTime); o.connect(g); g.connect(audioCtx.destination); o.start(); o.stop(audioCtx.currentTime+dur);}catch(e){}}
 function speak(text){ try{ if(window.speechSynthesis){ const u=new SpeechSynthesisUtterance(text); u.lang='en-US'; window.speechSynthesis.cancel(); window.speechSynthesis.speak(u);} }catch(e){}}
 function shutterSound(){ beep(900,0.04); setTimeout(()=>beep(1400,0.04),70); }
 
-/* ================== CAMERA ================== */
+/* ================== CAMERA (TIDAK BERUBAH) ================== */
 async function openCamera(){
   try{
     const stream = await navigator.mediaDevices.getUserMedia({ video:{ facingMode:'user', width:{ideal:1920}, height:{ideal:1080} }, audio:false });
@@ -464,7 +460,6 @@ async function openCamera(){
   }
 }
 
-// openCamera(); // Dihapus, sekarang dipanggil di initApp
 
 document.getElementById('mode1').addEventListener('click', ()=>{ captureMode='single'; document.getElementById('mode1').classList.add('selected'); document.getElementById('mode3').classList.remove('selected'); if(cameraReady) startBtn.disabled=false; });
 document.getElementById('mode3').addEventListener('click', ()=>{ captureMode='strip'; document.getElementById('mode3').classList.add('selected'); document.getElementById('mode1').classList.remove('selected'); if(cameraReady) startBtn.disabled=false; });
@@ -800,7 +795,7 @@ function roundRect(ctx, x, y, w, h, r, fill, stroke){
   if(fill) ctx.fill(); if(stroke) ctx.stroke();
 }
 
-/* ================== FLOW ================== */
+/* ================== FLOW (TIDAK BERUBAH) ================== */
 
 function flashOnce(duration=140){
   flashEl.style.opacity = '0.95'; setTimeout(()=>{ flashEl.style.opacity = '0'; }, duration);
@@ -917,11 +912,13 @@ function showQrPopup(url){
 
 // --- FUNGSI BARU UNTUK TRANSISI LAYAR ---
 function showControlScreen() {
+  // Pindah dari Landing Page ke Control Screen
   welcomeScreen.style.display = 'none';
+  topHeader.style.display = 'flex'; // Tampilkan Header
   cameraWrap.style.display = 'block';
   centerUI.style.display = 'flex';
-  // Mode strip disembunyikan, hanya tombol INITIATE yang terlihat
-  controlsRowTop.style.display = 'none'; 
+  controlsRowTop.style.display = 'none'; // Sembunyikan mode strip di awal
+
 }
 
 // --- EVENT LISTENER BARU ---
@@ -931,19 +928,30 @@ startLpBtn.addEventListener('click', showControlScreen);
 
 // 2. Header Title Click (Untuk ganti mode strip)
 headerTitle.addEventListener('click', () => {
-  // Toggle display mode strip (1 STRIP / 3 STRIP)
-  if (controlsRowTop.style.display === 'none' || controlsRowTop.style.display === '') {
-    controlsRowTop.style.display = 'flex';
+  // Hanya izinkan klik saat di layar kontrol (bukan di landing page atau modal)
+  if (cameraWrap.style.display === 'block' && modalOverlay.style.display !== 'flex') {
+    // Toggle display mode strip (1 STRIP / 3 STRIP)
+    if (controlsRowTop.style.display === 'none' || controlsRowTop.style.display === '') {
+      controlsRowTop.style.display = 'flex';
+    } else {
+      controlsRowTop.style.display = 'none';
+    }
+  } else if (modalOverlay.style.display === 'flex') {
+    // Jika di layar modal/preview, kembali ke kontrol kamera
+    modalOverlay.style.display = 'none';
+    showControlScreen();
   } else {
-    controlsRowTop.style.display = 'none';
-  }
+    // Jika masih di landing page, abaikan klik
+    return;
+  }
 });
+
 
 // 3. Control Buttons
 startBtn.addEventListener('click', runSession);
 retakeBtn.addEventListener('click', async ()=>{
   modalOverlay.style.display = 'none';
-  // Kembali ke layar pemilihan mode/kontrol kamera
+  await openCamera(); 
   showControlScreen(); 
 });
 printBtn.addEventListener('click', ()=>{
@@ -956,12 +964,20 @@ printBtn.addEventListener('click', ()=>{
 uploadBtn.addEventListener('click', uploadFinalWithShadowAndShowQr);
 barcodeClose.addEventListener('click', ()=>{ barcodePopup.style.display = 'none'; });
 
-// --- INISIASI APLIKASI (PERUBAHAN ALUR AWAL) ---
+// --- INISIASI APLIKASI (PERBAIKAN ALUR AWAL) ---
 function initApp() {
   openCamera(); // Kamera tetap inisiasi di latar belakang
-  welcomeScreen.style.display = 'flex'; // Tampilkan Landing Page di awal
-  cameraWrap.style.display = 'none'; // Sembunyikan kamera
-  centerUI.style.display = 'none'; // Sembunyikan kontrol
+
+  // 1. Tampilkan HANYA Landing Page di awal
+  welcomeScreen.style.display = 'flex'; 
+
+  // 2. Sembunyikan SEMUA elemen operasional/modal lainnya
+  topHeader.style.display = 'none'; // Sembunyikan Header
+  cameraWrap.style.display = 'none'; 
+  centerUI.style.display = 'none'; 
+  modalOverlay.style.display = 'none'; 
+  barcodePopup.style.display = 'none';
+
 }
 initApp(); 
 
