@@ -4,24 +4,26 @@
 <meta charset="utf-8"/>
 <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover"/>
 <title>VIZRIZE</title>
-<script src="qrcode.min.js"></script> 
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/qrious/4.0.2/qrious.min.js"></script>
+
 <style>
 @import url('https://fonts.googleapis.com/css2?family=Space+Mono:wght@400;700&family=Inter:wght@400;700;900&display=swap');
 
 :root{
-  --bg-dark: #1a1a1c;       
-  --bg-light: #2c2c2f;      
-  --border-grey: #5a5a60;   
-  --accent-neon: #ccff00;   
-  --accent-sec: #00ffff;    
-  --text-light: #f0f0f0;    
-  --text-dark: #0a0a0b;     
-  --receipt-bg: #fffdf7;    
-  --receipt-edge: #e6dfd4;  
+  --bg-dark: #1a1a1c;        
+  --bg-light: #2c2c2f;       
+  --border-grey: #5a5a60;    
+  --accent-neon: #ccff00;    
+  --accent-sec: #00ffff;     
+  --text-light: #f0f0f0;     
+  --text-dark: #0a0a0b;      
+  --receipt-bg: #fffdf7;     
+  --receipt-edge: #e6dfd4;   
   
-  --header-h: 12%;     
-  --top-area-h: 60%;   
-  --controls-h: 40%;   
+  --header-h: 12%;      
+  --top-area-h: 60%;    
+  --controls-h: 40%;    
 }
 
 *{box-sizing:border-box}
@@ -41,7 +43,6 @@ html,body{
   position: absolute;
   top: 0; left: 0; right: 0;
   height: var(--header-h);
-  display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: center;
@@ -67,7 +68,43 @@ html,body{
   font-weight: 700;
   letter-spacing: -1px;
   color: var(--text-light);
+  cursor: pointer; 
 }
+
+/* === 1B. WELCOME SCREEN (LANDING PAGE) === */
+#welcomeScreen {
+  position: fixed; 
+  top: 0; left: 0; right: 0; bottom: 0; 
+  background: var(--bg-dark);
+  display: flex; 
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  z-index: 100;
+}
+.startCardLp {
+  width: min(85%, 450px);
+  text-align: center;
+  padding: clamp(30px, 6vw, 50px);
+  border: 2px solid var(--accent-neon);
+  border-radius: 12px;
+  background: rgba(0,0,0,0.4);
+  box-shadow: 0 0 40px rgba(204, 255, 0, 0.2);
+}
+.lpTitle {
+  font-family: 'Space Mono', monospace;
+  font-size: clamp(30px, 8vw, 48px);
+  font-weight: 700;
+  letter-spacing: -2px;
+  color: var(--text-light);
+  margin: 10px 0 40px;
+}
+.lpBadge {
+  font-size: clamp(14px, 3vw, 18px);
+  font-weight: 700;
+  color: var(--accent-neon);
+}
+
 
 /* === 2. KAMERA === */
 #cameraWrap {
@@ -119,7 +156,6 @@ video#camera {
   background: var(--bg-light); 
   border-top: 2px solid var(--accent-neon); 
   z-index: 10;
-  display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: center;
@@ -140,7 +176,7 @@ video#camera {
 }
 
 .controlsRowTop {
-  display: flex;
+  display: none;
   gap: 15px;
   justify-content: center;
   margin-bottom: clamp(15px, 3vh, 25px);
@@ -196,7 +232,8 @@ video#camera {
 /* --- MODAL PREVIEW --- */
 .modalOverlay { 
   position: fixed; inset: 0; background: rgba(0,0,0,0.95); 
-  display: none; align-items: center; justify-content: center; 
+  display: none; 
+  align-items: center; justify-content: center; 
   z-index: 120; padding: 20px; backdrop-filter: blur(5px); 
 }
 .modalReceipt { 
@@ -237,7 +274,6 @@ video#camera {
   z-index: 140; background: rgba(0,0,0,0.95); 
 }
 #barcodeBox { 
-  /* Ukuran Box */
   width: min(600px, 90vw); 
   background: #111; 
   border: 2px solid var(--accent-neon);
@@ -252,21 +288,24 @@ video#camera {
   background: transparent; font-size: 24px; cursor: pointer; 
   color: #fff; 
 }
-/* --- INI KUNCI PERBAIKAN QR --- */
-/* Jangan pakai 'fit-content'. Berikan ukuran default yang pasti */
 #qrcodeHost { 
   padding: 15px; 
-  /* Paksa jadi kotak putih 250x250 di tengah secara default */
-  width: 250px; 
-  height: 250px;
-  background: #fff; 
+  /* Ganti ke canvas agar QRious bekerja baik */
+  display: flex; 
+  justify-content: center;
   margin: 20px auto; 
   border-radius: 4px;
-  display: block; /* Pastikan block */
+  background: #fff;
+  width: 250px;
+  height: 250px;
+  align-items: center;
 }
 #barcodeUrlText { font-size:12px; color:#888; margin-top:10px; }
 
 canvas { display: none; }
+/* PENTING: Tampilkan canvas QR code di dalam popup */
+#qrcodeHost canvas { display: block !important; }
+
 .stripPhoto { display: none; } 
 
 /* Tablet Tweaks */
@@ -275,7 +314,6 @@ canvas { display: none; }
   #cameraWrap { border-width: 6px; width: 94%; max-width: 1024px; }
   .startBtn { border-width: 5px; }
   .startCard { border-width: 2px; width: min(90%, 700px); }
-  /* Tablet QR lebih besar */
   #qrcodeHost { width: 300px; height: 300px; } 
 }
 /* Small Phone Tweaks */
@@ -284,14 +322,37 @@ canvas { display: none; }
 }
 </style>
 </head>
-<body>
+<body style="background-color: #1a1a1c;">
 
-<div class="topHeader">
+<div class="topHeader" id="topHeader" style="display: none;"> 
   <div class="badge">PHOTORECEIPT</div>
-  <div class="headerTitle">VIZRIZE</div>
+  <div class="headerTitle" id="headerTitle">VIZRIZE</div>
 </div>
 
-<div id="cameraWrap">
+<div id="welcomeScreen">
+  <div class="startCardLp">
+    <div class="lpBadge" id="lpBadgeDate"></div>
+    <div class="lpTitle" id="eventTitleLp">VIZRIZE PHOTOBOOTH</div>
+    <div id="eventPopup" 
+     style="display:none; position:fixed; inset:0; background:rgba(0,0,0,0.85); 
+     z-index:999; align-items:center; justify-content:center;color:white;">
+  <div style="background:#222; padding:25px; border:2px solid #ccff00; border-radius:10px; width:80%; max-width:380px; text-align:center;">
+    <div style="margin-bottom:10px; font-weight:700;">SET EVENT NAME</div>
+    <input id="eventInput" 
+           placeholder="Enter event name…" 
+           style="width:100%; padding:10px; border:none; border-radius:6px; margin-bottom:15px;">
+    <button id="eventSaveBtn" 
+            style="padding:10px 20px; background:#ccff00; border:none; font-weight:700; border-radius:6px; cursor:pointer; width:100%;">
+      SAVE
+    </button>
+  </div>
+</div>
+
+    <button id="startLpBtn" class="startBtn" style="letter-spacing: 5px;">TAP TO START</button>
+  </div>
+</div>
+
+<div id="cameraWrap" style="display: none;">
   <video id="camera" autoplay playsinline muted></video>
   <div id="countdownOverlay" aria-hidden="true">
     <div id="countBox">
@@ -302,9 +363,9 @@ canvas { display: none; }
 
 <div id="flash" aria-hidden="true"></div>
 
-<div class="centerUI" id="centerUI">
+<div class="centerUI" id="centerUI" style="display: none;">
   <div class="startCard">
-    <div class="controlsRowTop">
+    <div class="controlsRowTop" id="controlsRowTop">
       <button id="mode1" class="modeBtn" data-mode="single">1 STRIP</button>
       <button id="mode3" class="modeBtn" data-mode="strip">3 STRIP</button>
     </div>
@@ -330,9 +391,11 @@ canvas { display: none; }
   <div id="barcodeBox">
     <button id="barcodeClose" aria-label="Close">×</button>
     <div style="font-weight:700; letter-spacing:1px;">SCAN TO DOWNLOAD</div>
-    <div id="qrcodeHost"></div>
+    <div id="qrcodeHost">
+      <canvas id="qrCanvas"></canvas>
+    </div>
     <div id="barcodeUrlText"></div>
-  </div>
+   </div>
 </div>
 
 <canvas id="captureCanvas"></canvas>
@@ -342,7 +405,7 @@ canvas { display: none; }
 <canvas id="ditherCanvas"></canvas>
 
 <script>
-/* ================== CONFIG ================== */
+/* ================== CONFIG & DOM GRABS (TIDAK BERUBAH) ================== */
 const CLOUD_NAME = "dcqqaebln";
 const UPLOAD_PRESET = "vizrize_unsigned";
 const PRINT_W = 384;
@@ -350,7 +413,6 @@ const FINAL_W = 1080;
 const FINAL_H = 1920;
 const STRIP_GAP = 8;
 
-/* ================== DOM ================== */
 const video = document.getElementById('camera');
 const startBtn = document.getElementById('startBtn');
 const countdownOverlay = document.getElementById('countdownOverlay');
@@ -361,7 +423,6 @@ const modalOverlay = document.getElementById('modalOverlay');
 const finalPreviewWrap = document.getElementById('finalPreviewWrap');
 const uploadedUrlEl = document.getElementById('uploadedUrl');
 const uploadBtn = document.getElementById('uploadBtn');
-const printBtn = document.getElementById('printBtn');
 const retakeBtn = document.getElementById('retakeBtn');
 
 const barcodePopup = document.getElementById('barcodePopup');
@@ -375,20 +436,27 @@ const printCanvas = document.getElementById('printCanvas');
 const uploadShadowCanvas = document.getElementById('uploadShadowCanvas');
 const ditherCanvas = document.getElementById('ditherCanvas');
 
+const welcomeScreen = document.getElementById('welcomeScreen');
+const startLpBtn = document.getElementById('startLpBtn');
+const cameraWrap = document.getElementById('cameraWrap');
+const centerUI = document.getElementById('centerUI');
+const headerTitle = document.getElementById('headerTitle');
+const controlsRowTop = document.getElementById('controlsRowTop');
+const topHeader = document.getElementById('topHeader'); 
+
 let captureMode = '';
 let capturedCanvases = [];
 let lastDitherDataUrl = null;
 let lastUploadUrl = null;
 let lastNoShadowCanvas = null;
 let cameraReady = false;
-
-/* ================== AUDIO ================== */
 const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+
+/* ================== AUDIO & FUNGSI HELPER LAINNYA (TIDAK BERUBAH) ================== */
 function beep(freq=1000,dur=0.06){ try{ const o=audioCtx.createOscillator(), g=audioCtx.createGain(); o.type='sine'; o.frequency.setValueAtTime(freq,audioCtx.currentTime); g.gain.setValueAtTime(0.06,audioCtx.currentTime); o.connect(g); g.connect(audioCtx.destination); o.start(); o.stop(audioCtx.currentTime+dur);}catch(e){}}
 function speak(text){ try{ if(window.speechSynthesis){ const u=new SpeechSynthesisUtterance(text); u.lang='en-US'; window.speechSynthesis.cancel(); window.speechSynthesis.speak(u);} }catch(e){}}
 function shutterSound(){ beep(900,0.04); setTimeout(()=>beep(1400,0.04),70); }
 
-/* ================== CAMERA ================== */
 async function openCamera(){
   try{
     const stream = await navigator.mediaDevices.getUserMedia({ video:{ facingMode:'user', width:{ideal:1920}, height:{ideal:1080} }, audio:false });
@@ -406,12 +474,7 @@ async function openCamera(){
     alert('Cannot access camera: '+(err.message||err));
   }
 }
-openCamera();
 
-document.getElementById('mode1').addEventListener('click', ()=>{ captureMode='single'; document.getElementById('mode1').classList.add('selected'); document.getElementById('mode3').classList.remove('selected'); if(cameraReady) startBtn.disabled=false; });
-document.getElementById('mode3').addEventListener('click', ()=>{ captureMode='strip'; document.getElementById('mode3').classList.add('selected'); document.getElementById('mode1').classList.remove('selected'); if(cameraReady) startBtn.disabled=false; });
-
-/* ================== CAPTURE helpers ================== */
 function captureOnce(){
   const vw = video.videoWidth || 0;
   const vh = video.videoHeight || 0;
@@ -499,77 +562,53 @@ function floydDither(srcCanvas, targetWidth){
   return ditherCanvas.toDataURL('image/png');
 }
 
-/* ================== COMPOSE FUNCTIONS ================== */
-
-// 1. PREVIEW (1080p, Margin, Fixed Calculation)
 function composeFinalNoShadow(captured, txId, dateStr){
   const canvas = noShadowCanvas;
   canvas.width = FINAL_W; canvas.height = FINAL_H;
   const ctx = canvas.getContext('2d');
-  
   const pad = 48;
   const paperX = pad, paperY = pad;
   const paperW = FINAL_W - pad*2, paperH = FINAL_H - pad*2;
-  
-  // Define coordinates FIRST
   const paperBottom = paperY + paperH;
   const contentX = paperX + 20;
   const contentW = paperW - 40;
   const colorAbu = '#6b5c4b';
   const colorEdge = '#ded6c8';
-
-  // Calculate Footer Positions
   const footerBrandY = paperBottom - 40;
   const footerThankY = paperBottom - 70;
   const footerTotalY = paperBottom - 130;
   const footerTaxY = footerTotalY - 34;
   const footerSubY = footerTaxY - 30;
   const footerLineY = footerSubY - 32;
-
-  // Calculate Header Positions
   const headerY = paperY + 70;
   const headerLineY = headerY + 58;
-
   ctx.fillStyle = '#ffffff'; ctx.fillRect(0,0,FINAL_W,FINAL_H);
   ctx.fillStyle = '#fffdf7'; ctx.fillRect(paperX, paperY, paperW, paperH);
-
-  // Header
   ctx.fillStyle = '#111'; ctx.textAlign = 'center'; ctx.font = '32px monospace';
   ctx.fillText('VIZRIZE PHOTOBOOTH', paperX + paperW/2, headerY);
   ctx.font = '16px monospace'; ctx.fillStyle = colorAbu;
   ctx.fillText('Jakarta • Photobooth', paperX + paperW/2, headerY + 32);
-  
   ctx.strokeStyle = colorEdge; ctx.setLineDash([6,6]);
   ctx.beginPath(); ctx.moveTo(paperX + 12, headerLineY); ctx.lineTo(paperX + paperW - 12, headerLineY); ctx.stroke(); ctx.setLineDash([]);
-
-  // Footer
   ctx.font = '18px monospace'; ctx.fillStyle = colorAbu; ctx.textAlign = 'center';
   ctx.fillText('THANK YOU ~ HAVE A NICE DAY!', paperX + paperW/2, footerThankY);
   ctx.font = '16px monospace'; ctx.fillStyle = '#111';
   ctx.fillText('~ PHOTORECEIPT by VizRize ~', paperX + paperW/2, footerBrandY);
-
   const subtotal = 15000; const tax = Math.round(subtotal * 0.1); const total = subtotal + tax;
-  
   ctx.font = '18px monospace'; ctx.fillStyle = colorAbu;
   ctx.textAlign = 'left'; ctx.fillText('SUBTOTAL', contentX + 8, footerSubY);
   ctx.textAlign = 'right'; ctx.fillText('Rp' + subtotal.toLocaleString('id-ID'), contentX + contentW - 8, footerSubY);
-  
   ctx.textAlign = 'left'; ctx.fillText('TAX (10%)', contentX + 8, footerTaxY);
   ctx.textAlign = 'right'; ctx.fillText('Rp' + tax.toLocaleString('id-ID'), contentX + contentW - 8, footerTaxY);
-  
   ctx.font = '20px monospace'; ctx.fillStyle = '#111';
   ctx.textAlign = 'left'; ctx.fillText('TOTAL', contentX + 8, footerTotalY);
   ctx.textAlign = 'right'; ctx.fillText('Rp' + total.toLocaleString('id-ID'), contentX + contentW - 8, footerTotalY);
-
   ctx.setLineDash([6,6]);
   ctx.beginPath(); ctx.moveTo(contentX, footerLineY); ctx.lineTo(contentX + contentW, footerLineY); ctx.strokeStyle = colorEdge; ctx.stroke(); ctx.setLineDash([]);
-
-  // --- PHOTO LOGIC ---
   const photoAreaTop = headerLineY + 20;
   const photoAreaBottom = footerLineY - 20;
   const photoAreaH = photoAreaBottom - photoAreaTop; 
   const photoW = contentW;
-
   if(captured.length === 1){
     let imgH = photoAreaH; 
     let imgW = Math.round(imgH * (4 / 3)); 
@@ -581,23 +620,16 @@ function composeFinalNoShadow(captured, txId, dateStr){
     ctx.fillStyle = '#fff'; ctx.fillRect(imgX, imgY, imgW, imgH); 
     ctx.drawImage(cropped, imgX, imgY, imgW, imgH);
   } else {
-    // 3-STRIP SCALING
     const idealPhotoH = Math.round(photoW * 3 / 4);
     const totalNeededH = (idealPhotoH * captured.length) + (STRIP_GAP * (captured.length - 1));
-    
     let scale = 1.0;
-    if (totalNeededH > photoAreaH) {
-        scale = photoAreaH / totalNeededH; 
-    }
-
+    if (totalNeededH > photoAreaH) { scale = photoAreaH / totalNeededH; }
     const scaledPhotoW = photoW * scale;
     const scaledPhotoH = idealPhotoH * scale;
     const scaledGap = STRIP_GAP * scale;
     const scaledTotalH = (scaledPhotoH * captured.length) + (scaledGap * (captured.length - 1));
-
     let photoY = photoAreaTop + (photoAreaH - scaledTotalH) / 2; 
     let photoX = contentX + (contentW - scaledPhotoW) / 2;
-
     captured.forEach((c,i)=>{
       const cropped = cropCenterTo4x3(c, photoW); 
       applyFintage(cropped);
@@ -610,45 +642,27 @@ function composeFinalNoShadow(captured, txId, dateStr){
   return canvas;
 }
 
-// 2. PRINT (384px, No Margin, Big Font, Spasi Bawah)
 function composeFinalForPrint(captured) {
   const canvas = printCanvas; 
   canvas.width = PRINT_W; 
-
   const headerFontSize = 26; const subHeaderFontSize = 16;
   const receiptFontSize = 20; const totalFontSize = 22;
   const footerFontSize = 16; const padding = 8; 
   const photoW = PRINT_W; 
-
   let photoTotalHeight = 0;
-  if (captured.length === 1) {
-    photoTotalHeight = Math.round(photoW * (3/4)); 
-  } else {
-    const photoH = Math.round(photoW * (3/4));
-    photoTotalHeight = (photoH * captured.length) + (padding * (captured.length - 1));
-  }
-
+  if (captured.length === 1) { photoTotalHeight = Math.round(photoW * (3/4)); } 
+  else { const photoH = Math.round(photoW * (3/4)); photoTotalHeight = (photoH * captured.length) + (padding * (captured.length - 1)); }
   let totalHeight = 0;
-  totalHeight += padding; 
-  totalHeight += headerFontSize; 
-  totalHeight += subHeaderFontSize; 
-  totalHeight += padding + 5 + padding; 
-  totalHeight += photoTotalHeight; 
-  totalHeight += padding + 5 + padding; 
+  totalHeight += padding; totalHeight += headerFontSize; totalHeight += subHeaderFontSize; totalHeight += padding + 5 + padding; 
+  totalHeight += photoTotalHeight; totalHeight += padding + 5 + padding; 
   totalHeight += receiptFontSize + receiptFontSize + padding + totalFontSize;
-  totalHeight += padding + 5 + padding; 
-  totalHeight += footerFontSize + footerFontSize + padding; 
-  totalHeight += 50; 
-
+  totalHeight += padding + 5 + padding; totalHeight += footerFontSize + footerFontSize + padding; totalHeight += 50; 
   canvas.height = totalHeight;
   const ctx = canvas.getContext('2d');
   ctx.fillStyle = '#ffffff'; ctx.fillRect(0, 0, canvas.width, canvas.height);
   ctx.fillStyle = '#000000'; 
-  
   let currentY = 0;
   const leftX = 0; const rightX = canvas.width;
-
-  // Header
   currentY += padding;
   ctx.font = `bold ${headerFontSize}px monospace`;
   ctx.textAlign = 'center'; 
@@ -657,11 +671,8 @@ function composeFinalForPrint(captured) {
   ctx.font = `normal ${subHeaderFontSize}px monospace`;
   ctx.fillText('Jakarta Photobooth', canvas.width / 2, currentY + subHeaderFontSize);
   currentY += subHeaderFontSize + padding;
-  
   drawDashedLine(ctx, leftX, currentY, rightX, currentY); 
   currentY += 5 + padding;
-
-  // Photo
   if (captured.length === 1) {
     const photoH = Math.round(photoW * (3/4));
     const cropped = cropCenterTo4x3(captured[0], photoW);
@@ -677,38 +688,28 @@ function composeFinalForPrint(captured) {
     });
   }
   currentY += padding;
-
-  // Receipt
   drawDashedLine(ctx, leftX, currentY, rightX, currentY); 
   currentY += 5 + padding;
-
   const subtotal = 15000; const tax = Math.round(subtotal * 0.1); const total = subtotal + tax;
-  
   ctx.font = `normal ${receiptFontSize}px monospace`;
   ctx.textAlign = 'left'; ctx.fillText('SUBTOTAL', leftX, currentY + receiptFontSize); 
   ctx.textAlign = 'right'; ctx.fillText('Rp' + subtotal.toLocaleString('id-ID'), rightX, currentY + receiptFontSize); 
   currentY += receiptFontSize;
-
   ctx.textAlign = 'left'; ctx.fillText('TAX (10%)', leftX, currentY + receiptFontSize); 
   ctx.textAlign = 'right'; ctx.fillText('Rp' + tax.toLocaleString('id-ID'), rightX, currentY + receiptFontSize); 
   currentY += receiptFontSize + padding;
-  
   ctx.font = `bold ${totalFontSize}px monospace`;
   ctx.textAlign = 'left'; ctx.fillText('TOTAL', leftX, currentY + totalFontSize); 
   ctx.textAlign = 'right'; ctx.fillText('Rp' + total.toLocaleString('id-ID'), rightX, currentY + totalFontSize); 
   currentY += totalFontSize + padding;
-
   drawDashedLine(ctx, leftX, currentY, rightX, currentY); 
   currentY += 5 + padding;
-  
-  // Footer
   ctx.font = `normal ${footerFontSize}px monospace`;
   ctx.textAlign = 'center'; 
   ctx.fillText('THANK YOU ~ HAVE A NICE DAY!', canvas.width / 2, currentY + footerFontSize);
   currentY += footerFontSize;
   ctx.font = `bold ${footerFontSize}px monospace`;
   ctx.fillText('~ PHOTORECEIPT by VizRize ~', canvas.width / 2, currentY + footerFontSize);
-  
   return canvas;
 }
 
@@ -723,8 +724,8 @@ function drawDashedLine(ctx, x1, y1, x2, y2) {
 }
 
 function composeUploadWithShadow(noShadowCanvasEl){
-  const pad = 40; const upW = noShadowCanvasEl.width + pad*2; const upH = noShadowCanvasEl.height + pad*2;
-  const u = uploadShadowCanvas; u.width = upW; u.height = upH;
+  const u = uploadShadowCanvas; const pad = 40; const upW = noShadowCanvasEl.width + pad*2; const upH = noShadowCanvasEl.height + pad*2;
+  u.width = upW; u.height = upH;
   const ctx = u.getContext('2d');
   ctx.fillStyle = '#ffffff'; ctx.fillRect(0,0,upW,upH);
   ctx.save(); ctx.shadowColor = 'rgba(0,0,0,0.18)'; ctx.shadowBlur = 40; ctx.shadowOffsetY = 16;
@@ -741,8 +742,6 @@ function roundRect(ctx, x, y, w, h, r, fill, stroke){
   ctx.beginPath(); ctx.moveTo(x + r, y); ctx.arcTo(x + w, y, x + w, y + h, r); ctx.arcTo(x + w, y + h, x, y + h, r); ctx.arcTo(x, y + h, x, y, r); ctx.arcTo(x, y, x + w, y, r); ctx.closePath();
   if(fill) ctx.fill(); if(stroke) ctx.stroke();
 }
-
-/* ================== FLOW ================== */
 
 function flashOnce(duration=140){
   flashEl.style.opacity = '0.95'; setTimeout(()=>{ flashEl.style.opacity = '0'; }, duration);
@@ -763,7 +762,7 @@ async function runCountdown(sec=3){
 }
 
 async function runSession(){
-  if(!captureMode){ alert('Select mode first'); return; }
+  if(!captureMode){ alert('Pilih mode strip dulu. Klik nama event di atas.'); return; }
   if(!cameraReady){ alert('Camera not ready yet'); return; }
   capturedCanvases = [];
   const shots = (captureMode === 'single') ? 1 : 3;
@@ -782,7 +781,6 @@ async function runSession(){
 }
 
 function preparePreviewAndFinal(captured){
-  // Clean UI
   finalPreviewWrap.innerHTML = '';
   uploadedUrlEl.textContent = 'Not uploaded';
   lastDitherDataUrl = null; lastUploadUrl = null; lastNoShadowCanvas = null;
@@ -790,7 +788,6 @@ function preparePreviewAndFinal(captured){
   const txId = 'VZ-' + Date.now().toString(36).toUpperCase().slice(-8);
   const dateStr = new Date().toLocaleString('en-GB', { day:'2-digit', month:'short', year:'numeric', hour:'2-digit', minute:'2-digit' });
 
-  // 1. PREVIEW (App) - FIXED SCALING
   const noShadow = composeFinalNoShadow(captured, txId, dateStr);
   lastNoShadowCanvas = noShadow;
   const dataUrl = noShadow.toDataURL('image/jpeg',0.92);
@@ -798,12 +795,9 @@ function preparePreviewAndFinal(captured){
   img.src = dataUrl; img.className = 'finalPreviewImg';
   finalPreviewWrap.appendChild(img);
 
-  // 2. PRINT (Printer) - No Margin, Big Font
-  console.log('Membuat layout cetak (tanpa margin)...');
   const canvasForDither = composeFinalForPrint(captured);
   lastDitherDataUrl = floydDither(canvasForDither, PRINT_W);
 
-  // 3. AUTO PRINT
   if (window.flutter_inappwebview) {
     console.log('Memicu print otomatis...');
     window.flutter_inappwebview.callHandler('printHandler', lastDitherDataUrl);
@@ -840,28 +834,86 @@ async function uploadCanvasToCloudinary(canvas){
   return json.secure_url;
 }
 
-// REVISI: QR Popup Fix (Dimensi Pasti)
 function showQrPopup(url){
-  qrcodeHost.innerHTML = ''; 
+  const qrCanvas = document.getElementById('qrCanvas');
   barcodeUrlText.textContent = url; 
   barcodePopup.style.display = 'flex'; 
   barcodePopup.onclick = (e)=>{ if(e.target === barcodePopup) barcodePopup.style.display = 'none'; };
 
-  setTimeout(() => {
-    try {
-        const width = qrcodeHost.offsetWidth || 250; 
-        new QRCode(qrcodeHost, { text: url, width: width, height: width, correctLevel: QRCode.CorrectLevel.M });
-    } catch(e) { 
-        console.error(e); alert("QR Script Gagal."); 
-    }
-  }, 150);
+  try {
+    new QRious({
+      element: qrCanvas,
+      value: url,
+      size: 250,
+      background: 'white',
+      foreground: 'black'
+    });
+  } catch(e) { 
+      console.error("QRious Error:", e); 
+      alert("Gagal membuat QR Code. Periksa koneksi internet untuk memuat library."); 
+  }
 }
 
-startBtn.addEventListener('click', runSession);
-retakeBtn.addEventListener('click', async ()=>{
-  modalOverlay.style.display = 'none';
-  await openCamera(); 
+/* ========================================================================= */
+/* 🚀 FUNGSI BARU UNTUK FLOW LANDING PAGE/KONTROL CAMERA */
+/* ========================================================================= */
+
+// 1. FUNGSI UNTUK KEMBALI KE LANDING PAGE (DIPAKAI OLEH RETAKE & INIT)
+function showLandingPage() {
+    // Sembunyikan semua elemen operasional
+    modalOverlay.style.display = 'none';
+    topHeader.style.display = 'none';
+    cameraWrap.style.display = 'none';
+    centerUI.style.display = 'none';
+    
+    // Tampilkan Landing Page
+    welcomeScreen.style.display = 'flex';
+    
+    // Reset mode dan tombol start
+    captureMode = ''; 
+    document.getElementById('mode1').classList.remove('selected');
+    document.getElementById('mode3').classList.remove('selected');
+    document.getElementById('startBtn').disabled = true; 
+}
+
+
+// 2. FUNGSI UNTUK MASUK KE LAYAR KONTROL
+function showControlScreen() {
+  welcomeScreen.style.display = 'none';
+  topHeader.style.display = 'flex';
+  cameraWrap.style.display = 'block';
+  centerUI.style.display = 'flex';
+  
+  // PERUBAHAN: Tampilkan tombol strip secara default
+  controlsRowTop.style.display = 'flex'; 
+}
+
+// --- EVENT LISTENER SETUP ---
+startLpBtn.addEventListener('click', showControlScreen);
+document.getElementById('mode1').addEventListener('click', ()=>{ captureMode='single'; document.getElementById('mode1').classList.add('selected'); document.getElementById('mode3').classList.remove('selected'); if(cameraReady) startBtn.disabled=false; });
+document.getElementById('mode3').addEventListener('click', ()=>{ captureMode='strip'; document.getElementById('mode3').classList.add('selected'); document.getElementById('mode1').classList.remove('selected'); if(cameraReady) startBtn.disabled=false; });
+
+// Perilaku HeaderTitle (Toggle Strip)
+headerTitle.addEventListener('click', () => {
+  if (cameraWrap.style.display === 'block' && modalOverlay.style.display !== 'flex') {
+    if (controlsRowTop.style.display === 'none' || controlsRowTop.style.display === '') {
+      controlsRowTop.style.display = 'flex';
+    } else {
+      controlsRowTop.style.display = 'none';
+    }
+  } else if (modalOverlay.style.display === 'flex') {
+    // Jika diklik saat di modal, kembali ke Landing Page
+    showLandingPage();
+  }
 });
+
+startBtn.addEventListener('click', runSession);
+
+// PERUBAHAN: RETAKE sekarang memanggil showLandingPage()
+retakeBtn.addEventListener('click', async ()=>{
+  showLandingPage(); 
+});
+
 printBtn.addEventListener('click', ()=>{
   if (window.flutter_inappwebview && lastDitherDataUrl) {
     window.flutter_inappwebview.callHandler('printHandler', lastDitherDataUrl);
@@ -872,6 +924,54 @@ printBtn.addEventListener('click', ()=>{
 uploadBtn.addEventListener('click', uploadFinalWithShadowAndShowQr);
 barcodeClose.addEventListener('click', ()=>{ barcodePopup.style.display = 'none'; });
 
+/* --- INISIASI --- */
+function initApp() {
+  openCamera(); 
+  // Panggil Landing Page di awal
+  showLandingPage(); 
+}
+initApp(); 
+
+// === SET BADGE DATE ===
+function formatDate() {
+  const now = new Date();
+  const hari = now.getDate().toString().padStart(2, '0');
+  const bulan = now.toLocaleString('en-US', { month: 'short' });
+  const tahun = now.getFullYear();
+  return `${hari} ${bulan} ${tahun}`;
+}
+document.getElementById("lpBadgeDate").innerText = formatDate();
+
+// === EVENT TITLE EDIT POPUP ===
+const eventTitleLp = document.getElementById("eventTitleLp");
+const eventPopup = document.getElementById("eventPopup");
+const eventInput = document.getElementById("eventInput");
+const eventSaveBtn = document.getElementById("eventSaveBtn");
+
+// buka popup ketika judul diklik
+eventTitleLp.addEventListener("click", () => {
+  eventInput.value = eventTitleLp.innerText;
+  eventPopup.style.display = "flex";
+});
+
+// simpan hasil & update judul
+eventSaveBtn.addEventListener("click", () => {
+  const newText = eventInput.value.trim();
+  if(newText.length > 0){
+    eventTitleLp.innerText = newText;
+    headerTitle.innerText = newText; // juga update header setelah masuk kamera
+  }
+  eventPopup.style.display = "none";
+});
+
+// klik background popup buat menutup
+eventPopup.addEventListener("click", (e)=> {
+  if(e.target === eventPopup){
+    eventPopup.style.display = "none";
+  }
+});
+
 </script>
 </body>
 </html>
+
