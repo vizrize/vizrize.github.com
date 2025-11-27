@@ -1,0 +1,977 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover"/>
+<title>CAFERIN</title>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/qrious/4.0.2/qrious.min.js"></script>
+
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Space+Mono:wght@400;700&family=Inter:wght@400;700;900&display=swap');
+
+:root{
+  --bg-dark: #1a1a1c;        
+  --bg-light: #2c2c2f;       
+  --border-grey: #5a5a60;    
+  --accent-neon: #ccff00;    
+  --accent-sec: #00ffff;     
+  --text-light: #f0f0f0;     
+  --text-dark: #0a0a0b;      
+  --receipt-bg: #fffdf7;     
+  --receipt-edge: #e6dfd4;   
+  
+  --header-h: 12%;      
+  --top-area-h: 60%;    
+  --controls-h: 40%;    
+}
+
+*{box-sizing:border-box}
+html,body{
+  height:100%; margin:0; overflow: hidden;
+  font-family: 'Inter', sans-serif;
+  background: var(--bg-dark); 
+  color: var(--text-light);
+  -webkit-font-smoothing:antialiased;
+  position: fixed; width: 100%;
+}
+
+.font-mono { font-family: 'Space Mono', monospace; }
+
+/* === 1. HEADER === */
+.topHeader {
+  position: absolute;
+  top: 0; left: 0; right: 0;
+  height: var(--header-h);
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  z-index: 20;
+  background: var(--bg-dark);
+  border-bottom: 1px solid var(--border-grey);
+  padding-top: env(safe-area-inset-top);
+}
+.badge {
+  background: var(--accent-neon);
+  color: var(--text-dark);
+  padding: 2px 8px;
+  border-radius: 4px;
+  font-size: clamp(10px, 2vw, 12px);
+  font-weight: 900;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+  margin-bottom: 4px;
+}
+.headerTitle {
+  font-family: 'Space Mono', monospace;
+  font-size: clamp(18px, 5vw, 26px);
+  font-weight: 700;
+  letter-spacing: -1px;
+  color: var(--text-light);
+  cursor: pointer; 
+}
+
+/* === 1B. WELCOME SCREEN (LANDING PAGE) === */
+#welcomeScreen {
+  position: fixed; 
+  top: 0; left: 0; right: 0; bottom: 0; 
+  background: var(--bg-dark);
+  display: flex; 
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  z-index: 100;
+}
+.startCardLp {
+  width: min(85%, 450px);
+  text-align: center;
+  padding: clamp(30px, 6vw, 50px);
+  border: 2px solid var(--accent-neon);
+  border-radius: 12px;
+  background: rgba(0,0,0,0.4);
+  box-shadow: 0 0 40px rgba(204, 255, 0, 0.2);
+}
+.lpTitle {
+  font-family: 'Space Mono', monospace;
+  font-size: clamp(30px, 8vw, 48px);
+  font-weight: 700;
+  letter-spacing: -2px;
+  color: var(--text-light);
+  margin: 10px 0 40px;
+}
+.lpBadge {
+  font-size: clamp(14px, 3vw, 18px);
+  font-weight: 700;
+  color: var(--accent-neon);
+}
+
+
+/* === 2. KAMERA === */
+#cameraWrap {
+  position: absolute;
+  left: 50%;
+  transform: translateX(-50%);
+  top: calc(var(--header-h) + 2%); 
+  width: 90%; 
+  max-width: 600px; 
+  aspect-ratio: 4 / 3; 
+  max-height: calc(var(--top-area-h) - var(--header-h) - 20px);
+  background: #000;
+  z-index: 5;
+  border: 4px solid var(--border-grey);
+  border-radius: 8px;
+  box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+  overflow: hidden;
+}
+
+video#camera {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  transform: scaleX(-1);
+}
+
+#countdownOverlay {
+  position: absolute;
+  inset: 0;
+  display: none;
+  align-items: center;
+  justify-content: center;
+  background: transparent;
+  z-index: 30;
+}
+#countNum { 
+  font-size: clamp(80px, 20vw, 140px); 
+  font-weight: 900; 
+  color: #fff;
+  font-family: 'Space Mono', monospace;
+  text-shadow: 0 0 20px rgba(0,0,0,0.8), 4px 4px 0 #000;
+}
+
+/* === 3. KONTROL === */
+.centerUI {
+  position: absolute;
+  bottom: 0; left: 0; right: 0;
+  height: var(--controls-h); 
+  background: var(--bg-light); 
+  border-top: 2px solid var(--accent-neon); 
+  z-index: 10;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: clamp(15px, 3vh, 25px);
+  padding-bottom: env(safe-area-inset-bottom);
+  background-image: radial-gradient(#3a3a3e 15%, transparent 16%);
+  background-size: 12px 12px;
+  box-shadow: 0 -10px 40px rgba(0,0,0,0.5);
+}
+
+.startCard {
+  width: min(85%, 450px);
+  text-align: center;
+  padding: clamp(20px, 4vw, 30px);
+  border: 1px dashed var(--border-grey);
+  border-radius: 12px;
+  background: rgba(0,0,0,0.2);
+}
+
+.controlsRowTop {
+  display: none;
+  gap: 15px;
+  justify-content: center;
+  margin-bottom: clamp(15px, 3vh, 25px);
+}
+.modeBtn {
+  flex: 1;
+  padding: clamp(12px, 2vh, 16px);
+  border-radius: 6px;
+  border: 1px solid var(--border-grey);
+  background: var(--bg-dark);
+  color: #aaa;
+  font-family: 'Space Mono', monospace;
+  font-weight: 700;
+  cursor: pointer;
+  font-size: clamp(12px, 3vw, 14px);
+  text-transform: uppercase;
+  transition: all 0.2s;
+}
+.modeBtn.selected {
+  background: var(--text-light);
+  color: var(--text-dark);
+  border-color: var(--accent-neon);
+  box-shadow: 0 0 15px rgba(204, 255, 0, 0.3);
+  transform: translateY(-2px);
+}
+
+.startBtn {
+  display: inline-block;
+  width: 100%;
+  padding: clamp(18px, 4vh, 24px);
+  border-radius: 8px;
+  border: 3px solid var(--accent-neon);
+  background: transparent;
+  color: var(--accent-neon);
+  font-size: clamp(22px, 6vw, 32px);
+  font-weight: 900;
+  font-family: 'Inter', sans-serif;
+  text-transform: uppercase;
+  cursor: pointer;
+  transition: all 0.1s;
+  letter-spacing: 3px;
+  box-shadow: inset 0 0 20px rgba(204, 255, 0, 0.1), 0 10px 20px rgba(0,0,0,0.3);
+}
+.startBtn:active {
+  background: var(--accent-neon);
+  color: var(--text-dark);
+  transform: scale(0.98);
+}
+.startBtn:disabled { opacity: 0.3; cursor: not-allowed; filter: grayscale(1); box-shadow: none; }
+
+#flash { position: fixed; inset: 0; background: #fff; opacity: 0; pointer-events: none; z-index: 100; transition: opacity 140ms ease-out; }
+
+/* --- MODAL PREVIEW --- */
+.modalOverlay { 
+  position: fixed; inset: 0; background: rgba(0,0,0,0.95); 
+  display: none; 
+  align-items: center; justify-content: center; 
+  z-index: 120; padding: 20px; backdrop-filter: blur(5px); 
+}
+.modalReceipt { 
+  width: min(500px, 94vw); max-height: 85vh; overflow: auto; 
+  background: var(--receipt-bg); border-radius: 4px; padding: 0; 
+  font-family: 'Space Mono', monospace; color: var(--text-dark); 
+  box-shadow: 0 0 60px rgba(0,0,0,0.9);
+  border: 4px solid var(--bg-light);
+}
+.receiptInner { padding: 20px; }
+.controlsRow { 
+  display: flex; gap: 10px; justify-content: center; 
+  padding: 20px; background: var(--bg-dark); border-top: 4px solid var(--accent-neon);
+}
+.action { 
+  flex: 1; padding: 14px; border-radius: 4px; border: none; 
+  font-weight: 700; cursor: pointer; font-size: clamp(10px, 3vw, 14px); 
+  text-transform: uppercase; font-family: 'Space Mono', monospace;
+}
+.printBtn { background: var(--accent-neon); color: var(--text-dark); }
+.uploadBtn { background: var(--text-light); color: var(--text-dark); }
+.retakeBtn { background: transparent; color: #fff; border: 1px solid #555; }
+
+#finalPreviewWrap { 
+  margin: 10px 0; display: flex; justify-content: center; 
+  min-height: 200px; 
+}
+.finalPreviewImg { width: 100%; display: block; border: 1px solid #ddd; }
+.uploadUrl { 
+  text-align:center; margin-top:10px; font-size:10px; 
+  color: #999; font-family: 'Space Mono', monospace;
+}
+
+/* === QR POPUP FIXED CSS === */
+#barcodePopup { 
+  position: fixed; inset: 0; display: none; 
+  align-items: center; justify-content: center; 
+  z-index: 140; background: rgba(0,0,0,0.95); 
+}
+#barcodeBox { 
+  width: min(600px, 90vw); 
+  background: #111; 
+  border: 2px solid var(--accent-neon);
+  padding: 30px; 
+  text-align: center; 
+  position: relative; 
+  color: #fff; 
+  font-family: 'Space Mono', monospace;
+}
+#barcodeClose { 
+  position: absolute; top: 10px; right: 15px; border: 0; 
+  background: transparent; font-size: 24px; cursor: pointer; 
+  color: #fff; 
+}
+#qrcodeHost { 
+  padding: 15px; 
+  /* Ganti ke canvas agar QRious bekerja baik */
+  display: flex; 
+  justify-content: center;
+  margin: 20px auto; 
+  border-radius: 4px;
+  background: #fff;
+  width: 250px;
+  height: 250px;
+  align-items: center;
+}
+#barcodeUrlText { font-size:12px; color:#888; margin-top:10px; }
+
+canvas { display: none; }
+/* PENTING: Tampilkan canvas QR code di dalam popup */
+#qrcodeHost canvas { display: block !important; }
+
+.stripPhoto { display: none; } 
+
+/* Tablet Tweaks */
+@media (min-width: 768px) {
+  :root { --header-h: 10%; --top-area-h: 65%; --controls-h: 35%; }
+  #cameraWrap { border-width: 6px; width: 94%; max-width: 1024px; }
+  .startBtn { border-width: 5px; }
+  .startCard { border-width: 2px; width: min(90%, 700px); }
+  #qrcodeHost { width: 300px; height: 300px; } 
+}
+/* Small Phone Tweaks */
+@media (max-width: 360px) {
+  #qrcodeHost { width: 200px; height: 200px; }
+}
+</style>
+</head>
+<body style="background-color: #1a1a1c;">
+
+<div class="topHeader" id="topHeader" style="display: none;"> 
+  <div class="badge">PHOTORECEIPT</div>
+  <div class="headerTitle" id="headerTitle">VIZRIZE</div>
+</div>
+
+<div id="welcomeScreen">
+  <div class="startCardLp">
+    <div class="lpBadge" id="lpBadgeDate"></div>
+    <div class="lpTitle" id="eventTitleLp">CAFERIN</div>
+    <div id="eventPopup" 
+     style="display:none; position:fixed; inset:0; background:rgba(0,0,0,0.85); 
+     z-index:999; align-items:center; justify-content:center;color:white;">
+  <div style="background:#222; padding:25px; border:2px solid #ccff00; border-radius:10px; width:80%; max-width:380px; text-align:center;">
+    <div style="margin-bottom:10px; font-weight:700;">SET EVENT NAME</div>
+    <input id="eventInput" 
+           placeholder="Enter event name…" 
+           style="width:100%; padding:10px; border:none; border-radius:6px; margin-bottom:15px;">
+    <button id="eventSaveBtn" 
+            style="padding:10px 20px; background:#ccff00; border:none; font-weight:700; border-radius:6px; cursor:pointer; width:100%;">
+      SAVE
+    </button>
+  </div>
+</div>
+
+    <button id="startLpBtn" class="startBtn" style="letter-spacing: 5px;">TAP TO START</button>
+  </div>
+</div>
+
+<div id="cameraWrap" style="display: none;">
+  <video id="camera" autoplay playsinline muted></video>
+  <div id="countdownOverlay" aria-hidden="true">
+    <div id="countBox">
+      <div id="countNum">3</div>
+    </div>
+  </div>
+</div>
+
+<div id="flash" aria-hidden="true"></div>
+
+<div class="centerUI" id="centerUI" style="display: none;">
+  <div class="startCard">
+    <div class="controlsRowTop" id="controlsRowTop">
+      <button id="mode1" class="modeBtn" data-mode="single">1 STRIP</button>
+      <button id="mode3" class="modeBtn" data-mode="strip">3 STRIP</button>
+    </div>
+    <button id="startBtn" class="startBtn" disabled>INITIATE</button>
+  </div>
+</div>
+
+<div id="modalOverlay" class="modalOverlay" aria-hidden="true">
+  <div class="modalReceipt" role="dialog" aria-modal="true" aria-labelledby="receiptLabel">
+    <div class="receiptInner" id="receiptInner">
+      <div id="finalPreviewWrap"></div>
+      <div class="uploadUrl" id="uploadedUrl">WAITING FOR UPLOAD...</div>
+    </div>
+    <div class="controlsRow">
+      <button id="printBtn" class="action printBtn">PRINT</button>
+      <button id="uploadBtn" class="action uploadBtn">UPLOAD</button>
+      <button id="retakeBtn" class="action retakeBtn">RETAKE</button>
+    </div>
+  </div>
+</div>
+
+<div id="barcodePopup" aria-hidden="true">
+  <div id="barcodeBox">
+    <button id="barcodeClose" aria-label="Close">×</button>
+    <div style="font-weight:700; letter-spacing:1px;">SCAN TO DOWNLOAD</div>
+    <div id="qrcodeHost">
+      <canvas id="qrCanvas"></canvas>
+    </div>
+    <div id="barcodeUrlText"></div>
+   </div>
+</div>
+
+<canvas id="captureCanvas"></canvas>
+<canvas id="noShadowCanvas"></canvas>
+<canvas id="printCanvas"></canvas>
+<canvas id="uploadShadowCanvas"></canvas>
+<canvas id="ditherCanvas"></canvas>
+
+<script>
+/* ================== CONFIG & DOM GRABS (TIDAK BERUBAH) ================== */
+const CLOUD_NAME = "dcqqaebln";
+const UPLOAD_PRESET = "vizrize_unsigned";
+const PRINT_W = 384;
+const FINAL_W = 1080;
+const FINAL_H = 1920;
+const STRIP_GAP = 8;
+
+const video = document.getElementById('camera');
+const startBtn = document.getElementById('startBtn');
+const countdownOverlay = document.getElementById('countdownOverlay');
+const countNum = document.getElementById('countNum');
+const flashEl = document.getElementById('flash');
+
+const modalOverlay = document.getElementById('modalOverlay');
+const finalPreviewWrap = document.getElementById('finalPreviewWrap');
+const uploadedUrlEl = document.getElementById('uploadedUrl');
+const uploadBtn = document.getElementById('uploadBtn');
+const retakeBtn = document.getElementById('retakeBtn');
+
+const barcodePopup = document.getElementById('barcodePopup');
+const barcodeClose = document.getElementById('barcodeClose');
+const qrcodeHost = document.getElementById('qrcodeHost');
+const barcodeUrlText = document.getElementById('barcodeUrlText');
+
+const captureCanvas = document.getElementById('captureCanvas');
+const noShadowCanvas = document.getElementById('noShadowCanvas');
+const printCanvas = document.getElementById('printCanvas');
+const uploadShadowCanvas = document.getElementById('uploadShadowCanvas');
+const ditherCanvas = document.getElementById('ditherCanvas');
+
+const welcomeScreen = document.getElementById('welcomeScreen');
+const startLpBtn = document.getElementById('startLpBtn');
+const cameraWrap = document.getElementById('cameraWrap');
+const centerUI = document.getElementById('centerUI');
+const headerTitle = document.getElementById('headerTitle');
+const controlsRowTop = document.getElementById('controlsRowTop');
+const topHeader = document.getElementById('topHeader'); 
+
+let captureMode = '';
+let capturedCanvases = [];
+let lastDitherDataUrl = null;
+let lastUploadUrl = null;
+let lastNoShadowCanvas = null;
+let cameraReady = false;
+const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+
+/* ================== AUDIO & FUNGSI HELPER LAINNYA (TIDAK BERUBAH) ================== */
+function beep(freq=1000,dur=0.06){ try{ const o=audioCtx.createOscillator(), g=audioCtx.createGain(); o.type='sine'; o.frequency.setValueAtTime(freq,audioCtx.currentTime); g.gain.setValueAtTime(0.06,audioCtx.currentTime); o.connect(g); g.connect(audioCtx.destination); o.start(); o.stop(audioCtx.currentTime+dur);}catch(e){}}
+function speak(text){ try{ if(window.speechSynthesis){ const u=new SpeechSynthesisUtterance(text); u.lang='en-US'; window.speechSynthesis.cancel(); window.speechSynthesis.speak(u);} }catch(e){}}
+function shutterSound(){ beep(900,0.04); setTimeout(()=>beep(1400,0.04),70); }
+
+async function openCamera(){
+  try{
+    const stream = await navigator.mediaDevices.getUserMedia({ video:{ facingMode:'user', width:{ideal:1920}, height:{ideal:1080} }, audio:false });
+    video.srcObject = stream; 
+    video.addEventListener('loadedmetadata', ()=> {
+      setTimeout(()=> {
+        if(video.videoWidth > 0 && video.videoHeight > 0){
+          cameraReady = true;
+          if(captureMode) startBtn.disabled = false;
+        }
+      }, 220);
+    }, { once: true });
+  }catch(err){
+    console.error('Camera open failed:', err);
+    alert('Cannot access camera: '+(err.message||err));
+  }
+}
+
+function captureOnce(){
+  const vw = video.videoWidth || 0;
+  const vh = video.videoHeight || 0;
+  if(!vw || !vh) return null;
+  captureCanvas.width = vw; captureCanvas.height = vh;
+  const ctx = captureCanvas.getContext('2d');
+  ctx.save(); ctx.scale(-1,1); ctx.drawImage(video, -vw, 0, vw, vh); ctx.restore();
+  const out = document.createElement('canvas'); out.width = vw; out.height = vh;
+  out.getContext('2d').drawImage(captureCanvas,0,0);
+  return out;
+}
+
+function cropCenterTo4x3(srcCanvas, targetW){
+  const targetH = Math.round(targetW * 3 / 4);
+  const sw = srcCanvas.width, sh = srcCanvas.height;
+  const srcRatio = sw/sh, tgtRatio = targetW/targetH;
+  let sx, sy, swc, shc;
+  if(srcRatio > tgtRatio){
+    shc = sh; swc = Math.round(shc * tgtRatio); sx = Math.floor((sw - swc)/2); sy = 0;
+  } else {
+    swc = sw; shc = Math.round(swc / tgtRatio); sx = 0; sy = Math.floor((sh - shc)/2);
+  }
+  const out = document.createElement('canvas'); out.width = targetW; out.height = targetH;
+  out.getContext('2d').drawImage(srcCanvas, sx, sy, swc, shc, 0, 0, targetW, targetH);
+  return out;
+}
+
+function applyFintage(canvas){
+  const ctx = canvas.getContext('2d');
+  const img = ctx.getImageData(0,0,canvas.width,canvas.height);
+  const d = img.data;
+  for(let i=0;i<d.length;i+=4){
+    const r=d[i], g=d[i+1], b=d[i+2];
+    let tr = (r*0.393 + g*0.769 + b*0.189);
+    let tg = (r*0.349 + g*0.686 + b*0.168);
+    let tb = (r*0.272 + g*0.534 + b*0.131);
+    tr = Math.min(255, ((tr-128)*1.03)+128);
+    tg = Math.min(255, ((tg-128)*1.02)+128);
+    tb = Math.min(255, ((tb-128)*0.98)+128);
+    d[i]=tr; d[i+1]=tg; d[i+2]=tb;
+    const grain = (Math.random()-0.5)*8;
+    d[i]+=grain; d[i+1]+=grain; d[i+2]+=grain;
+  }
+  ctx.putImageData(img,0,0);
+  return canvas;
+}
+
+function floydDither(srcCanvas, targetWidth){
+  const scale = targetWidth / srcCanvas.width;
+  const tw = Math.round(srcCanvas.width * scale);
+  const th = Math.round(srcCanvas.height * scale);
+  ditherCanvas.width = tw; ditherCanvas.height = th;
+  const dctx = ditherCanvas.getContext('2d');
+  dctx.drawImage(srcCanvas, 0, 0, tw, th);
+  const img = dctx.getImageData(0,0,tw,th);
+  const data = img.data;
+  const lum = new Float32Array(tw*th);
+  for(let y=0;y<th;y++){
+    for(let x=0;x<tw;x++){
+      const i=(y*tw+x)*4;
+      lum[y*tw+x] = 0.299*data[i] + 0.587*data[i+1] + 0.114*data[i+2];
+    }
+  }
+  for(let y=0;y<th;y++){
+    for(let x=0;x<tw;x++){
+      const idx = y*tw+x;
+      const oldv = lum[idx];
+      const newv = oldv < 128 ? 0 : 255;
+      const err = oldv - newv;
+      lum[idx] = newv;
+      if(x+1 < tw) lum[idx+1] += err * 7/16;
+      if(x-1 >=0 && y+1 < th) lum[idx + tw -1] += err * 3/16;
+      if(y+1 < th) lum[idx + tw] += err * 5/16;
+      if(x+1 < tw && y+1 < th) lum[idx + tw +1] += err * 1/16;
+    }
+  }
+  for(let y=0;y<th;y++){
+    for(let x=0;x<tw;x++){
+      const i=(y*tw+x)*4;
+      const v = lum[y*tw+x];
+      data[i]=data[i+1]=data[i+2]=v; data[i+3]=255;
+    }
+  }
+  dctx.putImageData(img,0,0);
+  return ditherCanvas.toDataURL('image/png');
+}
+
+function composeFinalNoShadow(captured, txId, dateStr){
+  const canvas = noShadowCanvas;
+  canvas.width = FINAL_W; canvas.height = FINAL_H;
+  const ctx = canvas.getContext('2d');
+  const pad = 48;
+  const paperX = pad, paperY = pad;
+  const paperW = FINAL_W - pad*2, paperH = FINAL_H - pad*2;
+  const paperBottom = paperY + paperH;
+  const contentX = paperX + 20;
+  const contentW = paperW - 40;
+  const colorAbu = '#6b5c4b';
+  const colorEdge = '#ded6c8';
+  const footerBrandY = paperBottom - 40;
+  const footerThankY = paperBottom - 70;
+  const footerTotalY = paperBottom - 130;
+  const footerTaxY = footerTotalY - 34;
+  const footerSubY = footerTaxY - 30;
+  const footerLineY = footerSubY - 32;
+  const headerY = paperY + 70;
+  const headerLineY = headerY + 58;
+  ctx.fillStyle = '#ffffff'; ctx.fillRect(0,0,FINAL_W,FINAL_H);
+  ctx.fillStyle = '#fffdf7'; ctx.fillRect(paperX, paperY, paperW, paperH);
+  ctx.fillStyle = '#111'; ctx.textAlign = 'center'; ctx.font = '32px monospace';
+  ctx.fillText('CAFERIN', paperX + paperW/2, headerY);
+  ctx.font = '16px monospace'; ctx.fillStyle = colorAbu;
+  ctx.fillText('Bogor • Photobooth', paperX + paperW/2, headerY + 32);
+  ctx.strokeStyle = colorEdge; ctx.setLineDash([6,6]);
+  ctx.beginPath(); ctx.moveTo(paperX + 12, headerLineY); ctx.lineTo(paperX + paperW - 12, headerLineY); ctx.stroke(); ctx.setLineDash([]);
+  ctx.font = '18px monospace'; ctx.fillStyle = colorAbu; ctx.textAlign = 'center';
+  ctx.fillText('THANK YOU ~ HAVE A NICE DAY!', paperX + paperW/2, footerThankY);
+  ctx.font = '16px monospace'; ctx.fillStyle = '#111';
+  ctx.fillText('~ PHOTORECEIPT by VizRize ~', paperX + paperW/2, footerBrandY);
+  const subtotal = 1000000; const tax = Math.round(subtotal * 0.1); const total = subtotal + tax;
+  ctx.font = '18px monospace'; ctx.fillStyle = colorAbu;
+  ctx.textAlign = 'left'; ctx.fillText('SUBTOTAL', contentX + 8, footerSubY);
+  ctx.textAlign = 'right'; ctx.fillText('Rp' + subtotal.toLocaleString('id-ID'), contentX + contentW - 8, footerSubY);
+  ctx.textAlign = 'left'; ctx.fillText('TAX (10%)', contentX + 8, footerTaxY);
+  ctx.textAlign = 'right'; ctx.fillText('Rp' + tax.toLocaleString('id-ID'), contentX + contentW - 8, footerTaxY);
+  ctx.font = '20px monospace'; ctx.fillStyle = '#111';
+  ctx.textAlign = 'left'; ctx.fillText('TOTAL', contentX + 8, footerTotalY);
+  ctx.textAlign = 'right'; ctx.fillText('Rp' + total.toLocaleString('id-ID'), contentX + contentW - 8, footerTotalY);
+  ctx.setLineDash([6,6]);
+  ctx.beginPath(); ctx.moveTo(contentX, footerLineY); ctx.lineTo(contentX + contentW, footerLineY); ctx.strokeStyle = colorEdge; ctx.stroke(); ctx.setLineDash([]);
+  const photoAreaTop = headerLineY + 20;
+  const photoAreaBottom = footerLineY - 20;
+  const photoAreaH = photoAreaBottom - photoAreaTop; 
+  const photoW = contentW;
+  if(captured.length === 1){
+    let imgH = photoAreaH; 
+    let imgW = Math.round(imgH * (4 / 3)); 
+    if (imgW > photoW) { imgW = photoW; imgH = Math.round(imgW * (3 / 4)); }
+    const imgX = contentX + (photoW - imgW) / 2;
+    const imgY = photoAreaTop + (photoAreaH - imgH) / 2;
+    const cropped = cropCenterTo4x3(captured[0], imgW);
+    applyFintage(cropped);
+    ctx.fillStyle = '#fff'; ctx.fillRect(imgX, imgY, imgW, imgH); 
+    ctx.drawImage(cropped, imgX, imgY, imgW, imgH);
+  } else {
+    const idealPhotoH = Math.round(photoW * 3 / 4);
+    const totalNeededH = (idealPhotoH * captured.length) + (STRIP_GAP * (captured.length - 1));
+    let scale = 1.0;
+    if (totalNeededH > photoAreaH) { scale = photoAreaH / totalNeededH; }
+    const scaledPhotoW = photoW * scale;
+    const scaledPhotoH = idealPhotoH * scale;
+    const scaledGap = STRIP_GAP * scale;
+    const scaledTotalH = (scaledPhotoH * captured.length) + (scaledGap * (captured.length - 1));
+    let photoY = photoAreaTop + (photoAreaH - scaledTotalH) / 2; 
+    let photoX = contentX + (contentW - scaledPhotoW) / 2;
+    captured.forEach((c,i)=>{
+      const cropped = cropCenterTo4x3(c, photoW); 
+      applyFintage(cropped);
+      ctx.fillStyle = '#fff'; 
+      ctx.fillRect(photoX, photoY, scaledPhotoW, scaledPhotoH);
+      ctx.drawImage(cropped, photoX, photoY, scaledPhotoW, scaledPhotoH);
+      photoY += scaledPhotoH + scaledGap;
+    });
+  }
+  return canvas;
+}
+
+function composeFinalForPrint(captured) {
+  const canvas = printCanvas; 
+  canvas.width = PRINT_W; 
+  const headerFontSize = 26; const subHeaderFontSize = 16;
+  const receiptFontSize = 20; const totalFontSize = 22;
+  const footerFontSize = 16; const padding = 8; 
+  const photoW = PRINT_W; 
+  let photoTotalHeight = 0;
+  if (captured.length === 1) { photoTotalHeight = Math.round(photoW * (3/4)); } 
+  else { const photoH = Math.round(photoW * (3/4)); photoTotalHeight = (photoH * captured.length) + (padding * (captured.length - 1)); }
+  let totalHeight = 0;
+  totalHeight += padding; totalHeight += headerFontSize; totalHeight += subHeaderFontSize; totalHeight += padding + 5 + padding; 
+  totalHeight += photoTotalHeight; totalHeight += padding + 5 + padding; 
+  totalHeight += receiptFontSize + receiptFontSize + padding + totalFontSize;
+  totalHeight += padding + 5 + padding; totalHeight += footerFontSize + footerFontSize + padding; totalHeight += 50; 
+  canvas.height = totalHeight;
+  const ctx = canvas.getContext('2d');
+  ctx.fillStyle = '#ffffff'; ctx.fillRect(0, 0, canvas.width, canvas.height);
+  ctx.fillStyle = '#000000'; 
+  let currentY = 0;
+  const leftX = 0; const rightX = canvas.width;
+  currentY += padding;
+  ctx.font = `bold ${headerFontSize}px monospace`;
+  ctx.textAlign = 'center'; 
+  ctx.fillText('VIZRIZE PHOTOBOOTH', canvas.width / 2, currentY + headerFontSize - (padding/2));
+  currentY += headerFontSize;
+  ctx.font = `normal ${subHeaderFontSize}px monospace`;
+  ctx.fillText('Jakarta Photobooth', canvas.width / 2, currentY + subHeaderFontSize);
+  currentY += subHeaderFontSize + padding;
+  drawDashedLine(ctx, leftX, currentY, rightX, currentY); 
+  currentY += 5 + padding;
+  if (captured.length === 1) {
+    const photoH = Math.round(photoW * (3/4));
+    const cropped = cropCenterTo4x3(captured[0], photoW);
+    ctx.drawImage(cropped, 0, currentY, photoW, photoH);
+    currentY += photoH;
+  } else {
+    const photoH = Math.round(photoW * (3/4));
+    captured.forEach((c, i) => {
+      const cropped = cropCenterTo4x3(c, photoW);
+      ctx.drawImage(cropped, 0, currentY, photoW, photoH);
+      currentY += photoH;
+      if (i < captured.length - 1) currentY += padding; 
+    });
+  }
+  currentY += padding;
+  drawDashedLine(ctx, leftX, currentY, rightX, currentY); 
+  currentY += 5 + padding;
+  const subtotal = 15000; const tax = Math.round(subtotal * 0.1); const total = subtotal + tax;
+  ctx.font = `normal ${receiptFontSize}px monospace`;
+  ctx.textAlign = 'left'; ctx.fillText('SUBTOTAL', leftX, currentY + receiptFontSize); 
+  ctx.textAlign = 'right'; ctx.fillText('Rp' + subtotal.toLocaleString('id-ID'), rightX, currentY + receiptFontSize); 
+  currentY += receiptFontSize;
+  ctx.textAlign = 'left'; ctx.fillText('TAX (10%)', leftX, currentY + receiptFontSize); 
+  ctx.textAlign = 'right'; ctx.fillText('Rp' + tax.toLocaleString('id-ID'), rightX, currentY + receiptFontSize); 
+  currentY += receiptFontSize + padding;
+  ctx.font = `bold ${totalFontSize}px monospace`;
+  ctx.textAlign = 'left'; ctx.fillText('TOTAL', leftX, currentY + totalFontSize); 
+  ctx.textAlign = 'right'; ctx.fillText('Rp' + total.toLocaleString('id-ID'), rightX, currentY + totalFontSize); 
+  currentY += totalFontSize + padding;
+  drawDashedLine(ctx, leftX, currentY, rightX, currentY); 
+  currentY += 5 + padding;
+  ctx.font = `normal ${footerFontSize}px monospace`;
+  ctx.textAlign = 'center'; 
+  ctx.fillText('THANK YOU ~ HAVE A NICE DAY!', canvas.width / 2, currentY + footerFontSize);
+  currentY += footerFontSize;
+  ctx.font = `bold ${footerFontSize}px monospace`;
+  ctx.fillText('~ PHOTORECEIPT by VizRize ~', canvas.width / 2, currentY + footerFontSize);
+  return canvas;
+}
+
+function drawDashedLine(ctx, x1, y1, x2, y2) {
+    ctx.beginPath();
+    ctx.setLineDash([4, 4]); 
+    ctx.moveTo(x1, y1);
+    ctx.lineTo(x2, y2);
+    ctx.strokeStyle = '#000000'; 
+    ctx.stroke();
+    ctx.setLineDash([]); 
+}
+
+function composeUploadWithShadow(noShadowCanvasEl){
+  const u = uploadShadowCanvas; const pad = 40; const upW = noShadowCanvasEl.width + pad*2; const upH = noShadowCanvasEl.height + pad*2;
+  u.width = upW; u.height = upH;
+  const ctx = u.getContext('2d');
+  ctx.fillStyle = '#ffffff'; ctx.fillRect(0,0,upW,upH);
+  ctx.save(); ctx.shadowColor = 'rgba(0,0,0,0.18)'; ctx.shadowBlur = 40; ctx.shadowOffsetY = 16;
+  const dstX = pad, dstY = pad; const r = 12;
+  ctx.fillStyle = '#fffdf7'; 
+  roundRect(ctx, dstX, dstY, noShadowCanvasEl.width, noShadowCanvasEl.height, r, true, false);
+  ctx.restore(); 
+  ctx.drawImage(noShadowCanvasEl, dstX, dstY);
+  return u;
+}
+
+function roundRect(ctx, x, y, w, h, r, fill, stroke){
+  if (typeof r === 'undefined') r = 5;
+  ctx.beginPath(); ctx.moveTo(x + r, y); ctx.arcTo(x + w, y, x + w, y + h, r); ctx.arcTo(x + w, y + h, x, y + h, r); ctx.arcTo(x, y + h, x, y, r); ctx.arcTo(x, y, x + w, y, r); ctx.closePath();
+  if(fill) ctx.fill(); if(stroke) ctx.stroke();
+}
+
+function flashOnce(duration=140){
+  flashEl.style.opacity = '0.95'; setTimeout(()=>{ flashEl.style.opacity = '0'; }, duration);
+}
+
+async function runCountdown(sec=3){
+  if(audioCtx.state === 'suspended') await audioCtx.resume();
+  countdownOverlay.style.display = 'flex';
+  for(let i=sec;i>0;i--){
+    countNum.textContent = i;
+    speak(i.toString()); beep(1000 - (i*80), 0.12);
+    await new Promise(r=>setTimeout(r,1000)); 
+  }
+  countNum.textContent = '📸';
+  speak('Click!'); shutterSound();
+  await new Promise(r=>setTimeout(r,200));
+  countdownOverlay.style.display = 'none';
+}
+
+async function runSession(){
+  if(!captureMode){ alert('Pilih mode strip dulu. Klik nama event di atas.'); return; }
+  if(!cameraReady){ alert('Camera not ready yet'); return; }
+  capturedCanvases = [];
+  const shots = (captureMode === 'single') ? 1 : 3;
+
+  for(let i=0;i<shots;i++){
+    await runCountdown(3);
+    flashOnce(140); 
+    const c = captureOnce();
+    if(!c){ alert('Capture failed'); return; }
+    capturedCanvases.push(c);
+    if(i < shots - 1) await new Promise(r=>setTimeout(r,500));
+  }
+
+  preparePreviewAndFinal(capturedCanvases);
+  modalOverlay.style.display = 'flex';
+}
+
+function preparePreviewAndFinal(captured){
+  finalPreviewWrap.innerHTML = '';
+  uploadedUrlEl.textContent = 'Not uploaded';
+  lastDitherDataUrl = null; lastUploadUrl = null; lastNoShadowCanvas = null;
+
+  const txId = 'VZ-' + Date.now().toString(36).toUpperCase().slice(-8);
+  const dateStr = new Date().toLocaleString('en-GB', { day:'2-digit', month:'short', year:'numeric', hour:'2-digit', minute:'2-digit' });
+
+  const noShadow = composeFinalNoShadow(captured, txId, dateStr);
+  lastNoShadowCanvas = noShadow;
+  const dataUrl = noShadow.toDataURL('image/jpeg',0.92);
+  const img = document.createElement('img');
+  img.src = dataUrl; img.className = 'finalPreviewImg';
+  finalPreviewWrap.appendChild(img);
+
+  const canvasForDither = composeFinalForPrint(captured);
+  lastDitherDataUrl = floydDither(canvasForDither, PRINT_W);
+
+  if (window.flutter_inappwebview) {
+    console.log('Memicu print otomatis...');
+    window.flutter_inappwebview.callHandler('printHandler', lastDitherDataUrl);
+  }
+}
+
+async function uploadFinalWithShadowAndShowQr(){
+  if(!lastNoShadowCanvas) { alert('Nothing to upload.'); return; }
+  if(lastUploadUrl){ showQrPopup(lastUploadUrl); return; }
+  
+  uploadBtn.disabled = true; uploadBtn.textContent = 'Uploading...';
+  try{
+    const shadowCanvas = composeUploadWithShadow(lastNoShadowCanvas);
+    const url = await uploadCanvasToCloudinary(shadowCanvas);
+    lastUploadUrl = url;
+    uploadedUrlEl.textContent = 'Uploaded: ' + url.slice(0, 40) + '...';
+    showQrPopup(url);
+    uploadBtn.textContent = 'Uploaded';
+  }catch(err){
+    alert('Upload failed: ' + (err.message || err));
+    uploadBtn.textContent = '☁️ Upload';
+  } finally {
+    uploadBtn.disabled = false; 
+  }
+}
+
+async function uploadCanvasToCloudinary(canvas){
+  const dataUrl = canvas.toDataURL('image/jpeg',0.92);
+  const blob = await (await fetch(dataUrl)).blob();
+  const form = new FormData(); form.append('file', blob); form.append('upload_preset', UPLOAD_PRESET); 
+  const resp = await fetch(`https://api.cloudinary.com/v1_1/${CLOUD_NAME}/image/upload`, { method: 'POST', body: form }); 
+  if(!resp.ok) throw new Error('Upload failed');
+  const json = await resp.json();
+  return json.secure_url;
+}
+
+function showQrPopup(url){
+  const qrCanvas = document.getElementById('qrCanvas');
+  barcodeUrlText.textContent = url; 
+  barcodePopup.style.display = 'flex'; 
+  barcodePopup.onclick = (e)=>{ if(e.target === barcodePopup) barcodePopup.style.display = 'none'; };
+
+  try {
+    new QRious({
+      element: qrCanvas,
+      value: url,
+      size: 250,
+      background: 'white',
+      foreground: 'black'
+    });
+  } catch(e) { 
+      console.error("QRious Error:", e); 
+      alert("Gagal membuat QR Code. Periksa koneksi internet untuk memuat library."); 
+  }
+}
+
+/* ========================================================================= */
+/* 🚀 FUNGSI BARU UNTUK FLOW LANDING PAGE/KONTROL CAMERA */
+/* ========================================================================= */
+
+// 1. FUNGSI UNTUK KEMBALI KE LANDING PAGE (DIPAKAI OLEH RETAKE & INIT)
+function showLandingPage() {
+    // Sembunyikan semua elemen operasional
+    modalOverlay.style.display = 'none';
+    topHeader.style.display = 'none';
+    cameraWrap.style.display = 'none';
+    centerUI.style.display = 'none';
+    
+    // Tampilkan Landing Page
+    welcomeScreen.style.display = 'flex';
+    
+    // Reset mode dan tombol start
+    captureMode = ''; 
+    document.getElementById('mode1').classList.remove('selected');
+    document.getElementById('mode3').classList.remove('selected');
+    document.getElementById('startBtn').disabled = true; 
+}
+
+
+// 2. FUNGSI UNTUK MASUK KE LAYAR KONTROL
+function showControlScreen() {
+  welcomeScreen.style.display = 'none';
+  topHeader.style.display = 'flex';
+  cameraWrap.style.display = 'block';
+  centerUI.style.display = 'flex';
+  
+  // PERUBAHAN: Tampilkan tombol strip secara default
+  controlsRowTop.style.display = 'flex'; 
+}
+
+// --- EVENT LISTENER SETUP ---
+startLpBtn.addEventListener('click', showControlScreen);
+document.getElementById('mode1').addEventListener('click', ()=>{ captureMode='single'; document.getElementById('mode1').classList.add('selected'); document.getElementById('mode3').classList.remove('selected'); if(cameraReady) startBtn.disabled=false; });
+document.getElementById('mode3').addEventListener('click', ()=>{ captureMode='strip'; document.getElementById('mode3').classList.add('selected'); document.getElementById('mode1').classList.remove('selected'); if(cameraReady) startBtn.disabled=false; });
+
+// Perilaku HeaderTitle (Toggle Strip)
+headerTitle.addEventListener('click', () => {
+  if (cameraWrap.style.display === 'block' && modalOverlay.style.display !== 'flex') {
+    if (controlsRowTop.style.display === 'none' || controlsRowTop.style.display === '') {
+      controlsRowTop.style.display = 'flex';
+    } else {
+      controlsRowTop.style.display = 'none';
+    }
+  } else if (modalOverlay.style.display === 'flex') {
+    // Jika diklik saat di modal, kembali ke Landing Page
+    showLandingPage();
+  }
+});
+
+startBtn.addEventListener('click', runSession);
+
+// PERUBAHAN: RETAKE sekarang memanggil showLandingPage()
+retakeBtn.addEventListener('click', async ()=>{
+  showLandingPage(); 
+});
+
+printBtn.addEventListener('click', ()=>{
+  if (window.flutter_inappwebview && lastDitherDataUrl) {
+    window.flutter_inappwebview.callHandler('printHandler', lastDitherDataUrl);
+  } else {
+    alert("Print manual hanya di aplikasi");
+  }
+});
+uploadBtn.addEventListener('click', uploadFinalWithShadowAndShowQr);
+barcodeClose.addEventListener('click', ()=>{ barcodePopup.style.display = 'none'; });
+
+/* --- INISIASI --- */
+function initApp() {
+  openCamera(); 
+  // Panggil Landing Page di awal
+  showLandingPage(); 
+}
+initApp(); 
+
+// === SET BADGE DATE ===
+function formatDate() {
+  const now = new Date();
+  const hari = now.getDate().toString().padStart(2, '0');
+  const bulan = now.toLocaleString('en-US', { month: 'short' });
+  const tahun = now.getFullYear();
+  return `${hari} ${bulan} ${tahun}`;
+}
+document.getElementById("lpBadgeDate").innerText = formatDate();
+
+// === EVENT TITLE EDIT POPUP ===
+const eventTitleLp = document.getElementById("eventTitleLp");
+const eventPopup = document.getElementById("eventPopup");
+const eventInput = document.getElementById("eventInput");
+const eventSaveBtn = document.getElementById("eventSaveBtn");
+
+// buka popup ketika judul diklik
+eventTitleLp.addEventListener("click", () => {
+  eventInput.value = eventTitleLp.innerText;
+  eventPopup.style.display = "flex";
+});
+
+// simpan hasil & update judul
+eventSaveBtn.addEventListener("click", () => {
+  const newText = eventInput.value.trim();
+  if(newText.length > 0){
+    eventTitleLp.innerText = newText;
+    headerTitle.innerText = newText; // juga update header setelah masuk kamera
+  }
+  eventPopup.style.display = "none";
+});
+
+// klik background popup buat menutup
+eventPopup.addEventListener("click", (e)=> {
+  if(e.target === eventPopup){
+    eventPopup.style.display = "none";
+  }
+});
+
+</script>
+</body>
+</html>
+
