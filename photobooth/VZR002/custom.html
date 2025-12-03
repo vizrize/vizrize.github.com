@@ -1590,13 +1590,21 @@
         photoTotalHeight = (singlePhotoHeight * captured.length) + (photoGap * (captured.length - 1));
       }
 
-      // Hitung total tinggi canvas
-      const totalHeight = padding + logoHeight + padding + photoTotalHeight + padding + barcodeHeight + thankYouHeight + padding;
+      // Hitung tinggi barcode yang sebenarnya
+      const barcodeWidth = 800;
+      let actualBarcodeHeight = barcodeHeight; // Default
+      if (barcodeImage && barcodeImage.complete && barcodeImage.naturalWidth > 0) {
+        actualBarcodeHeight = (barcodeImage.naturalHeight / barcodeImage.naturalWidth) * barcodeWidth;
+      }
+
+      // Hitung total tinggi canvas dengan tinggi barcode yang sebenarnya
+      const totalHeight = padding + logoHeight + padding + photoTotalHeight + padding + actualBarcodeHeight + 30 + thankYouHeight + padding;
       canvas.height = totalHeight;
 
       // Background putih
       ctx.fillStyle = '#ffffff';
       ctx.fillRect(0, 0, FINAL_W, totalHeight);
+
 
       let currentY = padding;
 
@@ -1652,14 +1660,12 @@
       currentY += padding;
 
       // === BARCODE ===
-      const barcodeWidth = 800;
       const barcodeX = (FINAL_W - barcodeWidth) / 2;
-      let actualBarcodeHeight = barcodeHeight; // Default ke allocated height
 
       // Gambar barcode (sudah aman karena base64 + crossOrigin)
       if (barcodeImage && barcodeImage.complete && barcodeImage.naturalWidth > 0) {
         const barcodeH = (barcodeImage.naturalHeight / barcodeImage.naturalWidth) * barcodeWidth;
-        actualBarcodeHeight = barcodeH; // Simpan tinggi yang sebenarnya
+        actualBarcodeHeight = barcodeH; // Update tinggi yang sebenarnya
         try {
           ctx.drawImage(barcodeImage, barcodeX, currentY, barcodeWidth, barcodeH);
         } catch (e) {
