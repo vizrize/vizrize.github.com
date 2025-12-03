@@ -1406,7 +1406,7 @@
           testCtx.drawImage(video, 0, 0);
           try {
             testCanvas.toDataURL(); // Will throw if still tainted
-            console.log('✅ VIDEO IS CORS-CLEAN - Canvas export will work!');
+            console.log('✅ AMAN - Canvas export will work!');
           } catch (e) {
             console.error('❌ VIDEO STILL TAINTS CANVAS:', e.message);
             console.warn('Possible causes:');
