@@ -1568,16 +1568,39 @@
       return ditherCanvas.toDataURL('image/png');
     }
 
-    function composeFinalNoShadow(captured, txId, dateStr) {
+    async function composeFinalNoShadow(captured, txId, dateStr) {
       const canvas = noShadowCanvas;
       canvas.width = FINAL_W;
 
       const ctx = canvas.getContext('2d', { willReadFrequently: true });
+
+      // Load images safely
+      const loadImageAsBlob = async (path) => {
+        try {
+          const response = await fetch(path);
+          const blob = await response.blob();
+          return await createImageBitmap(blob);
+        } catch (err) {
+          console.error('Failed to load image:', path, err);
+          return null;
+        }
+      };
+
+      const [logoImg, barcodeImg] = await Promise.all([
+        loadImageAsBlob('elemen/logo_arkaloka.png'),
+        loadImageAsBlob('elemen/barcode.png')
+      ]);
+
       const padding = 60;
-      const logoHeight = 180;
-      const barcodeHeight = 120;
-      const thankYouHeight = 60;
-      const photoGap = 8;
+      // Logo size
+      const logoWidth = captured.length === 1 ? 180 : 140;
+      const logoHeight = captured.length === 1 ? 60 : 47;
+
+      // Barcode & Text size
+      const barcodeWidth = 800;
+      const barcodeHeight = 100; // Diperkecil
+      const thankYouHeight = 50;
+      const photoGap = 20;
 
       // Hitung tinggi foto
       let photoTotalHeight = 0;
@@ -1591,7 +1614,8 @@
       }
 
       // Hitung total tinggi canvas
-      const totalHeight = padding + logoHeight + padding + photoTotalHeight + padding + barcodeHeight + thankYouHeight + padding;
+      // padding + logo + padding + photos + padding + barcode + padding + text + padding
+      const totalHeight = padding + logoHeight + padding + photoTotalHeight + padding + barcodeHeight + 40 + thankYouHeight + padding;
       canvas.height = totalHeight;
 
       // Background putih
@@ -1600,164 +1624,100 @@
 
       let currentY = padding;
 
-      // === LOGO ARKALOKA ===
-      const logoX = padding;
-      const logoWidth = 400;
-
-      // Gambar logo (sudah aman karena base64 + crossOrigin)
-      if (logoImage && logoImage.complete && logoImage.naturalWidth > 0) {
-        const logoH = (logoImage.naturalHeight / logoImage.naturalWidth) * logoWidth;
-        try {
-          ctx.drawImage(logoImage, logoX, currentY, logoWidth, logoH);
-        } catch (e) {
-          console.error('Failed to draw logo:', e);
-          // Fallback ke text
-          ctx.fillStyle = '#1a1a1c';
-          ctx.font = 'bold 72px Arial, sans-serif';
-          ctx.textAlign = 'left';
-          ctx.fillText('ARKALOKA', logoX, currentY + 60);
-          ctx.font = 'bold 48px Arial, sans-serif';
-          ctx.fillText('Studio', logoX, currentY + 120);
-        }
-      } else {
-        // Fallback text jika gambar tidak ada
-        ctx.fillStyle = '#1a1a1c';
-        ctx.font = 'bold 72px Arial, sans-serif';
-        ctx.textAlign = 'left';
-        ctx.fillText('ARKALOKA', logoX, currentY + 60);
-        ctx.font = 'bold 48px Arial, sans-serif';
-        ctx.fillText('Studio', logoX, currentY + 120);
+      // Draw Logo
+      if (logoImg) {
+        ctx.drawImage(logoImg, padding, currentY, logoWidth, logoHeight);
       }
-
       currentY += logoHeight + padding;
 
-      // === FOTO LANDSCAPE (HITAM PUTIH) ===
+      // Draw Photos
       if (captured.length === 1) {
         const cropped = cropCenterTo4x3(captured[0], photoWidth);
-        applyGrayscale(cropped); // Filter hitam putih
+        applyFintage(cropped);
         ctx.drawImage(cropped, padding, currentY, photoWidth, singlePhotoHeight);
-        currentY += singlePhotoHeight;
+        currentY += singlePhotoHeight + padding;
       } else {
         captured.forEach((c, i) => {
           const cropped = cropCenterTo4x3(c, photoWidth);
-          applyGrayscale(cropped); // Filter hitam putih
+          applyFintage(cropped);
           ctx.drawImage(cropped, padding, currentY, photoWidth, singlePhotoHeight);
           currentY += singlePhotoHeight;
-          if (i < captured.length - 1) {
-            currentY += photoGap;
-          }
+          if (i < captured.length - 1) currentY += photoGap;
         });
+        currentY += padding;
       }
 
-      currentY += padding;
-
-      // === BARCODE ===
-      const barcodeWidth = 800;
-      const barcodeX = (FINAL_W - barcodeWidth) / 2;
-
-      // Gambar barcode (sudah aman karena base64 + crossOrigin)
-      if (barcodeImage && barcodeImage.complete && barcodeImage.naturalWidth > 0) {
-        const barcodeH = (barcodeImage.naturalHeight / barcodeImage.naturalWidth) * barcodeWidth;
-        try {
-          ctx.drawImage(barcodeImage, barcodeX, currentY, barcodeWidth, barcodeH);
-        } catch (e) {
-          console.error('Failed to draw barcode:', e);
-          // Fallback: generate pattern
-          const barcodeBarHeight = 80;
-          ctx.fillStyle = '#000000';
-          const barCount = 40;
-          const barWidth = barcodeWidth / barCount;
-          for (let i = 0; i < barCount; i++) {
-            if (Math.random() > 0.5) {
-              const barW = barWidth * (Math.random() * 0.5 + 0.5);
-              ctx.fillRect(barcodeX + (i * barWidth), currentY, barW, barcodeBarHeight);
-            }
-          }
-        }
-      } else {
-        // Fallback: generate pattern jika gambar tidak ada
-        const barcodeBarHeight = 80;
-        ctx.fillStyle = '#000000';
-        const barCount = 40;
-        const barWidth = barcodeWidth / barCount;
-        for (let i = 0; i < barCount; i++) {
-          if (Math.random() > 0.5) {
-            const barW = barWidth * (Math.random() * 0.5 + 0.5);
-            ctx.fillRect(barcodeX + (i * barWidth), currentY, barW, barcodeBarHeight);
-          }
-        }
+      // Draw Barcode
+      if (barcodeImg) {
+        const barcodeX = (FINAL_W - barcodeWidth) / 2;
+        ctx.drawImage(barcodeImg, barcodeX, currentY, barcodeWidth, barcodeHeight);
       }
+      currentY += barcodeHeight + 40; // Jarak sebelum teks
 
-      currentY += barcodeHeight;
-
-      // === THANK YOU TEXT ===
-      ctx.font = 'bold 36px Arial, sans-serif';
+      // Draw Text
       ctx.fillStyle = '#000000';
+      ctx.font = 'bold 36px Arial, sans-serif';
       ctx.textAlign = 'center';
-      ctx.fillText('THANK YOU FOR CHOOSING US', FINAL_W / 2, currentY + 40);
+      ctx.fillText('THANK YOU FOR CHOOSING US', FINAL_W / 2, currentY + 30);
 
       return canvas;
     }
 
-    function composeFinalForPrint(captured, printWidth = PRINT_W_80MM) {
+    async function composeFinalForPrint(captured, printWidth = PRINT_W_80MM) {
       const canvas = printCanvas;
       canvas.width = printWidth;
 
-      const ctx = canvas.getContext('2d');
-      const padding = Math.round(printWidth * 0.05);
-      const logoHeight = Math.round(printWidth * 0.25);
-      const barcodeHeight = Math.round(printWidth * 0.15);
-      const thankYouHeight = Math.round(printWidth * 0.08);
-      const photoGap = 4;
+      // Load images safely
+      const loadImageAsBlob = async (path) => {
+        try {
+          const response = await fetch(path);
+          const blob = await response.blob();
+          return await createImageBitmap(blob);
+        } catch (err) {
+          console.error('Failed to load image:', path, err);
+          return null;
+        }
+      };
 
-      // Hitung tinggi foto
+      const [logoImg, barcodeImg] = await Promise.all([
+        loadImageAsBlob('elemen/logo_arkaloka.png'),
+        loadImageAsBlob('elemen/barcode.png')
+      ]);
+
+      const padding = 5;
+      const photoW = printWidth;
+
+      // Hitung total height
+      let totalHeight = 0;
+
+      // Header dengan logo
+      const logoWidth = printWidth * 0.45;
+      const logoHeight = logoWidth * (47 / 140); // maintain aspect ratio
+      totalHeight += padding + (logoImg ? logoHeight : 0) + padding;
+
+      // Photos
       let photoTotalHeight = 0;
-      const photoWidth = printWidth;
-      const singlePhotoHeight = Math.round(photoWidth * 3 / 4); // landscape 4:3
-
       if (captured.length === 1) {
-        photoTotalHeight = singlePhotoHeight;
+        photoTotalHeight = Math.round(photoW * (3 / 4));
       } else {
-        photoTotalHeight = (singlePhotoHeight * captured.length) + (photoGap * (captured.length - 1));
+        const photoH = Math.round(photoW * (3 / 4));
+        photoTotalHeight = (photoH * captured.length) + (padding * (captured.length - 1));
       }
+      totalHeight += photoTotalHeight + padding;
 
-      // Hitung total tinggi canvas
-      const totalHeight = padding + logoHeight + padding + photoTotalHeight + padding + barcodeHeight + thankYouHeight + padding;
+      // Barcode
+      const barcodeWidth = printWidth * 0.9;
+      // Rasio lebih kecil untuk tinggi (misal 100/800 dari lebar barcode)
+      const barcodeHeight = barcodeWidth * (100 / 800);
+      totalHeight += (barcodeImg ? barcodeHeight : 0) + padding;
+
+      // Footer text
+      const footerFontSize = Math.round(printWidth * 0.035);
+      // Tambah padding extra untuk teks footer agar tidak ketimpa
+      totalHeight += footerFontSize + padding * 4;
+
       canvas.height = totalHeight;
-
-      // Background putih
-      ctx.fillStyle = '#ffffff';
-      ctx.fillRect(0, 0, printWidth, totalHeight);
-
-      let currentY = padding;
-
-      // === LOGO ARKALOKA ===
-      const logoX = padding;
-      const logoFontSize = Math.round(printWidth * 0.11);
-      const studioFontSize = Math.round(printWidth * 0.07);
-
-      // Coba gunakan logo image dengan cara yang aman
-      const logoWidth = Math.round(printWidth * 0.6);
-      // ImageBitmap menggunakan width/height, Image menggunakan naturalWidth/naturalHeight
-      const logoNaturalWidth = logoImage ? (logoImage.width || logoImage.naturalWidth) : 0;
-      const logoNaturalHeight = logoImage ? (logoImage.height || logoImage.naturalHeight) : 0;
-      const logoH = logoNaturalWidth > 0 ? (logoNaturalHeight / logoNaturalWidth) * logoWidth : Math.round(printWidth * 0.25);
-
-      const logoDrawn = drawImageSafely(ctx, logoImage, logoX, currentY, logoWidth, logoH);
-
-      if (!logoDrawn) {
-        // Fallback text jika gambar gagal
-        ctx.fillStyle = '#1a1a1c';
-        ctx.font = `bold ${logoFontSize}px Arial, sans-serif`;
-        ctx.textAlign = 'left';
-        ctx.fillText('ARKALOKA', logoX, currentY + Math.round(logoFontSize * 0.8));
-
-        ctx.font = `bold ${studioFontSize}px Arial, sans-serif`;
-        ctx.fillText('Studio', logoX, currentY + Math.round(logoFontSize * 0.8) + Math.round(studioFontSize * 1.2));
-      }
-
-      currentY += logoHeight + padding;
-
+      const ctx = canvas.getContext('2d');
       // === FOTO LANDSCAPE ===
       if (captured.length === 1) {
         const cropped = cropCenterTo4x3(captured[0], photoWidth);
