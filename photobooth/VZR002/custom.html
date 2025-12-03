@@ -1688,13 +1688,13 @@
         }
       }
 
-      currentY += barcodeHeight;
+      currentY += barcodeHeight + 20; // Tambah padding 20px setelah barcode
 
       // === THANK YOU TEXT ===
       ctx.font = 'bold 36px Arial, sans-serif';
       ctx.fillStyle = '#000000';
       ctx.textAlign = 'center';
-      ctx.fillText('THANK YOU FOR CHOOSING US', FINAL_W / 2, currentY + 40);
+      ctx.fillText('THANK YOU FOR CHOOSING US', FINAL_W / 2, currentY + 30);
 
       return canvas;
     }
@@ -1801,14 +1801,14 @@
         }
       }
 
-      currentY += barcodeHeight;
+      currentY += barcodeHeight + Math.round(printWidth * 0.02); // Tambah padding setelah barcode
 
       // === THANK YOU TEXT ===
       const thankYouFontSize = Math.round(printWidth * 0.045);
       ctx.font = `bold ${thankYouFontSize}px Arial, sans-serif`;
       ctx.fillStyle = '#000000';
       ctx.textAlign = 'center';
-      ctx.fillText('THANK YOU FOR CHOOSING US', printWidth / 2, currentY + Math.round(thankYouHeight * 0.5));
+      ctx.fillText('THANK YOU FOR CHOOSING US', printWidth / 2, currentY + Math.round(thankYouHeight * 0.6));
 
       return canvas;
     }
