@@ -1654,16 +1654,19 @@
       // === BARCODE ===
       const barcodeWidth = 800;
       const barcodeX = (FINAL_W - barcodeWidth) / 2;
+      let actualBarcodeHeight = barcodeHeight; // Default ke allocated height
 
       // Gambar barcode (sudah aman karena base64 + crossOrigin)
       if (barcodeImage && barcodeImage.complete && barcodeImage.naturalWidth > 0) {
         const barcodeH = (barcodeImage.naturalHeight / barcodeImage.naturalWidth) * barcodeWidth;
+        actualBarcodeHeight = barcodeH; // Simpan tinggi yang sebenarnya
         try {
           ctx.drawImage(barcodeImage, barcodeX, currentY, barcodeWidth, barcodeH);
         } catch (e) {
           console.error('Failed to draw barcode:', e);
           // Fallback: generate pattern
           const barcodeBarHeight = 80;
+          actualBarcodeHeight = barcodeBarHeight;
           ctx.fillStyle = '#000000';
           const barCount = 40;
           const barWidth = barcodeWidth / barCount;
@@ -1677,6 +1680,7 @@
       } else {
         // Fallback: generate pattern jika gambar tidak ada
         const barcodeBarHeight = 80;
+        actualBarcodeHeight = barcodeBarHeight;
         ctx.fillStyle = '#000000';
         const barCount = 40;
         const barWidth = barcodeWidth / barCount;
@@ -1688,7 +1692,7 @@
         }
       }
 
-      currentY += barcodeHeight + 20; // Tambah padding 20px setelah barcode
+      currentY += actualBarcodeHeight + 30; // Gunakan tinggi barcode yang sebenarnya + padding 30px
 
       // === THANK YOU TEXT ===
       ctx.font = 'bold 36px Arial, sans-serif';
@@ -1784,12 +1788,14 @@
       const barcodeNaturalWidth = barcodeImage ? (barcodeImage.width || barcodeImage.naturalWidth) : 0;
       const barcodeNaturalHeight = barcodeImage ? (barcodeImage.height || barcodeImage.naturalHeight) : 0;
       const barcodeH = barcodeNaturalWidth > 0 ? (barcodeNaturalHeight / barcodeNaturalWidth) * barcodeWidth : Math.round(barcodeHeight * 0.6);
+      let actualBarcodeHeight = barcodeH; // Simpan tinggi barcode yang sebenarnya
 
       const barcodeDrawn = drawImageSafely(ctx, barcodeImage, barcodeX, currentY, barcodeWidth, barcodeH);
 
       if (!barcodeDrawn) {
         // Fallback: generate pattern jika gambar gagal
         const barcodeBarHeight = Math.round(barcodeHeight * 0.6);
+        actualBarcodeHeight = barcodeBarHeight;
         ctx.fillStyle = '#000000';
         const barCount = 30;
         const barWidth = barcodeWidth / barCount;
@@ -1801,14 +1807,14 @@
         }
       }
 
-      currentY += barcodeHeight + Math.round(printWidth * 0.02); // Tambah padding setelah barcode
+      currentY += actualBarcodeHeight + Math.round(printWidth * 0.04); // Gunakan tinggi sebenarnya + padding 4%
 
       // === THANK YOU TEXT ===
       const thankYouFontSize = Math.round(printWidth * 0.045);
       ctx.font = `bold ${thankYouFontSize}px Arial, sans-serif`;
       ctx.fillStyle = '#000000';
       ctx.textAlign = 'center';
-      ctx.fillText('THANK YOU FOR CHOOSING US', printWidth / 2, currentY + Math.round(thankYouHeight * 0.6));
+      ctx.fillText('THANK YOU FOR CHOOSING US', printWidth / 2, currentY + Math.round(thankYouHeight * 0.5));
 
       return canvas;
     }
