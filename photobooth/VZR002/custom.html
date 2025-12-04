@@ -1719,6 +1719,7 @@
       const barcodeHeight = Math.round(printWidth * 0.15);
       const thankYouHeight = Math.round(printWidth * 0.08);
       const photoGap = 4;
+      const safeZonePadding = 100; // Safe zone di bagian bawah untuk mencegah pemotongan saat dirobek
 
       // Hitung tinggi foto
       let photoTotalHeight = 0;
@@ -1731,8 +1732,8 @@
         photoTotalHeight = (singlePhotoHeight * captured.length) + (photoGap * (captured.length - 1));
       }
 
-      // Hitung total tinggi canvas
-      const totalHeight = padding + logoHeight + padding + photoTotalHeight + padding + barcodeHeight + thankYouHeight + padding;
+      // Hitung total tinggi canvas dengan safe zone padding di bawah
+      const totalHeight = padding + logoHeight + padding + photoTotalHeight + padding + barcodeHeight + thankYouHeight + padding + safeZonePadding;
       canvas.height = totalHeight;
 
       // Background putih
