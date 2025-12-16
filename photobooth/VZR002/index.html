@@ -354,8 +354,10 @@
     .poster-pojokkiri {
       position: absolute;
       width: 35vh;
-      bottom: 0;
-      left: 0;
+      bottom: 0 !important;
+      /* WAJIB pojok kiri bawah */
+      left: 0 !important;
+      /* WAJIB pojok kiri bawah */
       z-index: 1;
     }
 
@@ -432,8 +434,10 @@
     body::after {
       content: '';
       position: fixed;
-      bottom: 20px;
-      left: 20px;
+      top: 20px !important;
+      /* WAJIB pojok kiri ATAS */
+      left: 20px !important;
+      /* WAJIB pojok kiri ATAS */
       width: 140px;
       height: 48px;
       background: url('elemen/logo_arkaloka.png') center/contain no-repeat;
@@ -809,7 +813,6 @@
       <img src="elemen/yellow_splatter.png" alt="" class="bg-yellow-splatter" aria-hidden="true">
       <img src="elemen/yellow_splatter_left.png" alt="" class="bg-yellow-splatter-left" aria-hidden="true">
       <img src="elemen/dark_green_shapes.png" alt="" class="bg-green-shapes" aria-hidden="true">
-      <img src="elemen/pojokkiri.png" alt="" class="poster-pojokkiri" aria-hidden="true">
 
       <!-- Free badge (positioned absolutely) -->
       <div class="poster-free-text" id="freeTextLp">FREE</div>
@@ -883,6 +886,9 @@
         </div>
       </div>
     </div>
+
+    <!-- Pojokkiri HARUS di luar container agar mentok pojok kiri bawah layar! -->
+    <img src="elemen/pojokkiri.png" alt="" class="poster-pojokkiri" aria-hidden="true">
   </div>
 
   <div id="cameraWrap" style="display: none;">
@@ -945,7 +951,10 @@
     /* ================== CONFIG & DOM GRABS (TIDAK BERUBAH) ================== */
     const CLOUD_NAME = "dgepnlofq";
     const UPLOAD_PRESET = "vizrize_unsigned";
-    const PRINT_W_80MM = 576;  // Lebar PENUH untuk printer 80mm (72mm x 8 dots/mm = 576 pixels)
+    // IMPORTANT: Lebar harus lebih kecil dari lebar fisik printer untuk avoid wrapping!
+    // 384px terlalu lebar → foto wrap/terpotong
+    // 320px adalah lebar AMAN untuk 80mm thermal printer (tested & no wrapping)
+    const PRINT_W_80MM = 320;  // Lebar aman untuk printer 80mm (no wrapping)
     const FINAL_W = 1080;
     const FINAL_H = 1920;
     const STRIP_GAP = 8;
@@ -1216,6 +1225,10 @@
       totalHeight += safeZonePadding; // Tambahkan safe zone
       canvas.height = totalHeight;
       const ctx = canvas.getContext('2d');
+
+      // CRITICAL: Disable image smoothing untuk thermal printer (WAJIB untuk menghindari glitch!)
+      ctx.imageSmoothingEnabled = false;
+
       ctx.fillStyle = '#ffffff'; ctx.fillRect(0, 0, canvas.width, canvas.height);
       ctx.fillStyle = '#000000';
       let currentY = 0;
