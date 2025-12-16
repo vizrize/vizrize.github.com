@@ -115,11 +115,6 @@
       justify-content: center;
       z-index: 100;
       overflow: hidden;
-      animation: fadeIn 0.6s ease-out;
-    }
-
-    #welcomeScreen.hiding {
-      animation: fadeOut 0.5s ease-out forwards;
     }
 
     .startCardLp {
@@ -166,7 +161,6 @@
       left: 3vh;
       width: 11vh;
       z-index: 5;
-      animation: fadeIn 0.8s ease-out 0.2s backwards;
     }
 
     .poster-hello {
@@ -175,7 +169,6 @@
       margin-bottom: 2vh;
       position: relative;
       z-index: 2;
-      animation: slideUp 0.8s ease-out 0.3s backwards;
     }
 
     .poster-free-badge {
@@ -184,7 +177,7 @@
       top: 24vh;
       left: 2vh;
       z-index: 10;
-      animation: badge-spin 4s linear infinite, scaleIn 0.6s ease-out 0.5s backwards;
+      animation: badge-spin 4s linear infinite;
     }
 
     .poster-free-text {
@@ -201,7 +194,6 @@
       letter-spacing: 1px;
       z-index: 11;
       cursor: pointer;
-      animation: fadeIn 0.6s ease-out 0.6s backwards;
     }
 
     @keyframes badge-spin {
@@ -214,95 +206,6 @@
       }
     }
 
-    /* Landing Page Animations */
-    @keyframes fadeIn {
-      from {
-        opacity: 0;
-      }
-
-      to {
-        opacity: 1;
-      }
-    }
-
-    @keyframes slideUp {
-      from {
-        opacity: 0;
-        transform: translateY(30px);
-      }
-
-      to {
-        opacity: 1;
-        transform: translateY(0);
-      }
-    }
-
-    @keyframes slideUpLarge {
-      from {
-        opacity: 0;
-        transform: translateY(50px);
-      }
-
-      to {
-        opacity: 1;
-        transform: translateY(0);
-      }
-    }
-
-    @keyframes scaleIn {
-      from {
-        opacity: 0;
-        transform: scale(0.8);
-      }
-
-      to {
-        opacity: 1;
-        transform: scale(1);
-      }
-    }
-
-    @keyframes bounceIn {
-      0% {
-        opacity: 0;
-        transform: scale(0.3);
-      }
-
-      50% {
-        opacity: 1;
-        transform: scale(1.05);
-      }
-
-      70% {
-        transform: scale(0.9);
-      }
-
-      100% {
-        transform: scale(1);
-      }
-    }
-
-    @keyframes fadeOut {
-      from {
-        opacity: 1;
-      }
-
-      to {
-        opacity: 0;
-      }
-    }
-
-    @keyframes slideUpOut {
-      from {
-        opacity: 1;
-        transform: translateY(0);
-      }
-
-      to {
-        opacity: 0;
-        transform: translateY(-50px);
-      }
-    }
-
     .poster-gambar3 {
       position: absolute;
       width: 14vh;
@@ -310,7 +213,6 @@
       right: 3vh;
       z-index: 11;
       transform: rotate(0deg);
-      animation: slideUp 0.8s ease-out 0.4s backwards;
     }
 
     .poster-receipt-box {
@@ -320,7 +222,6 @@
       top: 30.5vh;
       transform: translateY(-50%);
       z-index: 3;
-      animation: scaleIn 0.8s ease-out 0.4s backwards;
     }
 
     .poster-photostrip {
@@ -329,7 +230,6 @@
       margin-bottom: 2.5vh;
       transform: rotate(-3deg);
       filter: drop-shadow(0 1.2vh 2.4vh rgba(0, 0, 0, 0.2));
-      animation: slideUpLarge 0.8s ease-out 0.5s backwards;
     }
 
     .poster-event-name {
@@ -345,7 +245,6 @@
       line-height: 1.3;
       cursor: pointer;
       z-index: 20;
-      animation: slideUp 0.6s ease-out 0.7s backwards;
     }
 
     .poster-start-button {
@@ -368,7 +267,6 @@
       text-shadow: 0 0.2vh 0.4vh rgba(0, 0, 0, 0.3);
       background: transparent;
       z-index: 20;
-      animation: bounceIn 0.8s ease-out 0.8s backwards;
     }
 
     .poster-start-button::before {
@@ -419,7 +317,6 @@
       padding: 0 3vh;
       cursor: pointer;
       z-index: 20;
-      animation: fadeIn 0.6s ease-out 0.9s backwards;
     }
 
     /* Background decorative elements */
@@ -430,7 +327,6 @@
       right: 3.5vh;
       opacity: 1;
       z-index: 0;
-      animation: fadeIn 1s ease-out 0.2s backwards;
     }
 
     .bg-yellow-splatter-left {
@@ -440,7 +336,6 @@
       left: 2vh;
       opacity: 1;
       z-index: 0;
-      animation: fadeIn 1s ease-out 0.3s backwards;
     }
 
     .bg-green-shapes {
@@ -454,7 +349,6 @@
       opacity: 1;
       z-index: 0;
       object-fit: cover;
-      animation: fadeIn 0.8s ease-out;
     }
 
     .poster-pojokkiri {
@@ -463,7 +357,6 @@
       bottom: 0;
       left: 0;
       z-index: 1;
-      animation: fadeIn 1s ease-out 0.4s backwards;
     }
 
 
@@ -484,7 +377,6 @@
         0 12px 32px rgba(26, 58, 46, 0.3),
         0 4px 12px rgba(26, 58, 46, 0.2);
       overflow: hidden;
-      animation: fadeIn 0.5s ease-out;
     }
 
     video#camera {
@@ -523,7 +415,7 @@
       background-image:
         linear-gradient(rgba(45, 80, 22, 0.15) 2px, transparent 2px),
         linear-gradient(90deg, rgba(45, 80, 22, 0.15) 2px, transparent 2px);
-      background-size: 45px 45px;
+      background-size: 30px 30px;
       border-top: 8px double #1a3a2e;
       z-index: 3;
       flex-direction: column;
@@ -534,21 +426,6 @@
       padding-top: 70px;
       padding-bottom: calc(env(safe-area-inset-bottom) + 40px);
       box-shadow: 0 -4px 20px rgba(26, 58, 46, 0.15);
-      animation: slideUp 0.6s ease-out;
-    }
-
-    /* Responsive grid untuk tablet */
-    @media (min-width: 768px) {
-      .centerUI {
-        background-size: 60px 60px;
-      }
-    }
-
-    /* Responsive grid untuk desktop */
-    @media (min-width: 1024px) {
-      .centerUI {
-        background-size: 75px 75px;
-      }
     }
 
     /* Logo Arkaloka di pojok kiri bawah layar */
@@ -689,7 +566,6 @@
       justify-content: center;
       z-index: 120;
       padding: 20px;
-      animation: fadeIn 0.4s ease-out;
     }
 
     .modalReceipt {
@@ -705,7 +581,6 @@
         0 12px 40px rgba(26, 58, 46, 0.3),
         0 4px 16px rgba(26, 58, 46, 0.2);
       border: 4px solid #1a3a2e;
-      animation: scaleIn 0.4s ease-out;
     }
 
     .receiptInner {
@@ -825,78 +700,48 @@
       align-items: center;
       justify-content: center;
       z-index: 140;
-      background: rgba(245, 243, 237, 0.98);
-      animation: fadeIn 0.3s ease-out;
+      background: rgba(0, 0, 0, 0.95);
     }
 
     #barcodeBox {
       width: min(600px, 90vw);
-      background: #f5f3ed;
-      background-image:
-        linear-gradient(rgba(45, 80, 22, 0.15) 2px, transparent 2px),
-        linear-gradient(90deg, rgba(45, 80, 22, 0.15) 2px, transparent 2px);
-      background-size: 45px 45px;
-      border: 4px solid #1a3a2e;
-      border-radius: 16px;
-      padding: 40px;
+      background: #111;
+      border: 2px solid var(--accent-neon);
+      padding: 30px;
       text-align: center;
       position: relative;
-      color: #1a3a2e;
-      font-family: 'Gontserrat', 'Inter', sans-serif;
-      box-shadow: 0 12px 40px rgba(26, 58, 46, 0.3);
-      animation: scaleIn 0.4s ease-out;
+      color: #fff;
+      font-family: 'Space Mono', monospace;
     }
 
     #barcodeClose {
       position: absolute;
-      top: 15px;
-      right: 20px;
+      top: 10px;
+      right: 15px;
       border: 0;
-      background: #1a3a2e;
-      color: #ffffff;
-      width: 36px;
-      height: 36px;
-      border-radius: 50%;
+      background: transparent;
       font-size: 24px;
       cursor: pointer;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      transition: all 0.3s ease;
-    }
-
-    #barcodeClose:hover {
-      background: #0f2419;
-      transform: scale(1.1);
+      color: #fff;
     }
 
     #qrcodeHost {
-      padding: 20px;
+      padding: 15px;
+      /* Ganti ke canvas agar QRious bekerja baik */
       display: flex;
       justify-content: center;
-      margin: 30px auto 20px;
-      border-radius: 12px;
-      background: #ffffff;
-      width: 280px;
-      height: 280px;
+      margin: 20px auto;
+      border-radius: 4px;
+      background: #fff;
+      width: 250px;
+      height: 250px;
       align-items: center;
-      box-shadow: 0 4px 16px rgba(26, 58, 46, 0.2);
-    }
-
-    #barcodeBox>div:first-of-type {
-      font-weight: 800;
-      font-size: 20px;
-      letter-spacing: 1px;
-      color: #1a3a2e;
-      margin-bottom: 10px;
     }
 
     #barcodeUrlText {
-      font-size: 11px;
-      color: #6b5c4b;
-      margin-top: 15px;
-      word-break: break-all;
-      font-family: 'Space Mono', monospace;
+      font-size: 12px;
+      color: #888;
+      margin-top: 10px;
     }
 
     canvas {
@@ -948,146 +793,6 @@
         height: 200px;
       }
     }
-
-    /* Mobile Responsive untuk Landing Page */
-    @media (max-width: 767px) {
-      .startCardLp {
-        max-width: 100vw;
-        padding-top: 3vh;
-        padding-bottom: 2vh;
-      }
-
-      /* Scale down semua elemen poster untuk mobile */
-      .poster-logo {
-        top: 2vh;
-        left: 2vh;
-        width: 8vh;
-      }
-
-      .poster-hello {
-        width: 32vh;
-        margin-top: 7vh;
-        margin-bottom: 1.5vh;
-      }
-
-      .poster-free-badge {
-        width: 10vh;
-        top: 18vh;
-        left: 1.5vh;
-      }
-
-      .poster-free-text {
-        top: 22vh;
-        left: 1.5vh;
-        width: 10vh;
-        font-size: 2vh;
-      }
-
-      .poster-gambar3 {
-        width: 11vh;
-        top: 8vh;
-        right: 2vh;
-      }
-
-      .poster-receipt-box {
-        width: 30vh;
-        left: 12vh;
-        top: 24vh;
-      }
-
-      .poster-photostrip {
-        width: 40vh;
-        margin-top: 3vh;
-        margin-bottom: 2vh;
-      }
-
-      .poster-event-name {
-        font-size: 1.8vh;
-        margin: 0.5vh 2vh 1vh 2vh;
-      }
-
-      .poster-start-button {
-        width: 28vh;
-        height: 7.5vh;
-        font-size: 3.2vh;
-        letter-spacing: 3px;
-      }
-
-      .poster-footer-text {
-        font-size: 1.3vh;
-        margin-top: -0.3vh;
-        padding: 0 2vh;
-      }
-
-      /* Background elements - tetap mentok */
-      .bg-yellow-splatter {
-        width: 14vh;
-        bottom: 28vh;
-        right: 2.5vh;
-      }
-
-      .bg-yellow-splatter-left {
-        width: 14vh;
-        bottom: 28vh;
-        left: 1.5vh;
-      }
-
-      .bg-green-shapes {
-        position: absolute;
-        width: 100%;
-        height: 100%;
-        top: 0;
-        left: 0;
-        right: 0;
-        bottom: 0;
-        object-fit: cover;
-        object-position: top center;
-      }
-
-      .poster-pojokkiri {
-        width: 28vh;
-        bottom: 0;
-        left: 0;
-      }
-    }
-
-    /* Extra small phones */
-    @media (max-width: 360px) {
-      .poster-hello {
-        width: 28vh;
-        margin-top: 6vh;
-      }
-
-      .poster-photostrip {
-        width: 36vh;
-      }
-
-      .poster-event-name {
-        font-size: 1.6vh;
-      }
-
-      .poster-start-button {
-        width: 25vh;
-        height: 7vh;
-        font-size: 3vh;
-      }
-
-      .poster-receipt-box {
-        width: 26vh;
-        left: 10vh;
-      }
-    }
-
-    /* Adjust logo Arkaloka position on mobile to avoid button overlap */
-    @media (max-width: 767px) {
-      body::after {
-        bottom: auto;
-        top: 20px;
-        left: 20px;
-        width: 100px;
-        height: 34px;
-      }
-    }
   </style>
 </head>
 
@@ -1117,7 +822,7 @@
       <img src="elemen/receipt_box.png" alt="Reciept Photobooth" class="poster-receipt-box">
       <img src="elemen/gambar 2.png" alt="Photo samples" class="poster-photostrip">
 
-      <div class="poster-event-name" id="eventTitleLp">Diesnatalis SMANSA I KESAMBEN</div>
+      <div class="poster-event-name" id="eventTitleLp">Enter Your Event Name</div>
 
       <button id="startLpBtn" class="poster-start-button">Start</button>
 
@@ -1197,7 +902,7 @@
         <button id="mode1" class="modeBtn" data-mode="single">1 STRIP</button>
         <button id="mode3" class="modeBtn" data-mode="strip">3 STRIP</button>
       </div>
-      <button id="startBtn" class="startBtn" disabled>START</button>
+      <button id="startBtn" class="startBtn" disabled>INITIATE</button>
     </div>
   </div>
 
@@ -1214,7 +919,7 @@
       <div class="controlsRow">
         <button id="printBtn" class="action printBtn">PRINT</button>
         <button id="uploadBtn" class="action uploadBtn">UPLOAD</button>
-        <button id="retakeBtn" class="action retakeBtn">RETAKE</button>
+        <button id="retakeBtn" class="action retakeBtn">FINISH</button>
       </div>
     </div>
   </div>
@@ -1240,11 +945,11 @@
     /* ================== CONFIG & DOM GRABS (TIDAK BERUBAH) ================== */
     const CLOUD_NAME = "dgepnlofq";
     const UPLOAD_PRESET = "vizrize_unsigned";
-    const PRINT_W_58MM = 203;  // Lebar untuk printer 58mm
-    const PRINT_W_80MM = 384;  // Lebar untuk printer 80mm
+    const PRINT_W_80MM = 576;  // Lebar PENUH untuk printer 80mm (72mm x 8 dots/mm = 576 pixels)
     const FINAL_W = 1080;
     const FINAL_H = 1920;
     const STRIP_GAP = 8;
+    const SAFE_ZONE_BOTTOM = 150; // Safe zone besar untuk autocut printer
     let selectedPrinterWidth = PRINT_W_80MM; // Default 80mm
 
     const video = document.getElementById('camera');
@@ -1356,6 +1061,20 @@
       return canvas;
     }
 
+    function applyGrayscale(canvas) {
+      const ctx = canvas.getContext('2d');
+      const img = ctx.getImageData(0, 0, canvas.width, canvas.height);
+      const d = img.data;
+      for (let i = 0; i < d.length; i += 4) {
+        const gray = d[i] * 0.299 + d[i + 1] * 0.587 + d[i + 2] * 0.114;
+        d[i] = gray;
+        d[i + 1] = gray;
+        d[i + 2] = gray;
+      }
+      ctx.putImageData(img, 0, 0);
+      return canvas;
+    }
+
     function floydDither(srcCanvas, targetWidth) {
       const scale = targetWidth / srcCanvas.width;
       const tw = Math.round(srcCanvas.width * scale);
@@ -1398,7 +1117,8 @@
 
     function composeFinalNoShadow(captured, txId, dateStr) {
       const canvas = noShadowCanvas;
-      canvas.width = FINAL_W; canvas.height = FINAL_H;
+      const safeZonePadding = 80; // Safe zone di bagian bawah untuk print
+      canvas.width = FINAL_W; canvas.height = FINAL_H + safeZonePadding;
       const ctx = canvas.getContext('2d');
       const pad = 48;
       const paperX = pad, paperY = pad;
@@ -1416,7 +1136,7 @@
       const footerLineY = footerSubY - 32;
       const headerY = paperY + 70;
       const headerLineY = headerY + 58;
-      ctx.fillStyle = '#ffffff'; ctx.fillRect(0, 0, FINAL_W, FINAL_H);
+      ctx.fillStyle = '#ffffff'; ctx.fillRect(0, 0, FINAL_W, FINAL_H + safeZonePadding);
       ctx.fillStyle = '#fffdf7'; ctx.fillRect(paperX, paperY, paperW, paperH);
       ctx.fillStyle = '#111'; ctx.textAlign = 'center'; ctx.font = '32px monospace';
       ctx.fillText('ARKALOKA', paperX + paperW / 2, headerY);
@@ -1451,7 +1171,7 @@
         const imgX = contentX + (photoW - imgW) / 2;
         const imgY = photoAreaTop + (photoAreaH - imgH) / 2;
         const cropped = cropCenterTo4x3(captured[0], imgW);
-        applyFintage(cropped);
+        applyGrayscale(cropped); // Konversi ke hitam putih
         ctx.fillStyle = '#fff'; ctx.fillRect(imgX, imgY, imgW, imgH);
         ctx.drawImage(cropped, imgX, imgY, imgW, imgH);
       } else {
@@ -1467,7 +1187,7 @@
         let photoX = contentX + (contentW - scaledPhotoW) / 2;
         captured.forEach((c, i) => {
           const cropped = cropCenterTo4x3(c, photoW);
-          applyFintage(cropped);
+          applyGrayscale(cropped); // Konversi ke hitam putih
           ctx.fillStyle = '#fff';
           ctx.fillRect(photoX, photoY, scaledPhotoW, scaledPhotoH);
           ctx.drawImage(cropped, photoX, photoY, scaledPhotoW, scaledPhotoH);
@@ -1487,11 +1207,13 @@
       let photoTotalHeight = 0;
       if (captured.length === 1) { photoTotalHeight = Math.round(photoW * (3 / 4)); }
       else { const photoH = Math.round(photoW * (3 / 4)); photoTotalHeight = (photoH * captured.length) + (padding * (captured.length - 1)); }
+      const safeZonePadding = SAFE_ZONE_BOTTOM; // Safe zone di bagian bawah untuk autocut
       let totalHeight = 0;
       totalHeight += padding; totalHeight += headerFontSize; totalHeight += subHeaderFontSize; totalHeight += padding + 5 + padding;
       totalHeight += photoTotalHeight; totalHeight += padding + 5 + padding;
       totalHeight += receiptFontSize + receiptFontSize + padding + totalFontSize;
       totalHeight += padding + 5 + padding; totalHeight += footerFontSize + footerFontSize + padding; totalHeight += 50;
+      totalHeight += safeZonePadding; // Tambahkan safe zone
       canvas.height = totalHeight;
       const ctx = canvas.getContext('2d');
       ctx.fillStyle = '#ffffff'; ctx.fillRect(0, 0, canvas.width, canvas.height);
