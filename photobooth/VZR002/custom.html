@@ -1313,34 +1313,62 @@
       return ditherCanvas.toDataURL('image/png');
     }
 
-    // Fungsi untuk convert canvas ke grayscale tanpa dithering (untuk mode 1 STRIP)
-    function convertToGrayscale(srcCanvas) {
+
+    // Fungsi untuk convert canvas ke dithered dengan threshold lebih tinggi (untuk mode 1 STRIP)
+    // Thermal printer tidak support grayscale, jadi tetap harus dithering tapi dengan threshold berbeda
+    function convertToSmoothDither(srcCanvas, targetWidth) {
+      const scale = targetWidth / srcCanvas.width;
+      const tw = Math.round(srcCanvas.width * scale);
+      const th = Math.round(srcCanvas.height * scale);
+
       const tempCanvas = document.createElement('canvas');
-      tempCanvas.width = srcCanvas.width;
-      tempCanvas.height = srcCanvas.height;
-      const ctx = tempCanvas.getContext('2d');
+      tempCanvas.width = tw;
+      tempCanvas.height = th;
+      const dctx = tempCanvas.getContext('2d');
+      dctx.drawImage(srcCanvas, 0, 0, tw, th);
 
-      // Gambar canvas source ke temp canvas
-      ctx.drawImage(srcCanvas, 0, 0);
-
-      // Ambil image data dan konversi ke grayscale
-      const img = ctx.getImageData(0, 0, tempCanvas.width, tempCanvas.height);
+      const img = dctx.getImageData(0, 0, tw, th);
       const data = img.data;
+      const lum = new Float32Array(tw * th);
 
-      for (let i = 0; i < data.length; i += 4) {
-        const r = data[i];
-        const g = data[i + 1];
-        const b = data[i + 2];
-        // Convert to grayscale using luminosity method
-        const gray = Math.round(0.299 * r + 0.587 * g + 0.114 * b);
-        data[i] = gray;
-        data[i + 1] = gray;
-        data[i + 2] = gray;
+      // Convert to luminosity
+      for (let y = 0; y < th; y++) {
+        for (let x = 0; x < tw; x++) {
+          const i = (y * tw + x) * 4;
+          lum[y * tw + x] = 0.299 * data[i] + 0.587 * data[i + 1] + 0.114 * data[i + 2];
+        }
       }
 
-      ctx.putImageData(img, 0, 0);
+      // Floyd-Steinberg dithering dengan threshold lebih tinggi untuk hasil lebih terang
+      for (let y = 0; y < th; y++) {
+        for (let x = 0; x < tw; x++) {
+          const idx = y * tw + x;
+          const oldv = lum[idx];
+          // PERBAIKAN: Threshold lebih tinggi (160 vs 128) agar lebih banyak putih = lebih terang
+          const newv = oldv < 160 ? 0 : 255;
+          const err = oldv - newv;
+          lum[idx] = newv;
+          if (x + 1 < tw) lum[idx + 1] += err * 7 / 16;
+          if (x - 1 >= 0 && y + 1 < th) lum[idx + tw - 1] += err * 3 / 16;
+          if (y + 1 < th) lum[idx + tw] += err * 5 / 16;
+          if (x + 1 < tw && y + 1 < th) lum[idx + tw + 1] += err * 1 / 16;
+        }
+      }
+
+      // Apply dithered values
+      for (let y = 0; y < th; y++) {
+        for (let x = 0; x < tw; x++) {
+          const i = (y * tw + x) * 4;
+          const v = lum[y * tw + x];
+          data[i] = data[i + 1] = data[i + 2] = v;
+          data[i + 3] = 255;
+        }
+      }
+
+      dctx.putImageData(img, 0, 0);
       return tempCanvas.toDataURL('image/png');
     }
+
 
     function composeFinalNoShadow(captured, txId, dateStr) {
       const canvas = noShadowCanvas;
@@ -1693,12 +1721,12 @@
 
       const canvasForDither = composeFinalForPrint(captured, selectedPrinterWidth);
 
-      // PERBAIKAN: Mode 1 STRIP menggunakan grayscale, Mode 3 STRIP menggunakan dithering
+      // PERBAIKAN: Mode 1 STRIP menggunakan smooth dithering, Mode 3 STRIP menggunakan dithering normal
       if (captureMode === 'single') {
-        // Mode 1 STRIP: Gunakan grayscale langsung tanpa dithering
-        lastDitherDataUrl = convertToGrayscale(canvasForDither);
+        // Mode 1 STRIP: Gunakan smooth dithering dengan threshold lebih tinggi
+        lastDitherDataUrl = convertToSmoothDither(canvasForDither, selectedPrinterWidth);
       } else {
-        // Mode 3 STRIP: Gunakan Floyd-Steinberg dithering (binary)
+        // Mode 3 STRIP: Gunakan Floyd-Steinberg dithering normal (binary)
         lastDitherDataUrl = floydDither(canvasForDither, selectedPrinterWidth);
       }
 
@@ -1850,9 +1878,9 @@
       // Regenerate dither dengan ukuran baru
       if (capturedCanvases.length > 0) {
         const canvasForDither = composeFinalForPrint(capturedCanvases, selectedPrinterWidth);
-        // PERBAIKAN: Mode 1 STRIP menggunakan grayscale, Mode 3 STRIP menggunakan dithering
+        // PERBAIKAN: Mode 1 STRIP menggunakan smooth dithering, Mode 3 STRIP menggunakan dithering normal
         if (captureMode === 'single') {
-          lastDitherDataUrl = convertToGrayscale(canvasForDither);
+          lastDitherDataUrl = convertToSmoothDither(canvasForDither, selectedPrinterWidth);
         } else {
           lastDitherDataUrl = floydDither(canvasForDither, selectedPrinterWidth);
         }
@@ -1866,9 +1894,9 @@
       // Regenerate dither dengan ukuran baru
       if (capturedCanvases.length > 0) {
         const canvasForDither = composeFinalForPrint(capturedCanvases, selectedPrinterWidth);
-        // PERBAIKAN: Mode 1 STRIP menggunakan grayscale, Mode 3 STRIP menggunakan dithering
+        // PERBAIKAN: Mode 1 STRIP menggunakan smooth dithering, Mode 3 STRIP menggunakan dithering normal
         if (captureMode === 'single') {
-          lastDitherDataUrl = convertToGrayscale(canvasForDither);
+          lastDitherDataUrl = convertToSmoothDither(canvasForDither, selectedPrinterWidth);
         } else {
           lastDitherDataUrl = floydDither(canvasForDither, selectedPrinterWidth);
         }
