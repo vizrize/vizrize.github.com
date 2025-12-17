@@ -971,15 +971,27 @@
     /* ================== CONFIG & DOM GRABS (TIDAK BERUBAH) ================== */
     const CLOUD_NAME = "dgepnlofq";
     const UPLOAD_PRESET = "vizrize_unsigned";
-    // IMPORTANT: Lebar harus lebih kecil dari lebar fisik printer untuk avoid wrapping!
-    // 384px terlalu lebar → foto wrap/terpotong
-    // 320px adalah lebar AMAN untuk 80mm thermal printer (tested & no wrapping)
-    const PRINT_W_80MM = 320;  // Lebar aman untuk printer 80mm (no wrapping)
+
+    // IMPORTANT: Lebar optimal untuk thermal printer berdasarkan resolusi
+    // 58mm printer = ~203 pixels (58mm x 72 DPI / 25.4)
+    // 80mm printer = ~576 pixels (80mm x 203 DPI / 25.4) - untuk ODI autocut
+    const PRINT_W_58MM = 203;   // Lebar optimal untuk printer 58mm
+    const PRINT_W_80MM = 576;   // Lebar optimal untuk printer 80mm (ODI autocut)
     const FINAL_W = 1080;
     const FINAL_H = 1920;
     const STRIP_GAP = 8;
-    const SAFE_ZONE_BOTTOM = 150; // Safe zone besar untuk autocut printer
+    const SAFE_ZONE_BOTTOM = 150; // Safe zone besar untuk autocut printer (tidak dipakai lagi)
     let selectedPrinterWidth = PRINT_W_80MM; // Default 80mm
+
+    // PERBAIKAN: Baca safe zone dari URL parameter (dari Flutter settings)
+    function getSafeZoneFromURL() {
+      const urlParams = new URLSearchParams(window.location.search);
+      const safeZone1 = parseInt(urlParams.get('safeZone1')) || 80;  // Default 80px
+      const safeZone3 = parseInt(urlParams.get('safeZone3')) || 100; // Default 100px
+      console.log('📐 Safe Zone from URL:', { safeZone1, safeZone3 });
+      return { safeZone1, safeZone3 };
+    }
+    const SAFE_ZONES = getSafeZoneFromURL();
 
     const video = document.getElementById('camera');
     const startBtn = document.getElementById('startBtn');
@@ -1236,14 +1248,20 @@
       let photoTotalHeight = 0;
       if (captured.length === 1) { photoTotalHeight = Math.round(photoW * (3 / 4)); }
       else { const photoH = Math.round(photoW * (3 / 4)); photoTotalHeight = (photoH * captured.length) + (padding * (captured.length - 1)); }
-      const safeZonePadding = SAFE_ZONE_BOTTOM; // Safe zone di bagian bawah untuk autocut
+
+      // PERBAIKAN: Safe zone dari settings (URL parameter)
+      const safeZonePadding = (captured.length === 1) ? SAFE_ZONES.safeZone1 : SAFE_ZONES.safeZone3;
+
       let totalHeight = 0;
       totalHeight += padding; totalHeight += headerFontSize; totalHeight += subHeaderFontSize; totalHeight += padding + 5 + padding;
       totalHeight += photoTotalHeight; totalHeight += padding + 5 + padding;
       totalHeight += receiptFontSize + receiptFontSize + padding + totalFontSize;
       totalHeight += padding + 5 + padding; totalHeight += footerFontSize + footerFontSize + padding; totalHeight += 50;
-      totalHeight += safeZonePadding; // Tambahkan safe zone
+      totalHeight += safeZonePadding; // Tambahkan safe zone dari settings
       canvas.height = totalHeight;
+
+      console.log('🖨️ composeFinalForPrint (final.html) - Mode:', captured.length === 1 ? '1 STRIP' : '3 STRIP', 'Print width:', printWidth);
+      console.log('📏 Canvas size:', printWidth, 'x', totalHeight, '| Safe zone:', safeZonePadding, 'px');
       const ctx = canvas.getContext('2d');
 
       // CRITICAL: Disable image smoothing untuk thermal printer (WAJIB untuk menghindari glitch!)
