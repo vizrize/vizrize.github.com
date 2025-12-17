@@ -1317,6 +1317,8 @@
     // Fungsi untuk convert canvas ke dithered dengan threshold lebih tinggi (untuk mode 1 STRIP)
     // Thermal printer tidak support grayscale, jadi tetap harus dithering tapi dengan threshold berbeda
     function convertToSmoothDither(srcCanvas, targetWidth) {
+      console.log('🎨 convertToSmoothDither - Input:', srcCanvas.width, 'x', srcCanvas.height, '→ Target width:', targetWidth);
+
       const scale = targetWidth / srcCanvas.width;
       const tw = Math.round(srcCanvas.width * scale);
       const th = Math.round(srcCanvas.height * scale);
@@ -1344,8 +1346,8 @@
         for (let x = 0; x < tw; x++) {
           const idx = y * tw + x;
           const oldv = lum[idx];
-          // PERBAIKAN: Threshold lebih tinggi (160 vs 128) agar lebih banyak putih = lebih terang
-          const newv = oldv < 160 ? 0 : 255;
+          // PERBAIKAN: Threshold 140 (balance antara terang dan detail)
+          const newv = oldv < 140 ? 0 : 255;
           const err = oldv - newv;
           lum[idx] = newv;
           if (x + 1 < tw) lum[idx + 1] += err * 7 / 16;
@@ -1366,7 +1368,9 @@
       }
 
       dctx.putImageData(img, 0, 0);
-      return tempCanvas.toDataURL('image/png');
+      const result = tempCanvas.toDataURL('image/png');
+      console.log('✅ convertToSmoothDither - Output:', tw, 'x', th, 'Data URL length:', result.length);
+      return result;
     }
 
 
@@ -1512,6 +1516,8 @@
     }
 
     function composeFinalForPrint(captured, printWidth = PRINT_W_80MM) {
+      console.log('🖨️ composeFinalForPrint - Mode:', captured.length === 1 ? '1 STRIP' : '3 STRIP', 'Print width:', printWidth);
+
       const canvas = printCanvas;
       canvas.width = printWidth;
 
@@ -1525,7 +1531,9 @@
       const barcodeHeight = Math.round(printWidth * 0.15);
       const thankYouHeight = Math.round(printWidth * 0.08);
       const photoGap = 4;
-      const safeZonePadding = SAFE_ZONE_BOTTOM; // Safe zone besar untuk autocut printer
+
+      // PERBAIKAN: Safe zone lebih kecil untuk mode 1 STRIP, lebih besar untuk mode 3 STRIP
+      const safeZonePadding = (captured.length === 1) ? 30 : 60; // 1 STRIP: 30px, 3 STRIP: 60px
 
       // Hitung tinggi foto
       let photoTotalHeight = 0;
@@ -1541,6 +1549,8 @@
       // Hitung total tinggi canvas dengan safe zone padding di bawah
       const totalHeight = padding + logoHeight + padding + photoTotalHeight + padding + barcodeHeight + thankYouHeight + padding + safeZonePadding;
       canvas.height = totalHeight;
+
+      console.log('📏 Canvas size:', printWidth, 'x', totalHeight, '| Safe zone:', safeZonePadding, 'px');
 
       // Background putih
       ctx.fillStyle = '#ffffff';
