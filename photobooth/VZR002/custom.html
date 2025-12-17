@@ -953,7 +953,7 @@
         <button id="printer80mm" class="printerSizeBtn selected" data-width="384">80mm</button>
       </div>
       <div class="controlsRow">
-        <button id="printBtn" class="action printBtn" style="display:none;">PRINT</button>
+        <button id="printBtn" class="action printBtn">PRINT</button>
         <button id="uploadBtn" class="action uploadBtn">UPLOAD</button>
         <button id="retakeBtn" class="action retakeBtn">FINISH</button>
       </div>
@@ -1313,6 +1313,35 @@
       return ditherCanvas.toDataURL('image/png');
     }
 
+    // Fungsi untuk convert canvas ke grayscale tanpa dithering (untuk mode 1 STRIP)
+    function convertToGrayscale(srcCanvas) {
+      const tempCanvas = document.createElement('canvas');
+      tempCanvas.width = srcCanvas.width;
+      tempCanvas.height = srcCanvas.height;
+      const ctx = tempCanvas.getContext('2d');
+
+      // Gambar canvas source ke temp canvas
+      ctx.drawImage(srcCanvas, 0, 0);
+
+      // Ambil image data dan konversi ke grayscale
+      const img = ctx.getImageData(0, 0, tempCanvas.width, tempCanvas.height);
+      const data = img.data;
+
+      for (let i = 0; i < data.length; i += 4) {
+        const r = data[i];
+        const g = data[i + 1];
+        const b = data[i + 2];
+        // Convert to grayscale using luminosity method
+        const gray = Math.round(0.299 * r + 0.587 * g + 0.114 * b);
+        data[i] = gray;
+        data[i + 1] = gray;
+        data[i + 2] = gray;
+      }
+
+      ctx.putImageData(img, 0, 0);
+      return tempCanvas.toDataURL('image/png');
+    }
+
     function composeFinalNoShadow(captured, txId, dateStr) {
       const canvas = noShadowCanvas;
       canvas.width = FINAL_W;
@@ -1663,7 +1692,15 @@
       finalPreviewWrap.appendChild(img);
 
       const canvasForDither = composeFinalForPrint(captured, selectedPrinterWidth);
-      lastDitherDataUrl = floydDither(canvasForDither, selectedPrinterWidth);
+
+      // PERBAIKAN: Mode 1 STRIP menggunakan grayscale, Mode 3 STRIP menggunakan dithering
+      if (captureMode === 'single') {
+        // Mode 1 STRIP: Gunakan grayscale langsung tanpa dithering
+        lastDitherDataUrl = convertToGrayscale(canvasForDither);
+      } else {
+        // Mode 3 STRIP: Gunakan Floyd-Steinberg dithering (binary)
+        lastDitherDataUrl = floydDither(canvasForDither, selectedPrinterWidth);
+      }
 
       if (window.flutter_inappwebview) {
         console.log('Memicu print otomatis...');
@@ -1813,7 +1850,12 @@
       // Regenerate dither dengan ukuran baru
       if (capturedCanvases.length > 0) {
         const canvasForDither = composeFinalForPrint(capturedCanvases, selectedPrinterWidth);
-        lastDitherDataUrl = floydDither(canvasForDither, selectedPrinterWidth);
+        // PERBAIKAN: Mode 1 STRIP menggunakan grayscale, Mode 3 STRIP menggunakan dithering
+        if (captureMode === 'single') {
+          lastDitherDataUrl = convertToGrayscale(canvasForDither);
+        } else {
+          lastDitherDataUrl = floydDither(canvasForDither, selectedPrinterWidth);
+        }
       }
     });
 
@@ -1824,18 +1866,22 @@
       // Regenerate dither dengan ukuran baru
       if (capturedCanvases.length > 0) {
         const canvasForDither = composeFinalForPrint(capturedCanvases, selectedPrinterWidth);
-        lastDitherDataUrl = floydDither(canvasForDither, selectedPrinterWidth);
+        // PERBAIKAN: Mode 1 STRIP menggunakan grayscale, Mode 3 STRIP menggunakan dithering
+        if (captureMode === 'single') {
+          lastDitherDataUrl = convertToGrayscale(canvasForDither);
+        } else {
+          lastDitherDataUrl = floydDither(canvasForDither, selectedPrinterWidth);
+        }
       }
     });
 
-    // DISABLED: Menyebabkan print 2x dengan auto-print
-// printBtn.addEventListener('click', () => {
-//   if (window.flutter_inappwebview && lastDitherDataUrl) {
-//     window.flutter_inappwebview.callHandler('printHandler', lastDitherDataUrl);
-//   } else {
-//     alert("Print manual hanya di aplikasi");
-//   }
-// });
+    printBtn.addEventListener('click', () => {
+      if (window.flutter_inappwebview && lastDitherDataUrl) {
+        window.flutter_inappwebview.callHandler('printHandler', lastDitherDataUrl);
+      } else {
+        alert("Print manual hanya di aplikasi");
+      }
+    });
     uploadBtn.addEventListener('click', uploadFinalWithShadowAndShowQr);
     barcodeClose.addEventListener('click', () => { barcodePopup.style.display = 'none'; });
 
