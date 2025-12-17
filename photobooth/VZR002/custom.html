@@ -993,6 +993,16 @@
     const SAFE_ZONE_BOTTOM = 150; // Safe zone besar untuk autocut printer (tidak dipakai lagi)
     let selectedPrinterWidth = PRINT_W_80MM; // Default 80mm
 
+    // PERBAIKAN: Baca safe zone dari URL parameter (dari Flutter settings)
+    function getSafeZoneFromURL() {
+      const urlParams = new URLSearchParams(window.location.search);
+      const safeZone1 = parseInt(urlParams.get('safeZone1')) || 80;  // Default 80px
+      const safeZone3 = parseInt(urlParams.get('safeZone3')) || 100; // Default 100px
+      console.log('📐 Safe Zone from URL:', { safeZone1, safeZone3 });
+      return { safeZone1, safeZone3 };
+    }
+    const SAFE_ZONES = getSafeZoneFromURL();
+
     const video = document.getElementById('camera');
     const startBtn = document.getElementById('startBtn');
     const countdownOverlay = document.getElementById('countdownOverlay');
@@ -1533,8 +1543,8 @@
       const thankYouHeight = Math.round(printWidth * 0.08);
       const photoGap = 4;
 
-      // PERBAIKAN: Safe zone lebih besar untuk ODI 80mm autocut printer
-      const safeZonePadding = (captured.length === 1) ? 80 : 100; // 1 STRIP: 80px, 3 STRIP: 100px
+      // PERBAIKAN: Safe zone dari settings (URL parameter)
+      const safeZonePadding = (captured.length === 1) ? SAFE_ZONES.safeZone1 : SAFE_ZONES.safeZone3;
 
       // Hitung tinggi foto
       let photoTotalHeight = 0;
