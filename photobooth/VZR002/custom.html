@@ -1310,7 +1310,15 @@
         }
       }
       dctx.putImageData(img, 0, 0);
-      return ditherCanvas.toDataURL('image/png');
+
+      // CRITICAL: Return pixel data, BUKAN base64 PNG!
+      // Base64 PNG → Printer print sebagai binary/text
+      // Pixel data → Flutter bisa process dengan benar
+      return JSON.stringify({
+        width: tw,
+        height: th,
+        pixels: Array.from(data)  // RGBA pixel array
+      });
     }
 
     function composeFinalNoShadow(captured, txId, dateStr) {
