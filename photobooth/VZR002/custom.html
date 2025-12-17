@@ -953,7 +953,7 @@
         <button id="printer80mm" class="printerSizeBtn selected" data-width="384">80mm</button>
       </div>
       <div class="controlsRow">
-        <button id="printBtn" class="action printBtn">PRINT</button>
+        <button id="printBtn" class="action printBtn" style="display:none;">PRINT</button>
         <button id="uploadBtn" class="action uploadBtn">UPLOAD</button>
         <button id="retakeBtn" class="action retakeBtn">FINISH</button>
       </div>
@@ -1828,13 +1828,14 @@
       }
     });
 
-    printBtn.addEventListener('click', () => {
-      if (window.flutter_inappwebview && lastDitherDataUrl) {
-        window.flutter_inappwebview.callHandler('printHandler', lastDitherDataUrl);
-      } else {
-        alert("Print manual hanya di aplikasi");
-      }
-    });
+    // DISABLED: Menyebabkan print 2x dengan auto-print
+// printBtn.addEventListener('click', () => {
+//   if (window.flutter_inappwebview && lastDitherDataUrl) {
+//     window.flutter_inappwebview.callHandler('printHandler', lastDitherDataUrl);
+//   } else {
+//     alert("Print manual hanya di aplikasi");
+//   }
+// });
     uploadBtn.addEventListener('click', uploadFinalWithShadowAndShowQr);
     barcodeClose.addEventListener('click', () => { barcodePopup.style.display = 'none'; });
 
