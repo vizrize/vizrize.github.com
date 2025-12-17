@@ -1533,8 +1533,8 @@
       const thankYouHeight = Math.round(printWidth * 0.08);
       const photoGap = 4;
 
-      // PERBAIKAN: Safe zone cukup untuk dipotong tapi tetap hemat kertas
-      const safeZonePadding = (captured.length === 1) ? 50 : 60; // 1 STRIP: 50px, 3 STRIP: 60px
+      // PERBAIKAN: Safe zone lebih besar untuk ODI 80mm autocut printer
+      const safeZonePadding = (captured.length === 1) ? 80 : 100; // 1 STRIP: 80px, 3 STRIP: 100px
 
       // Hitung tinggi foto
       let photoTotalHeight = 0;
@@ -1585,6 +1585,7 @@
       }
 
       currentY += logoHeight + padding;
+      console.log('📍 After logo: currentY =', currentY);
 
       // === FOTO LANDSCAPE ===
       if (captured.length === 1) {
@@ -1601,6 +1602,7 @@
           }
         });
       }
+      console.log('📍 After photos: currentY =', currentY);
 
       currentY += padding;
 
@@ -1632,6 +1634,7 @@
       }
 
       currentY += actualBarcodeHeight + Math.round(printWidth * 0.04); // Gunakan tinggi sebenarnya + padding 4%
+      console.log('📍 After barcode: currentY =', currentY, '| Barcode height:', actualBarcodeHeight);
 
       // === THANK YOU TEXT ===
       const thankYouFontSize = Math.round(printWidth * 0.045);
@@ -1639,6 +1642,10 @@
       ctx.fillStyle = '#000000';
       ctx.textAlign = 'center';
       ctx.fillText('THANK YOU FOR CHOOSING US', printWidth / 2, currentY + Math.round(thankYouHeight * 0.5));
+
+      currentY += thankYouHeight + padding;
+      console.log('📍 After thank you: currentY =', currentY);
+      console.log('✅ Total height:', totalHeight, '| Remaining space (safe zone):', totalHeight - currentY);
 
       return canvas;
     }
