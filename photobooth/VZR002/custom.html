@@ -982,14 +982,15 @@
     const CLOUD_NAME = "dgepnlofq";
     const UPLOAD_PRESET = "vizrize_unsigned";
 
-    // IMPORTANT: Lebar harus lebih kecil dari lebar fisik printer untuk avoid wrapping!
-    // 384px terlalu lebar → foto wrap/terpotong
-    // 320px adalah lebar AMAN untuk 80mm thermal printer (tested & no wrapping)
-    const PRINT_W_80MM = 320;  // Lebar aman untuk printer 80mm (no wrapping)
+    // IMPORTANT: Lebar optimal untuk thermal printer berdasarkan resolusi
+    // 58mm printer = ~203 pixels (58mm x 72 DPI / 25.4)
+    // 80mm printer = ~576 pixels (80mm x 203 DPI / 25.4) - untuk ODI autocut
+    const PRINT_W_58MM = 203;   // Lebar optimal untuk printer 58mm
+    const PRINT_W_80MM = 576;   // Lebar optimal untuk printer 80mm (ODI autocut)
     const FINAL_W = 1080;
     const FINAL_H = 1920;
     const STRIP_GAP = 8;
-    const SAFE_ZONE_BOTTOM = 150; // Safe zone besar untuk autocut printer
+    const SAFE_ZONE_BOTTOM = 150; // Safe zone besar untuk autocut printer (tidak dipakai lagi)
     let selectedPrinterWidth = PRINT_W_80MM; // Default 80mm
 
     const video = document.getElementById('camera');
@@ -1532,8 +1533,8 @@
       const thankYouHeight = Math.round(printWidth * 0.08);
       const photoGap = 4;
 
-      // PERBAIKAN: Safe zone lebih kecil untuk mode 1 STRIP, lebih besar untuk mode 3 STRIP
-      const safeZonePadding = (captured.length === 1) ? 30 : 60; // 1 STRIP: 30px, 3 STRIP: 60px
+      // PERBAIKAN: Safe zone cukup untuk dipotong tapi tetap hemat kertas
+      const safeZonePadding = (captured.length === 1) ? 50 : 60; // 1 STRIP: 50px, 3 STRIP: 60px
 
       // Hitung tinggi foto
       let photoTotalHeight = 0;
