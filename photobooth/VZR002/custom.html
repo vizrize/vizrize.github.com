@@ -1678,6 +1678,14 @@
       uploadBtn.disabled = true; uploadBtn.textContent = 'Uploading...';
       try {
         const shadowCanvas = composeUploadWithShadow(lastNoShadowCanvas);
+
+        // BACKUP: Kirim upload canvas ke Flutter untuk save (jika toggle backup aktif)
+        if (window.flutter_inappwebview) {
+          const uploadDataUrl = shadowCanvas.toDataURL('image/jpeg', 0.92);
+          console.log('Sending upload canvas to Flutter for backup...');
+          window.flutter_inappwebview.callHandler('saveUploadHandler', uploadDataUrl);
+        }
+
         const url = await uploadCanvasToCloudinary(shadowCanvas);
         lastUploadUrl = url;
         uploadedUrlEl.textContent = 'Uploaded: ' + url.slice(0, 40) + '...';
