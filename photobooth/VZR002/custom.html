@@ -1847,7 +1847,19 @@
 
 
     // 2. FUNGSI UNTUK MASUK KE LAYAR KONTROL
+    // 2. FUNGSI UNTUK MASUK KE LAYAR KONTROL
+    let isProcessing = false; // Flag untuk prevent double-click
+
     function showControlScreen() {
+      // Prevent double-click
+      if (isProcessing) {
+        console.log('⚠️ Already processing, ignoring click');
+        return;
+      }
+
+      isProcessing = true;
+      startLpBtn.disabled = true;
+
       // Tambahkan class hiding untuk animasi fadeOut
       welcomeScreen.classList.add('hiding');
 
@@ -1869,6 +1881,10 @@
         if (cameraReady) {
           startBtn.disabled = false;
         }
+
+        // Reset flag setelah animasi selesai
+        isProcessing = false;
+        startLpBtn.disabled = false;
       }, 500); // Delay sesuai dengan durasi animasi fadeOut
     }
 
@@ -1891,7 +1907,22 @@
       }
     });
 
-    startBtn.addEventListener('click', runSession);
+    // PERBAIKAN: Prevent double-click pada startBtn
+    startBtn.addEventListener('click', () => {
+      if (isProcessing) {
+        console.log('⚠️ Already capturing, ignoring click');
+        return;
+      }
+
+      isProcessing = true;
+      startBtn.disabled = true;
+
+      runSession().finally(() => {
+        // Reset flag setelah capture selesai
+        isProcessing = false;
+        startBtn.disabled = false;
+      });
+    });
 
     // PERUBAHAN: RETAKE sekarang memanggil showLandingPage()
     retakeBtn.addEventListener('click', async () => {
